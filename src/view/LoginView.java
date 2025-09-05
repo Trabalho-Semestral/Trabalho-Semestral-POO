@@ -31,7 +31,7 @@ public class LoginView extends JFrame {
     }
 
     private void initComponents() {
-        setTitle("💻 Sistema de Venda de Equipamentos Informáticos - Login");
+        setTitle(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png" Sistema de Venda de Equipamentos Informáticos - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 500);
         setLocationRelativeTo(null);
@@ -69,7 +69,7 @@ public class LoginView extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Logo
-        JLabel lblLogo = new JLabel("🖥️");
+        JLabel lblLogo = new JLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png"");
         lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
@@ -77,7 +77,7 @@ public class LoginView extends JFrame {
         mainPanel.add(lblLogo, gbc);
 
         // Título
-        JLabel lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
+        JLabel lblTitulo = UITheme.createTitleLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png" Sistema de Vendas");
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 10, 5, 10);
