@@ -67,7 +67,7 @@ public class MenuVendedorView extends JPanel {
         JPanel welcomeCard = criarWelcomeCard();
         JPanel registrarClienteCard = new GerirClientesView(controller);
         JPanel registrarVendaCard = new RegistrarVendaView(controller, vendedorLogado);
-        JPanel minhasVendasCard = new JPanel(); // Pode criar um panel similar com tabela de vendas
+        JPanel minhasVendasCard = new JPanel();
         JPanel verReservasCard = new GerirReservasView(controller);
 
         contentPanel.add(welcomeCard, "Welcome");
@@ -187,7 +187,7 @@ public class MenuVendedorView extends JPanel {
     }
 
     private void abrirMinhasVendas() {
-        // manter seu código atual para Minhas Vendas
+
     }
 
     private void abrirVerReservas() {

@@ -1,7 +1,9 @@
+
 package view;
 
 import controller.SistemaController;
 import model.concretas.Vendedor;
+import model.concretas.Gestor;
 import util.UITheme;
 
 import javax.swing.*;
@@ -48,7 +50,8 @@ public class LoginView extends JFrame {
         txtSenha.setPreferredSize(new Dimension(250, 35));
         txtSenha.setMinimumSize(new Dimension(200, 30));
 
-        cmbTipoUsuario = UITheme.createStyledComboBox(new String[]{"Administrador", "Vendedor"});
+        // ✅ Incluir "Gestor" no ComboBox
+        cmbTipoUsuario = UITheme.createStyledComboBox(new String[]{"Administrador", "Gestor", "Vendedor"});
         cmbTipoUsuario.setPreferredSize(new Dimension(250, 35));
         cmbTipoUsuario.setMinimumSize(new Dimension(200, 30));
 
@@ -217,6 +220,18 @@ public class LoginView extends JFrame {
                     MainView mainView = new MainView(controller, tipoUsuario);
                     mainView.setVisible(true);
                     break;
+
+                case "Gestor": // ✅ Novo case para Gestor
+                    JFrame gestorFrame = new JFrame("Sistema de Vendas - Gestor");
+                    gestorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    gestorFrame.setSize(1200, 800);
+                    gestorFrame.setLocationRelativeTo(null);
+
+                    MenuGestorView gestorView = new MenuGestorView(controller, (Gestor) controller.getUsuarioLogado());
+                    gestorFrame.add(gestorView);
+                    gestorFrame.setVisible(true);
+                    break;
+
                 case "Vendedor":
                     JFrame vendedorFrame = new JFrame("Sistema de Vendas - Vendedor");
                     vendedorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
