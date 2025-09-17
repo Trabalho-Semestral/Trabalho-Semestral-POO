@@ -1,500 +1,468 @@
 package view;
 
 import controller.SistemaController;
-
 import model.abstractas.Equipamento;
 import model.concretas.Cliente;
+import model.concretas.Computador;
+import model.concretas.Periferico;
 import model.concretas.Venda;
 import model.concretas.Vendedor;
 import util.UITheme;
+import util.Validador;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Tela para registrar vendas com layout padronizado.
- */
 public class RegistrarVendaView extends JPanel {
-    
+
     private SistemaController controller;
     private Vendedor vendedorLogado;
-    
-    // Componentes da interface
+
+    // --- COMPONENTES DO CLIENTE ---
+    private JRadioButton rbClienteCorporativo, rbClienteBalcao;
+    private CardLayout cardLayoutCliente;
+    private JPanel painelCamposCliente;
     private JComboBox<Cliente> cmbCliente;
-    private JComboBox<Equipamento> cmbEquipamento;
+    private JTextArea txtAreaDetalhesCliente;
+    private JTextField txtNomeClienteBalcao, txtBiClienteBalcao, txtTelefoneClienteBalcao;
+    private JTable tabelaEquipamentosDisponiveis;
+    private DefaultTableModel modeloTabelaEquipamentos;
+    private JLabel lblFotoEquipamento;
+    private JTextArea txtAreaDetalhesEquipamento;
     private JTextField txtQuantidade;
     private JButton btnAdicionarItem;
-    private JButton btnRemoverItem;
-    private JButton btnFinalizarVenda;
-    private JButton btnLimparVenda;
-    private JButton btnVoltar;
-    private JLabel lblTotalVenda;
-    private JLabel lblInfoCliente;
-    private JLabel lblInfoEquipamento;
-    
-    // Tabela de itens da venda
+
+    // --- COMPONENTES DA VENDA ATUAL (CARRINHO) ---
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
-    
-    // Dados da venda
-    private List<ItemVenda> itensVenda;
-    private double totalVenda;
-    
-    // Classe interna para representar um item da venda
+    private JLabel lblTotalVenda;
+
+    // --- BOTÕES DE AÇÃO ---
+    private JButton btnRemoverItem, btnFinalizarVenda, btnLimparVenda, btnVoltar;
+
+    // --- DADOS ---
+    private List<ItemVenda> itensVenda = new ArrayList<>();
+    private double totalVenda = 0.0;
+
     private static class ItemVenda {
-        public Equipamento equipamento;
-        public int quantidade;
-        public double subtotal;
-        
-        public ItemVenda(Equipamento equipamento, int quantidade) {
-            this.equipamento = equipamento;
-            this.quantidade = quantidade;
-            this.subtotal = equipamento.getPreco() * quantidade;
+        Equipamento equipamento; int quantidade; double subtotal;
+        ItemVenda(Equipamento eq, int qtd) {
+            this.equipamento = eq; this.quantidade = qtd; this.subtotal = eq.getPreco() * qtd;
         }
     }
-    
+
     public RegistrarVendaView(SistemaController controller, Vendedor vendedorLogado) {
         this.controller = controller;
         this.vendedorLogado = vendedorLogado;
-        this.itensVenda = new ArrayList<>();
-        this.totalVenda = 0.0;
         initComponents();
         setupLayout();
         setupEvents();
         carregarDadosIniciais();
     }
-    
-    /**
-     * Inicializa os componentes da interface.
-     */
+
     private void initComponents() {
-        setLayout(new BorderLayout());
         setBackground(UITheme.BACKGROUND_COLOR);
-        
-        // ComboBoxes com tema personalizado
-        cmbCliente = UITheme.createStyledComboBox(new Cliente[0]);
-        cmbEquipamento = UITheme.createStyledComboBox(new Equipamento[0]);
-        
-        // Campo de quantidade
+
+        // --- INICIALIZAÇÃO DOS COMPONENTES DO CLIENTE ---
+        rbClienteCorporativo = new JRadioButton("Cliente Corporativo", true);
+        rbClienteBalcao = new JRadioButton("Cliente de Balcão");
+        UITheme.styleRadioButton(rbClienteCorporativo);
+        UITheme.styleRadioButton(rbClienteBalcao);
+        ButtonGroup bgTipoCliente = new ButtonGroup();
+        bgTipoCliente.add(rbClienteCorporativo); bgTipoCliente.add(rbClienteBalcao);
+
+        cardLayoutCliente = new CardLayout();
+        painelCamposCliente = new JPanel(cardLayoutCliente);
+        painelCamposCliente.setOpaque(false);
+
+        // --- Card Cliente Corporativo ---
+        JPanel painelCorp = new JPanel(new BorderLayout(5, 5));
+        painelCorp.setOpaque(false);
+        cmbCliente = new JComboBox<>();
+        txtAreaDetalhesCliente = new JTextArea("Selecione um cliente para ver os detalhes.");
+        txtAreaDetalhesCliente.setEditable(false);
+        txtAreaDetalhesCliente.setFont(UITheme.FONT_BODY);
+        txtAreaDetalhesCliente.setOpaque(false);
+        txtAreaDetalhesCliente.setWrapStyleWord(true);
+        txtAreaDetalhesCliente.setLineWrap(true);
+        JScrollPane scrollDetalhesCliente = new JScrollPane(txtAreaDetalhesCliente);
+        scrollDetalhesCliente.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        scrollDetalhesCliente.setOpaque(false);
+        scrollDetalhesCliente.getViewport().setOpaque(false);
+        painelCorp.add(cmbCliente, BorderLayout.NORTH);
+        painelCorp.add(scrollDetalhesCliente, BorderLayout.CENTER);
+        painelCamposCliente.add(painelCorp, "CORPORATIVO");
+
+        // --- Card Cliente de Balcão ---
+        JPanel painelBalcao = new JPanel(new GridLayout(0, 1, 5, 5));
+        painelBalcao.setOpaque(false);
+        txtNomeClienteBalcao = UITheme.createStyledTextField();
+        txtBiClienteBalcao = UITheme.createStyledTextField();
+        txtTelefoneClienteBalcao = UITheme.createStyledTextField();
+        UITheme.setFieldAsInput(txtNomeClienteBalcao, "Nome do Cliente de Balcão");
+        UITheme.setFieldAsInput(txtBiClienteBalcao, "Nº BI (Obrigatório)");
+        UITheme.setFieldAsInput(txtTelefoneClienteBalcao, "Telefone (Obrigatório)");
+        painelBalcao.add(txtNomeClienteBalcao);
+        painelBalcao.add(txtBiClienteBalcao);
+        painelBalcao.add(txtTelefoneClienteBalcao);
+        painelCamposCliente.add(painelBalcao, "BALCAO");
+
+        // --- INICIALIZAÇÃO DOS COMPONENTES DE PRODUTO ---
+        modeloTabelaEquipamentos = new DefaultTableModel(new String[]{"Marca", "Tipo", "Preço", "Estoque"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tabelaEquipamentosDisponiveis = new JTable(modeloTabelaEquipamentos);
+        UITheme.applyTableStyle(tabelaEquipamentosDisponiveis);
+
+        lblFotoEquipamento = new JLabel("Selecione um produto", SwingConstants.CENTER);
+        lblFotoEquipamento.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
+        lblFotoEquipamento.setPreferredSize(new Dimension(150, 150));
+
+        txtAreaDetalhesEquipamento = new JTextArea("Detalhes do produto...");
+        txtAreaDetalhesEquipamento.setEditable(false);
+        txtAreaDetalhesEquipamento.setFont(UITheme.FONT_BODY);
+        txtAreaDetalhesEquipamento.setWrapStyleWord(true);
+        txtAreaDetalhesEquipamento.setLineWrap(true);
+        txtAreaDetalhesEquipamento.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
         txtQuantidade = UITheme.createStyledTextField();
         txtQuantidade.setText("1");
-        
-        // Botões com tema personalizado
-        btnAdicionarItem = UITheme.createPrimaryButton("➕ Adicionar Item");
-        btnRemoverItem = UITheme.createDangerButton("➖ Remover Item");
-        btnFinalizarVenda = UITheme.createPrimaryButton("✅ Finalizar Venda");
-        btnLimparVenda = UITheme.createSecondaryButton("🗑️ Limpar Venda");
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        
-        // Labels informativos
-        lblTotalVenda = UITheme.createTitleLabel("Total da Venda: 0,00 MT");
-        lblTotalVenda.setForeground(UITheme.PRIMARY_COLOR);
-        
-        lblInfoCliente = UITheme.createBodyLabel("Selecione um cliente");
-        lblInfoCliente.setForeground(UITheme.TEXT_SECONDARY);
-        
-        lblInfoEquipamento = UITheme.createBodyLabel("Selecione um equipamento");
-        lblInfoEquipamento.setForeground(UITheme.TEXT_SECONDARY);
-        
-        // Tabela de itens
-        String[] colunasItens = {"ID", "Marca", "Tipo", "Preço Unit.", "Qtd", "Subtotal"};
-        modeloTabelaItens = new DefaultTableModel(colunasItens, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+        txtQuantidade.setPreferredSize(new Dimension(60, UITheme.INPUT_SIZE.height));
+        btnAdicionarItem = UITheme.createPrimaryButton("➕ Adicionar");
+
+        // --- INICIALIZAÇÃO DO CARRINHO E AÇÕES ---
+        modeloTabelaItens = new DefaultTableModel(new String[]{"Qtd", "Produto", "Preço Unit.", "Subtotal"}, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaItensVenda = new JTable(modeloTabelaItens);
-        tabelaItensVenda.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabelaItensVenda.setFont(UITheme.FONT_BODY);
-        tabelaItensVenda.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
-        tabelaItensVenda.setRowHeight(30);
-        tabelaItensVenda.setSelectionBackground(UITheme.PRIMARY_LIGHT);
-        tabelaItensVenda.setSelectionForeground(UITheme.TEXT_PRIMARY);
+        UITheme.applyTableStyle(tabelaItensVenda);
+
+        lblTotalVenda = UITheme.createTitleLabel("TOTAL: 0,00 MT");
+        lblTotalVenda.setForeground(UITheme.SUCCESS_COLOR);
+
+        btnRemoverItem = UITheme.createDangerButton("Remover Item");
+        btnFinalizarVenda = UITheme.createSuccessButton("✅ Finalizar Venda");
+        btnLimparVenda = UITheme.createSecondaryButton("Limpar Tudo");
+        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
     }
-    
-    /**
-     * Configura o layout da interface seguindo o padrão de relatórios.
-     */
+
     private void setupLayout() {
-        // Painel superior com título
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        
-        JLabel lblTitulo = UITheme.createHeadingLabel("🛒 Registrar Nova Venda");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-        topPanel.add(lblTitulo, BorderLayout.CENTER);
-        
-        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        voltarPanel.add(btnVoltar);
-        topPanel.add(voltarPanel, BorderLayout.WEST);
-        
+        setLayout(new BorderLayout());
+        JPanel topPanel = UITheme.createTopbar("🛒 Registrar Nova Venda", btnVoltar);
         add(topPanel, BorderLayout.NORTH);
-        
-        // Painel principal com layout padronizado
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
-        
-        // Painel de formulário (superior)
-        JPanel formPanel = criarPainelFormulario();
-        mainPanel.add(formPanel, BorderLayout.NORTH);
-        
-        // Painel de botões de ação (meio)
-        JPanel buttonPanel = criarPainelBotoes();
-        mainPanel.add(buttonPanel, BorderLayout.CENTER);
-        
-        // Painel de tabela (inferior)
-        JPanel tablePanel = criarPainelTabela();
-        mainPanel.add(tablePanel, BorderLayout.SOUTH);
-        
-        add(mainPanel, BorderLayout.CENTER);
+
+        JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        mainSplit.setResizeWeight(0.6);
+        mainSplit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainSplit.setLeftComponent(createLeftPanel());
+        mainSplit.setRightComponent(createRightPanel());
+        add(mainSplit, BorderLayout.CENTER);
     }
-    
-    /**
-     * Cria o painel do formulário seguindo o padrão.
-     */
-    private JPanel criarPainelFormulario() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Título do formulário
-        JLabel lblFormTitulo = UITheme.createSubtitleLabel("Dados da Venda");
-        lblFormTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblFormTitulo, BorderLayout.NORTH);
-        
-        JPanel formContent = new JPanel(new GridBagLayout());
-        formContent.setBackground(UITheme.CARD_BACKGROUND);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.anchor = GridBagConstraints.WEST;
-        
-        // Cliente
-        gbc.gridx = 0; gbc.gridy = 0;
-        formContent.add(UITheme.createBodyLabel("Cliente:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        formContent.add(cmbCliente, gbc);
-        
-        // Equipamento
-        gbc.gridx = 2; gbc.gridy = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Equipamento:"), gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        formContent.add(cmbEquipamento, gbc);
-        
-        // Quantidade
-        gbc.gridx = 4; gbc.gridy = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Quantidade:"), gbc);
-        gbc.gridx = 5; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.3;
-        formContent.add(txtQuantidade, gbc);
-        
-        // Informações adicionais
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
-        formContent.add(lblInfoCliente, gbc);
-        
-        gbc.gridx = 3; gbc.gridy = 1; gbc.gridwidth = 3;
-        formContent.add(lblInfoEquipamento, gbc);
-        
-        panel.add(formContent, BorderLayout.CENTER);
-        
-        return panel;
+
+    private JPanel createLeftPanel() {
+        JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+        leftPanel.setOpaque(false);
+
+        JPanel painelCliente = UITheme.createCardPanel();
+        painelCliente.setLayout(new BorderLayout(10, 10));
+        painelCliente.setBorder(BorderFactory.createTitledBorder("1. Identificação do Cliente"));
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        radioPanel.setOpaque(false);
+        radioPanel.add(rbClienteCorporativo);
+        radioPanel.add(rbClienteBalcao);
+        painelCliente.add(radioPanel, BorderLayout.NORTH);
+        painelCliente.add(painelCamposCliente, BorderLayout.CENTER);
+
+        JPanel painelCarrinho = UITheme.createCardPanel();
+        painelCarrinho.setLayout(new BorderLayout(10, 10));
+        painelCarrinho.setBorder(BorderFactory.createTitledBorder("3. Itens da Venda (Carrinho)"));
+        painelCarrinho.add(new JScrollPane(tabelaItensVenda), BorderLayout.CENTER);
+
+        JPanel acoesCarrinhoPanel = new JPanel(new BorderLayout(10,10));
+        acoesCarrinhoPanel.setOpaque(false);
+        acoesCarrinhoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        acoesCarrinhoPanel.add(lblTotalVenda, BorderLayout.WEST);
+        JPanel botoesCarrinho = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        botoesCarrinho.setOpaque(false);
+        botoesCarrinho.add(btnRemoverItem);
+        botoesCarrinho.add(btnLimparVenda);
+        botoesCarrinho.add(btnFinalizarVenda);
+        acoesCarrinhoPanel.add(botoesCarrinho, BorderLayout.EAST);
+        painelCarrinho.add(acoesCarrinhoPanel, BorderLayout.SOUTH);
+
+        leftPanel.add(painelCliente, BorderLayout.NORTH);
+        leftPanel.add(painelCarrinho, BorderLayout.CENTER);
+        return leftPanel;
     }
-    
-    /**
-     * Cria o painel de botões de ação seguindo o padrão.
-     */
-    private JPanel criarPainelBotoes() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
-        panel.setBackground(UITheme.BACKGROUND_COLOR);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        
-        panel.add(btnAdicionarItem);
-        panel.add(btnRemoverItem);
-        panel.add(btnLimparVenda);
-        panel.add(btnFinalizarVenda);
-        
-        return panel;
+
+    private JPanel createRightPanel() {
+        JPanel rightPanel = UITheme.createCardPanel();
+        rightPanel.setLayout(new BorderLayout(10, 10));
+        rightPanel.setBorder(BorderFactory.createTitledBorder("2. Catálogo de Produtos"));
+
+        JPanel detalhesPanel = new JPanel(new BorderLayout(10, 10));
+        detalhesPanel.setOpaque(false);
+        detalhesPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        detalhesPanel.add(lblFotoEquipamento, BorderLayout.WEST);
+        detalhesPanel.add(new JScrollPane(txtAreaDetalhesEquipamento), BorderLayout.CENTER);
+
+        JPanel acoesProdutoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        acoesProdutoPanel.setOpaque(false);
+        acoesProdutoPanel.add(new JLabel("Qtd:"));
+        acoesProdutoPanel.add(txtQuantidade);
+        acoesProdutoPanel.add(btnAdicionarItem);
+        detalhesPanel.add(acoesProdutoPanel, BorderLayout.SOUTH);
+
+        rightPanel.add(new JScrollPane(tabelaEquipamentosDisponiveis), BorderLayout.CENTER);
+        rightPanel.add(detalhesPanel, BorderLayout.SOUTH);
+        return rightPanel;
     }
-    
-    /**
-     * Cria o painel da tabela seguindo o padrão.
-     */
-    private JPanel criarPainelTabela() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setPreferredSize(new Dimension(0, 400));
-        
-        // Título da tabela
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(UITheme.CARD_BACKGROUND);
-        
-        JLabel lblTabelaTitulo = UITheme.createSubtitleLabel("Itens da Venda");
-        headerPanel.add(lblTabelaTitulo, BorderLayout.WEST);
-        
-        lblTotalVenda.setForeground(UITheme.PRIMARY_COLOR);
-        headerPanel.add(lblTotalVenda, BorderLayout.EAST);
-        
-        panel.add(headerPanel, BorderLayout.NORTH);
-        
-        JScrollPane scrollPane = new JScrollPane(tabelaItensVenda);
-        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT, 1));
-        scrollPane.getViewport().setBackground(UITheme.CARD_BACKGROUND);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
-    /**
-     * Configura os eventos da interface.
-     */
+
     private void setupEvents() {
-        // ComboBox cliente
-        cmbCliente.addActionListener(e -> atualizarInfoCliente());
-        
-        // ComboBox equipamento
-        cmbEquipamento.addActionListener(e -> atualizarInfoEquipamento());
-        
-        // Botão adicionar item
-        btnAdicionarItem.addActionListener(e -> adicionarItem());
-        
-        // Botão remover item
-        btnRemoverItem.addActionListener(e -> removerItem());
-        
-        // Botão finalizar venda
-        btnFinalizarVenda.addActionListener(e -> finalizarVenda());
-        
-        // Botão limpar venda
+        rbClienteCorporativo.addActionListener(e -> toggleClienteFields(false));
+        rbClienteBalcao.addActionListener(e -> toggleClienteFields(true));
+        cmbCliente.addActionListener(e -> exibirDetalhesCliente());
+        tabelaEquipamentosDisponiveis.getSelectionModel().addListSelectionListener(this::exibirDetalhesEquipamento);
+        btnAdicionarItem.addActionListener(e -> adicionarItemAoCarrinho());
+        btnRemoverItem.addActionListener(e -> removerItemDoCarrinho());
         btnLimparVenda.addActionListener(e -> limparVenda());
-        
-        // Botão voltar
+        btnFinalizarVenda.addActionListener(e -> finalizarVenda());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-        
-        // Enter no campo quantidade adiciona item
-        txtQuantidade.addActionListener(e -> adicionarItem());
     }
-    
-    /**
-     * Carrega os dados iniciais (clientes e equipamentos).
-     */
+
     private void carregarDadosIniciais() {
-        // Carregar clientes
-        List<Cliente> clientes = controller.getClientes();
-        cmbCliente.removeAllItems();
-        for (Cliente cliente : clientes) {
-            cmbCliente.addItem(cliente);
+        controller.getClientes().forEach(cmbCliente::addItem);
+        modeloTabelaEquipamentos.setRowCount(0);
+        for(Equipamento eq : controller.getEquipamentos()) {
+            if (eq.getQuantidadeEstoque() > 0) {
+                modeloTabelaEquipamentos.addRow(new Object[]{
+                        eq.getMarca(),
+                        eq instanceof Computador ? "Computador" : "Periférico",
+                        String.format("%.2f MT", eq.getPreco()),
+                        eq.getQuantidadeEstoque()
+                });
+            }
         }
-        
-        // Carregar equipamentos
-        List<Equipamento> equipamentos = controller.getEquipamentos();
-        cmbEquipamento.removeAllItems();
-        for (Equipamento equipamento : equipamentos) {
-            cmbEquipamento.addItem(equipamento);
-        }
-        
-        atualizarInfoCliente();
-        atualizarInfoEquipamento();
+        toggleClienteFields(false);
     }
-    
-    /**
-     * Atualiza as informações do cliente selecionado.
-     */
-    private void atualizarInfoCliente() {
-        Cliente clienteSelecionado = (Cliente) cmbCliente.getSelectedItem();
-        if (clienteSelecionado != null) {
-            lblInfoCliente.setText("📞 " + clienteSelecionado.getTelefone() + " | 📧 " + 
-                                 (clienteSelecionado.getEmail() != null ? clienteSelecionado.getEmail() : "N/A"));
+
+    private void toggleClienteFields(boolean isBalcao) {
+        if (isBalcao) {
+            cardLayoutCliente.show(painelCamposCliente, "BALCAO");
+            limparCamposClienteBalcao();
         } else {
-            lblInfoCliente.setText("Selecione um cliente");
+            cardLayoutCliente.show(painelCamposCliente, "CORPORATIVO");
+            exibirDetalhesCliente();
         }
     }
-    
-    /**
-     * Atualiza as informações do equipamento selecionado.
-     */
-    private void atualizarInfoEquipamento() {
-        Equipamento equipamentoSelecionado = (Equipamento) cmbEquipamento.getSelectedItem();
-        if (equipamentoSelecionado != null) {
-            lblInfoEquipamento.setText("💰 " + String.format("%.2f MT", equipamentoSelecionado.getPreco()) + 
-                                     " | 📦 " + equipamentoSelecionado.getEstado());
-        } else {
-            lblInfoEquipamento.setText("Selecione um equipamento");
+
+    private void limparCamposClienteBalcao() {
+        txtNomeClienteBalcao.setText("");
+        txtBiClienteBalcao.setText("");
+        txtTelefoneClienteBalcao.setText("");
+    }
+
+    private void exibirDetalhesCliente() {
+        if(rbClienteCorporativo.isSelected()) {
+            Cliente c = (Cliente) cmbCliente.getSelectedItem();
+            if (c != null) {
+                StringBuilder detalhes = new StringBuilder();
+                detalhes.append("Nome:\t").append(c.getNome()).append("\n");
+                detalhes.append("Nº BI/NIF:\t").append(c.getNrBI()).append("\n");
+                detalhes.append("Telefone:\t").append(c.getTelefone()).append("\n");
+                if (c.getEmail() != null && !c.getEmail().isEmpty()) {
+                    detalhes.append("Email:\t").append(c.getEmail()).append("\n");
+                }
+                if (c.getEndereco() != null && !c.getEndereco().isEmpty()) {
+                    detalhes.append("Endereço:\t").append(c.getEndereco());
+                }
+                txtAreaDetalhesCliente.setText(detalhes.toString());
+            } else {
+                txtAreaDetalhesCliente.setText("Nenhum cliente corporativo selecionado.");
+            }
         }
     }
-    
-    /**
-     * Adiciona um item à venda.
-     */
-    private void adicionarItem() {
+
+    private void exibirDetalhesEquipamento(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting() && tabelaEquipamentosDisponiveis.getSelectedRow() != -1) {
+            int selectedRow = tabelaEquipamentosDisponiveis.convertRowIndexToModel(tabelaEquipamentosDisponiveis.getSelectedRow());
+            Equipamento eq = controller.getEquipamentos().stream().filter(equip -> equip.getQuantidadeEstoque() > 0).toList().get(selectedRow);
+
+            if (eq.getFotoPath() != null && new File(eq.getFotoPath()).exists()) {
+                ImageIcon icon = new ImageIcon(eq.getFotoPath());
+                Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+                lblFotoEquipamento.setIcon(new ImageIcon(img));
+                lblFotoEquipamento.setText("");
+            } else {
+                lblFotoEquipamento.setIcon(null);
+                lblFotoEquipamento.setText("Sem Foto");
+            }
+
+            StringBuilder detalhes = new StringBuilder();
+            detalhes.append("Marca: ").append(eq.getMarca()).append("\n");
+            detalhes.append("Estado: ").append(eq.getEstado()).append("\n");
+            detalhes.append("Preço: ").append(String.format("%.2f MT", eq.getPreco())).append("\n");
+            if(eq instanceof Computador comp) {
+                detalhes.append("Processador: ").append(comp.getProcessador()).append("\n");
+                detalhes.append("RAM: ").append(comp.getMemoriaRAM()).append("\n");
+                detalhes.append("Armazenamento: ").append(comp.getArmazenamento());
+            } else if (eq instanceof Periferico per) {
+                detalhes.append("Tipo: ").append(per.getTipo());
+            }
+            txtAreaDetalhesEquipamento.setText(detalhes.toString());
+        }
+    }
+
+    private void adicionarItemAoCarrinho() {
+        int selectedRow = tabelaEquipamentosDisponiveis.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Selecione um produto do catálogo.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int modelRow = tabelaEquipamentosDisponiveis.convertRowIndexToModel(selectedRow);
+        Equipamento eq = controller.getEquipamentos().stream().filter(equip -> equip.getQuantidadeEstoque() > 0).toList().get(modelRow);
+
         try {
-            Cliente cliente = (Cliente) cmbCliente.getSelectedItem();
-            Equipamento equipamento = (Equipamento) cmbEquipamento.getSelectedItem();
             int quantidade = Integer.parseInt(txtQuantidade.getText().trim());
-            
-            // Validações
-            if (cliente == null) {
-                JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Erro", JOptionPane.ERROR_MESSAGE);
+            if (quantidade <= 0) throw new NumberFormatException();
+
+            if (quantidade > eq.getQuantidadeEstoque()) {
+                JOptionPane.showMessageDialog(this, "Quantidade em estoque insuficiente.", "Estoque", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
-            if (equipamento == null) {
-                JOptionPane.showMessageDialog(this, "Selecione um equipamento.", "Erro", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            if (quantidade <= 0) {
-                JOptionPane.showMessageDialog(this, "A quantidade deve ser maior que zero.", "Erro", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            // Verificar se o item já existe na venda
+
             for (ItemVenda item : itensVenda) {
-                if (item.equipamento.getId().equals(equipamento.getId())) {
+                if (item.equipamento.getId().equals(eq.getId())) {
+                    if(item.quantidade + quantidade > item.equipamento.getQuantidadeEstoque()){
+                        JOptionPane.showMessageDialog(this, "Quantidade total excede o estoque.", "Estoque", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
                     item.quantidade += quantidade;
                     item.subtotal = item.equipamento.getPreco() * item.quantidade;
-                    atualizarTabelaItens();
-                    calcularTotal();
-                    txtQuantidade.setText("1");
+                    atualizarCarrinhoETotal();
                     return;
                 }
             }
-            
-            // Adicionar novo item
-            ItemVenda novoItem = new ItemVenda(equipamento, quantidade);
-            itensVenda.add(novoItem);
-            
-            atualizarTabelaItens();
-            calcularTotal();
-            txtQuantidade.setText("1");
-            
+            itensVenda.add(new ItemVenda(eq, quantidade));
+            atualizarCarrinhoETotal();
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Quantidade inválida.", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "A quantidade deve ser um número inteiro positivo.", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    /**
-     * Remove o item selecionado da venda.
-     */
-    private void removerItem() {
+
+    private void removerItemDoCarrinho() {
         int selectedRow = tabelaItensVenda.getSelectedRow();
         if (selectedRow >= 0) {
             itensVenda.remove(selectedRow);
-            atualizarTabelaItens();
-            calcularTotal();
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecione um item para remover.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            atualizarCarrinhoETotal();
         }
     }
-    
-    /**
-     * Finaliza a venda.
-     */
+
+    private Cliente getClienteDaVenda() {
+        if(rbClienteCorporativo.isSelected()) {
+            Cliente c = (Cliente) cmbCliente.getSelectedItem();
+            if (c == null) JOptionPane.showMessageDialog(this, "Selecione um cliente corporativo.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return c;
+        } else {
+            try {
+                String nome = txtNomeClienteBalcao.getText().trim();
+                String bi = txtBiClienteBalcao.getText().trim();
+                String telefone = txtTelefoneClienteBalcao.getText().trim();
+
+                if (!Validador.validarCampoObrigatorio(nome)) throw new IllegalArgumentException("O Nome do cliente é obrigatório.");
+                if (!Validador.validarBI(bi)) throw new IllegalArgumentException("O Nº de BI do cliente é inválido.");
+                if (!Validador.validarTelefone(telefone)) throw new IllegalArgumentException("O Telefone do cliente é inválido.");
+
+                Cliente novoCliente = new Cliente(nome, bi, null, telefone, null, null);
+                controller.adicionarCliente(novoCliente);
+                return novoCliente;
+            } catch (IllegalArgumentException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Dados do Cliente Inválidos", JOptionPane.WARNING_MESSAGE);
+                return null;
+            }
+        }
+    }
+
     private void finalizarVenda() {
         if (itensVenda.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Adicione pelo menos um item à venda.", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "O carrinho está vazio.", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
-        Cliente cliente = (Cliente) cmbCliente.getSelectedItem();
-        if (cliente == null) {
-            JOptionPane.showMessageDialog(this, "Selecione um cliente.", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // Confirmar venda
-        int confirm = JOptionPane.showConfirmDialog(this,
-            "Finalizar venda no valor de " + String.format("%.2f MT", totalVenda) + "?",
-            "Confirmar Venda",
-            JOptionPane.YES_NO_OPTION);
-            
+        Cliente cliente = getClienteDaVenda();
+        if (cliente == null) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Finalizar venda para " + cliente.getNome() + "?\nTotal: " + String.format("%.2f MT", totalVenda), "Confirmar Venda", JOptionPane.YES_NO_OPTION);
+
         if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                // Criar venda
-                List<Equipamento> equipamentos = new ArrayList<>();
-                for (ItemVenda item : itensVenda) {
-                    for (int i = 0; i < item.quantidade; i++) {
-                        equipamentos.add(item.equipamento);
-                    }
-                }
-                
-                Venda venda = new Venda(new Date(), vendedorLogado, cliente, equipamentos, totalVenda);
-                
-                if (controller.registrarVenda(venda)) {
-                    JOptionPane.showMessageDialog(this, "Venda registrada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-                    limparVenda();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Erro ao registrar venda.", "Erro", JOptionPane.ERROR_MESSAGE);
-                }
-                
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro ao finalizar venda: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            List<Equipamento> equipamentosVendidos = new ArrayList<>();
+            for(ItemVenda item : itensVenda) {
+                for (int i = 0; i < item.quantidade; i++) equipamentosVendidos.add(item.equipamento);
+            }
+
+            Venda venda = new Venda(new Date(), vendedorLogado, cliente, equipamentosVendidos, totalVenda);
+
+            if (controller.registrarVenda(venda)) {
+                JOptionPane.showMessageDialog(this, "Venda registrada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                limparVenda();
+                carregarDadosIniciais();
+            } else {
+                JOptionPane.showMessageDialog(this, "Erro ao registrar a venda.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    
-    /**
-     * Limpa todos os itens da venda.
-     */
+
     private void limparVenda() {
         itensVenda.clear();
-        atualizarTabelaItens();
-        calcularTotal();
-        txtQuantidade.setText("1");
+        limparCamposClienteBalcao();
+        txtAreaDetalhesCliente.setText("Selecione um cliente para ver os detalhes.");
+        if (cmbCliente.getItemCount() > 0) cmbCliente.setSelectedIndex(0);
+        atualizarCarrinhoETotal();
     }
-    
-    /**
-     * Volta ao menu principal.
-     */
-    private void voltarMenuPrincipal() {
-        if (!itensVenda.isEmpty()) {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                "Há itens na venda atual. Deseja realmente sair?",
-                "Confirmar Saída",
-                JOptionPane.YES_NO_OPTION);
-                
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
-        }
-        
-        controller.getCardLayoutManager().showPanel("MenuAdministrador");
-    }
-    
-    /**
-     * Atualiza a tabela de itens da venda.
-     */
-    private void atualizarTabelaItens() {
+
+    private void atualizarCarrinhoETotal() {
         modeloTabelaItens.setRowCount(0);
-        
-        for (ItemVenda item : itensVenda) {
-            Object[] row = {
-                item.equipamento.getId(),
-                item.equipamento.getMarca(),
-                item.equipamento.getClass().getSimpleName(),
-                String.format("%.2f MT", item.equipamento.getPreco()),
-                item.quantidade,
-                String.format("%.2f MT", item.subtotal)
-            };
-            modeloTabelaItens.addRow(row);
-        }
-    }
-    
-    /**
-     * Calcula o total da venda.
-     */
-    private void calcularTotal() {
         totalVenda = 0.0;
         for (ItemVenda item : itensVenda) {
+            modeloTabelaItens.addRow(new Object[]{
+                    item.quantidade,
+                    item.equipamento.getMarca(),
+                    String.format("%.2f", item.equipamento.getPreco()),
+                    String.format("%.2f", item.subtotal)
+            });
             totalVenda += item.subtotal;
         }
-        lblTotalVenda.setText("Total da Venda: " + String.format("%.2f MT", totalVenda));
+        lblTotalVenda.setText("TOTAL: " + String.format("%.2f MT", totalVenda));
+        txtQuantidade.setText("1");
+        tabelaEquipamentosDisponiveis.clearSelection();
+        txtAreaDetalhesEquipamento.setText("Detalhes do produto...");
+        lblFotoEquipamento.setIcon(null);
+        lblFotoEquipamento.setText("Selecione um produto");
+    }
+
+    private void voltarMenuPrincipal() {
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        if (tipoUsuario == null) {
+            controller.getCardLayoutManager().showPanel("Login");
+            return;
+        }
+
+        switch (tipoUsuario) {
+            case "Gestor":
+                controller.getCardLayoutManager().showPanel("MenuGestor");
+                break;
+            case "Vendedor":
+                controller.getCardLayoutManager().showPanel("MenuVendedor");
+                break;
+            case "Administrador":
+            default:
+                controller.getCardLayoutManager().showPanel("MenuAdministrador");
+                break;
+        }
     }
 }
-

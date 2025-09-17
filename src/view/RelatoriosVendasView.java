@@ -463,14 +463,27 @@ public class RelatoriosVendasView extends JPanel {
         JOptionPane.showMessageDialog(this, "Funcionalidade de exportação para PDF será implementada em versão futura.", 
                                     "Em Desenvolvimento", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-    /**
-     * Volta ao menu principal.
-     */
+
     private void voltarMenuPrincipal() {
-        controller.getCardLayoutManager().showPanel("MenuAdministrador");
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        if (tipoUsuario == null) {
+            controller.getCardLayoutManager().showPanel("Login");
+            return;
+        }
+
+        switch (tipoUsuario) {
+            case "Gestor":
+                controller.getCardLayoutManager().showPanel("MenuGestor");
+                break;
+            case "Vendedor":
+                controller.getCardLayoutManager().showPanel("MenuVendedor");
+                break;
+            case "Administrador":
+            default:
+                controller.getCardLayoutManager().showPanel("MenuAdministrador");
+                break;
+        }
     }
-    
     /**
      * Atualiza a tabela de vendas.
      */

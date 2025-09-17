@@ -217,13 +217,25 @@ public class GerirReservasView extends JPanel {
             JOptionPane.showMessageDialog(this, "Selecione uma reserva para cancelar.");
         }
     }
-    
+
     private void voltarMenuPrincipal() {
         String tipoUsuario = controller.getTipoUsuarioLogado();
-        if ("Administrador".equals(tipoUsuario)) {
-            controller.getCardLayoutManager().showPanel("MenuAdministrador");
-        } else if ("Vendedor".equals(tipoUsuario)) {
-            controller.getCardLayoutManager().showPanel("MenuVendedor");
+        if (tipoUsuario == null) {
+            controller.getCardLayoutManager().showPanel("Login");
+            return;
+        }
+
+        switch (tipoUsuario) {
+            case "Gestor":
+                controller.getCardLayoutManager().showPanel("MenuGestor");
+                break;
+            case "Vendedor":
+                controller.getCardLayoutManager().showPanel("MenuVendedor");
+                break;
+            case "Administrador":
+            default:
+                controller.getCardLayoutManager().showPanel("MenuAdministrador");
+                break;
         }
     }
 }

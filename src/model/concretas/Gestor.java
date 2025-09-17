@@ -10,6 +10,7 @@ import model.abstractas.Funcionario;
 public class Gestor extends Funcionario {
 
     private String departamento;
+    private String fotoPath;
 
     /**
      * Construtor padrão.
@@ -66,6 +67,14 @@ public class Gestor extends Funcionario {
     public void setDepartamento(String departamento) {
         this.departamento = departamento;
     }
+    public String getFotoPath() {
+        return fotoPath;
+    }
+
+    public void setFotoPath(String fotoPath) {
+        this.fotoPath = fotoPath;
+    }
+
 
     @Override
     public String toString() {

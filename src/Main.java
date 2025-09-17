@@ -5,7 +5,6 @@ import javax.swing.UIManager;
 
 /**
  * Classe principal da aplicação.
- * Ponto de entrada do sistema de venda de equipamentos informáticos.
  */
 public class Main {
 
@@ -15,16 +14,12 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        SwingUtilities.invokeLater(() -> {
-            try {
-                SistemaController controller = new SistemaController();
-                LoginView loginView = new LoginView(controller);
-                loginView.setVisible(true);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        SwingUtilities.invokeLater(() -> {
+            SistemaController controller = new SistemaController();
+
+            LoginView loginView = new LoginView(controller);
+            loginView.setVisible(true);
         });
     }
 }
-

@@ -10,13 +10,14 @@ import util.Validador;
 public class Vendedor extends Funcionario {
 
     private String codigoFuncionario;
+    private String fotoPath;
 
     /**
      * Construtor padrão.
      */
     public Vendedor() {
         super();
-        setTipoUsuario(TipoUsuario.VENDEDOR); // ✅ Definir tipo de usuário
+        setTipoUsuario(TipoUsuario.VENDEDOR);
         this.codigoFuncionario = "VEN" + GeradorID.gerarID();
     }
 
@@ -29,9 +30,11 @@ public class Vendedor extends Funcionario {
      * @param salario Salário do vendedor
      * @param senha Senha do vendedor
      */
-    public Vendedor(String nome, String nrBI, String nuit, String telefone,
-                    double salario, String senha) {
-        super(nome, nrBI, nuit, telefone, TipoUsuario.VENDEDOR, salario, senha); // ✅ Usar novo construtor
+    public Vendedor(String nome, String nrBI, String nuit, String telefone, double salario, String senha) {
+
+        super(nome, nrBI, nuit, telefone, TipoUsuario.VENDEDOR, salario, senha);
+
+        this.fotoPath = null;
         this.codigoFuncionario = "VEN" + GeradorID.gerarID();
     }
 
@@ -53,6 +56,14 @@ public class Vendedor extends Funcionario {
     public void setCodigoFuncionario(String codigoFuncionario) {
         this.codigoFuncionario = codigoFuncionario;
     }
+    public String getFotoPath() {
+        return fotoPath;
+    }
+
+    public void setFotoPath(String fotoPath) {
+        this.fotoPath = fotoPath;
+    }
+
 
     @Override
     public String toString() {

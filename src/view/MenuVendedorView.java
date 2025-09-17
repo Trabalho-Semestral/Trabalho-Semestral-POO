@@ -6,27 +6,38 @@ import util.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.Window;
 
 public class MenuVendedorView extends JPanel {
 
     private SistemaController controller;
     private Vendedor vendedorLogado;
-
     private JPanel sidebarPanel;
-    private JPanel contentPanel; // Panel com CardLayout
-    private CardLayout cardLayout;
+    private JButton btnToggleSidebar;
 
     public MenuVendedorView(SistemaController controller, Vendedor vendedorLogado) {
         this.controller = controller;
         this.vendedorLogado = vendedorLogado;
-
         initComponents();
         setupLayout();
+        setupEvents();
     }
 
     private void initComponents() {
         setLayout(new BorderLayout());
         setBackground(UITheme.BACKGROUND_COLOR);
+
+        // Botão toggle sidebar
+        btnToggleSidebar = new JButton("☰");
+        btnToggleSidebar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnToggleSidebar.setFocusPainted(false);
+        btnToggleSidebar.setBorderPainted(false);
+        btnToggleSidebar.setContentAreaFilled(false);
+        btnToggleSidebar.setForeground(UITheme.TEXT_WHITE);
+        btnToggleSidebar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnToggleSidebar.setPreferredSize(new Dimension(50, UITheme.TOPBAR_HEIGHT));
 
         // Sidebar
         sidebarPanel = new JPanel();
@@ -35,179 +46,224 @@ public class MenuVendedorView extends JPanel {
         sidebarPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
         sidebarPanel.setPreferredSize(new Dimension(UITheme.SIDEBAR_WIDTH, 0));
 
-        JLabel lblMenuTitulo = UITheme.createSubtitleLabel("MENU VENDEDOR");
+        JLabel lblMenuTitulo = UITheme.createSubtitleLabel("👤 PAINEL VENDEDOR");
         lblMenuTitulo.setForeground(UITheme.TEXT_WHITE);
         lblMenuTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblMenuTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         sidebarPanel.add(lblMenuTitulo);
 
-        JButton btnRegistrarCliente = criarBotaoMenu("👤 Registrar Cliente");
-        JButton btnRegistrarVenda = criarBotaoMenu("🛒 Registrar Venda");
-        JButton btnMinhasVendas = criarBotaoMenu("📋 Minhas Vendas");
-        JButton btnVerReservas = criarBotaoMenu("📦 Gerir Reservas");
-        JButton btnLogout = criarBotaoMenu("🚪 Sair");
-        btnLogout.setBackground(UITheme.ACCENT_COLOR);
+        // Botões do menu com emojis
+        sidebarPanel.add(criarBotaoMenu("👤 Registrar Cliente", "RegistrarCliente"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("🛒 Registrar Venda", "RegistrarVenda"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("📋 Minhas Vendas", "MinhasVendas"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("📦 Gerir Reservas", "GerirReservas"));
 
-        sidebarPanel.add(btnRegistrarCliente);
-        sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(btnRegistrarVenda);
-        sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(btnMinhasVendas);
-        sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(btnVerReservas);
         sidebarPanel.add(Box.createVerticalGlue());
+
+        JButton btnLogout = criarBotaoMenu("🚪 Sair", "Logout");
+        btnLogout.setBackground(UITheme.ACCENT_COLOR);
         sidebarPanel.add(btnLogout);
-
-        // Conteúdo central com CardLayout
-        cardLayout = new CardLayout();
-        contentPanel = new JPanel(cardLayout);
-        contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
-
-        // Cards
-        JPanel welcomeCard = criarWelcomeCard();
-        JPanel registrarClienteCard = new GerirClientesView(controller);
-        JPanel registrarVendaCard = new RegistrarVendaView(controller, vendedorLogado);
-        JPanel minhasVendasCard = new JPanel();
-        JPanel verReservasCard = new GerirReservasView(controller);
-
-        contentPanel.add(welcomeCard, "Welcome");
-        contentPanel.add(registrarClienteCard, "RegistrarCliente");
-        contentPanel.add(registrarVendaCard, "RegistrarVenda");
-        contentPanel.add(minhasVendasCard, "MinhasVendas");
-        contentPanel.add(verReservasCard, "GerirReservas");
-
-        // Botão eventos
-        btnRegistrarCliente.addActionListener(e -> cardLayout.show(contentPanel, "RegistrarCliente"));
-        btnRegistrarVenda.addActionListener(e -> cardLayout.show(contentPanel, "RegistrarVenda"));
-        btnMinhasVendas.addActionListener(e -> cardLayout.show(contentPanel, "MinhasVendas"));
-        btnVerReservas.addActionListener(e -> cardLayout.show(contentPanel, "GerirReservas"));
-        btnLogout.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Deseja realmente sair do sistema?",
-                    "Confirmar Logout",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                controller.logout();
-                controller.getCardLayoutManager().showPanel("Login");
-            }
-        });
-    }
-
-    private JButton criarBotaoMenu(String texto) {
-        JButton botao = new JButton(texto);
-        botao.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-        botao.setAlignmentX(Component.CENTER_ALIGNMENT);
-        botao.setBackground(new Color(70, 130, 180));
-        botao.setForeground(UITheme.TEXT_PRIMARY);
-        botao.setFont(UITheme.FONT_SUBHEADING);
-        botao.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        botao.setFocusPainted(false);
-        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botao.setHorizontalAlignment(SwingConstants.LEFT);
-        return botao;
-    }
-
-    private JPanel criarWelcomeCard() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-
-        JLabel lblWelcome = UITheme.createTitleLabel("Bem-vindo ao Sistema de Vendas");
-        lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
-        lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
-        panel.add(lblWelcome, BorderLayout.NORTH);
-
-        JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>Utilize o menu lateral para registrar clientes, vendas, consultar suas vendas e gerir reservas.</center></html>"
-        );
-        lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
-        lblDescription.setForeground(UITheme.TEXT_SECONDARY);
-        panel.add(lblDescription, BorderLayout.CENTER);
-
-        return panel;
     }
 
     private void setupLayout() {
-        // Topbar
+        // TopBar
         JPanel topBarPanel = new JPanel(new BorderLayout());
         topBarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         topBarPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBarPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
 
-        JLabel lblTitulo = UITheme.createHeadingLabel("Sistema de Venda de Equipamentos Informáticos");
+        topBarPanel.add(btnToggleSidebar, BorderLayout.WEST);
+
+        JLabel lblTitulo = UITheme.createHeadingLabel("💻 Sistema de Venda de Equipamentos Informáticos");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBarPanel.add(lblTitulo, BorderLayout.CENTER);
 
         JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        JLabel lblUserInfo = UITheme.createBodyLabel("👤 " + vendedorLogado.getNome());
+        JLabel lblUserInfo = UITheme.createBodyLabel("👤 " + vendedorLogado.getNome() + " (Vendedor)");
         lblUserInfo.setForeground(UITheme.TEXT_WHITE);
         userInfoPanel.add(lblUserInfo);
         topBarPanel.add(userInfoPanel, BorderLayout.EAST);
 
         add(topBarPanel, BorderLayout.NORTH);
 
-        // Conteúdo com sidebar e card central
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sidebarPanel, contentPanel);
+        // SplitPane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setLeftComponent(sidebarPanel);
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
+
+        // Cards de boas-vindas com emojis
+        JPanel welcomePanel = UITheme.createCardPanel();
+        welcomePanel.setLayout(new BorderLayout());
+
+        JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel do Vendedor");
+        lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
+        lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        welcomePanel.add(lblWelcome, BorderLayout.NORTH);
+
+        JLabel lblDescription = UITheme.createBodyLabel(
+                "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
+                        "Como Vendedor, você pode 👤 registrar clientes, 🛒 registrar vendas, 📋 consultar suas vendas e 📦 gerir reservas.</center></html>"
+        );
+        lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
+        lblDescription.setForeground(UITheme.TEXT_SECONDARY);
+        welcomePanel.add(lblDescription, BorderLayout.CENTER);
+
+        contentPanel.add(welcomePanel, BorderLayout.CENTER);
+        splitPane.setRightComponent(contentPanel);
+
         splitPane.setDividerSize(0);
         splitPane.setDividerLocation(UITheme.SIDEBAR_WIDTH);
-        splitPane.setEnabled(false);
+
         add(splitPane, BorderLayout.CENTER);
+
+        // Bottom panel
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        JLabel lblCopyright =
+                new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos - Painel Vendedor");
+        lblCopyright.setFont(UITheme.FONT_SMALL);
+        lblCopyright.setForeground(UITheme.TEXT_MUTED);
+        bottomPanel.add(lblCopyright);
+        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
+
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private JButton criarBotaoMenu(String texto, String actionCommand) {
+        JButton botao = new JButton(texto);
+        botao.setActionCommand(actionCommand);
+        botao.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        botao.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Fonte emoji
+        botao.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+
+        final Color corBase = new Color(70, 130, 180);
+        final Color corHover = new Color(19, 56, 94);
+
+        if (actionCommand.equals("Logout")) {
+            botao.setBackground(UITheme.ACCENT_COLOR);
+            botao.setForeground(UITheme.TEXT_BLACK);
+        } else {
+            botao.setBackground(corBase);
+            botao.setForeground(UITheme.TEXT_PRIMARY);
+        }
+
+        botao.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createRaisedBevelBorder(),
+                BorderFactory.createEmptyBorder(12, 15, 12, 15)
+        ));
+        botao.setFocusPainted(false);
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botao.setHorizontalAlignment(SwingConstants.LEFT);
+        botao.setOpaque(true);
+
+        botao.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent evt) {
+                if (actionCommand.equals("Logout")) {
+                    botao.setBackground(UITheme.ACCENT_COLOR.brighter());
+                } else {
+                    botao.setBackground(corHover);
+                    botao.setForeground(UITheme.TEXT_WHITE);
+                }
+            }
+
+            public void mouseExited(MouseEvent evt) {
+                if (actionCommand.equals("Logout")) {
+                    botao.setBackground(UITheme.ACCENT_COLOR);
+                    botao.setForeground(UITheme.TEXT_WHITE);
+                } else {
+                    botao.setBackground(corBase);
+                    botao.setForeground(UITheme.TEXT_PRIMARY);
+                }
+            }
+        });
+
+        return botao;
+    }
+
+    private void setupEvents() {
+        btnToggleSidebar.addActionListener(e -> toggleSidebar());
+
+        for (Component comp : sidebarPanel.getComponents()) {
+            if (comp instanceof JButton btn) {
+                btn.addActionListener(e -> {
+                    switch (btn.getActionCommand()) {
+                        case "RegistrarCliente" -> abrirRegistrarCliente();
+                        case "RegistrarVenda" -> abrirRegistrarVenda();
+                        case "MinhasVendas" -> abrirMinhasVendas();
+                        case "GerirReservas" -> abrirGerirReservas();
+                        case "Logout" -> {
+                            int confirm = JOptionPane.showConfirmDialog(MenuVendedorView.this,
+                                    "Deseja realmente sair do sistema?",
+                                    "Confirmar Logout",
+                                    JOptionPane.YES_NO_OPTION);
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                controller.logout();
+                                Window window = SwingUtilities.getWindowAncestor(MenuVendedorView.this);
+                                if (window instanceof JFrame) {
+                                    window.dispose();
+                                }
+                                new LoginView(controller).setVisible(true);
+                            }
+                        }
+                    }
+                });
+            }
+        }
     }
 
     private void toggleSidebar() {
         JSplitPane splitPane = (JSplitPane) getComponent(1);
-        if (sidebarPanel.isVisible()) {
-            sidebarPanel.setVisible(false);
-            splitPane.setDividerLocation(0);
-        } else {
-            sidebarPanel.setVisible(true);
-            splitPane.setDividerLocation(UITheme.SIDEBAR_WIDTH);
+        sidebarPanel.setVisible(!sidebarPanel.isVisible());
+        splitPane.setDividerLocation(sidebarPanel.isVisible() ? UITheme.SIDEBAR_WIDTH : 0);
+    }
+
+    private void abrirRegistrarCliente() {
+        try {
+            GerirClientesView view = new GerirClientesView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GerirClientes");
+            controller.getCardLayoutManager().showPanel("GerirClientes");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de clientes: " + e.getMessage());
         }
     }
 
-    // Métodos que abrem novas janelas
-    private void abrirGerirClientes() {
-        JFrame frame = new JFrame("Gerir Clientes");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        frame.add(new GerirClientesView(controller));
-        frame.setVisible(true);
-    }
-
     private void abrirRegistrarVenda() {
-        JFrame frame = new JFrame("Registrar Venda");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(900, 600);
-        frame.setLocationRelativeTo(null);
-        frame.add(new RegistrarVendaView(controller, vendedorLogado));
-        frame.setVisible(true);
+        try {
+            RegistrarVendaView view = new RegistrarVendaView(controller, vendedorLogado);
+            controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
+            controller.getCardLayoutManager().showPanel("RegistrarVenda");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
+        }
     }
 
     private void abrirMinhasVendas() {
-
+        try {
+            // Criar uma view personalizada para mostrar apenas as vendas do vendedor logado
+            RelatoriosVendasView view = new RelatoriosVendasView(controller);
+            controller.getCardLayoutManager().addPanel(view, "MinhasVendas");
+            controller.getCardLayoutManager().showPanel("MinhasVendas");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
+        }
     }
 
-    private void abrirVerReservas() {
-        JFrame frame = new JFrame("Gerir Reservas");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 600);
-        frame.setLocationRelativeTo(null);
-        frame.add(new GerirReservasView(controller));
-        frame.setVisible(true);
-    }
-
-    private void logout() {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Deseja realmente sair do sistema?",
-                "Confirmar Logout",
-                JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            controller.logout();
-            controller.getCardLayoutManager().showPanel("Login");
+    private void abrirGerirReservas() {
+        try {
+            GerirReservasView view = new GerirReservasView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GerirReservas");
+            controller.getCardLayoutManager().showPanel("GerirReservas");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de reservas: " + e.getMessage());
         }
     }
 }

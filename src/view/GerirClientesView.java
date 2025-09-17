@@ -321,14 +321,30 @@ import java.util.List;
             JOptionPane.showMessageDialog(this, "Selecione um cliente para remover.");
         }
     }
-    
-    /**
-     * Volta ao menu principal.
-     */
-    private void voltarMenuPrincipal() {
-        controller.getCardLayoutManager().showPanel("MenuAdministrador");
-    }
-    
+
+        /**
+         * Volta ao menu principal correto com base no tipo de usuário logado.
+         */
+        private void voltarMenuPrincipal() {
+            String tipoUsuario = controller.getTipoUsuarioLogado();
+            if (tipoUsuario == null) {
+                controller.getCardLayoutManager().showPanel("Login");
+                return;
+            }
+
+            switch (tipoUsuario) {
+                case "Gestor":
+                    controller.getCardLayoutManager().showPanel("MenuGestor");
+                    break;
+                case "Vendedor":
+                    controller.getCardLayoutManager().showPanel("MenuVendedor");
+                    break;
+                case "Administrador":
+                default:
+                    controller.getCardLayoutManager().showPanel("MenuAdministrador");
+                    break;
+            }
+        }
     /**
      * Cria um cliente a partir dos dados do formulário.
      * @return Cliente criado ou null se houver erro

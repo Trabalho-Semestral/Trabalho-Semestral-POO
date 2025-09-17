@@ -213,15 +213,12 @@ public class MenuGestorView extends JPanel {
                                     JOptionPane.YES_NO_OPTION);
                             if (confirm == JOptionPane.YES_OPTION) {
                                 controller.logout();
-                                if (controller.getCardLayoutManager() != null) {
-                                    controller.getCardLayoutManager().showPanel("Login");
-                                } else {
-                                    Window window = SwingUtilities.getWindowAncestor(MenuGestorView.this);
-                                    if (window instanceof JFrame frame) {
-                                        frame.dispose();
-                                        new LoginView(controller).setVisible(true);
-                                    }
+
+                                Window window = SwingUtilities.getWindowAncestor(MenuGestorView.this);
+                                if (window instanceof JFrame) {
+                                    window.dispose();
                                 }
+                                new LoginView(controller).setVisible(true);
                             }
                         }
                     }
