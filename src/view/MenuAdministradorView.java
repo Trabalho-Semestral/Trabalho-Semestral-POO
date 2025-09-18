@@ -54,6 +54,8 @@ public class MenuAdministradorView extends JPanel {
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("👤 Gerir Clientes", "GerirClientes"));
         sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("👨‍💼 Gerir Gestores", "GerirGestores"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("💻 Gerir Equipamentos", "GerirEquipamentos"));
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("📋 Gerir Reservas", "GerirReservas"));
@@ -199,6 +201,7 @@ public class MenuAdministradorView extends JPanel {
                     switch (btn.getActionCommand()) {
                         case "GerirVendedores" -> abrirGerirVendedores();
                         case "GerirClientes" -> abrirGerirClientes();
+                        case "GerirGestores" -> abrirGerirGestores();
                         case "GerirEquipamentos" -> abrirGerirEquipamentos();
                         case "GerirReservas" -> abrirGerirReservas();
                         case "RegistrarVenda" -> abrirRegistrarVenda();
@@ -270,6 +273,15 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().showPanel("RegistrarVenda");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
+        }
+    }
+    private void abrirGerirGestores() {
+        try {
+            GerirGestorView view = new GerirGestorView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GerirGestores");
+            controller.getCardLayoutManager().showPanel("GerirGestores");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de gestores: " + e.getMessage());
         }
     }
 

@@ -1,55 +1,65 @@
- package view;
+package view;
 
 import controller.SistemaController;
 import model.abstractas.Equipamento;
 import model.concretas.Computador;
 import model.concretas.Periferico;
 import util.UITheme;
+import util.Validador;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 public class GerirEquipamentosView extends JPanel {
 
+    private static final String FOTOS_EQUIPAMENTOS_PATH = "resources/fotos/equipamentos/";
+
     private SistemaController controller;
 
-    private JTextField txtID;
+    // Campos do formulário
     private JComboBox<String> cmbTipoEquipamento;
     private JTextField txtMarca;
     private JTextField txtPreco;
     private JTextField txtQuantidade;
     private JComboBox<Equipamento.EstadoEquipamento> cmbEstado;
-    private JTextField txtFotoPath;
 
+    // Campos específicos
     private JTextField txtProcessador;
     private JTextField txtMemoriaRAM;
     private JTextField txtArmazenamento;
     private JTextField txtPlacaGrafica;
-
     private JTextField txtTipoPeriferico;
+    private JPanel especificacoesPanel; // Painel com CardLayout
 
-    private JPanel panelComputador;
-    private JPanel panelPeriferico;
-    private JPanel panelFoto;
-    private JLabel lblFotoPreview;
+    // Componentes da foto
+    private JLabel lblFoto;
+    private String caminhoFotoAtual;
 
+    // Tabela
     private JTable tabelaEquipamentos;
     private DefaultTableModel modeloTabela;
 
+    // Botões
+    private JButton btnAdicionarFoto;
+    private JButton btnRemoverFoto;
     private JButton btnCadastrar;
     private JButton btnEditar;
     private JButton btnRemover;
-    private JButton btnLimpar;
     private JButton btnVoltar;
-    private JButton btnSelecionarFoto;
 
     public GerirEquipamentosView(SistemaController controller) {
         this.controller = controller;
+        new File(FOTOS_EQUIPAMENTOS_PATH).mkdirs(); // Cria o diretório de fotos se não existir
         initComponents();
         setupLayout();
         setupEvents();
@@ -57,448 +67,297 @@ public class GerirEquipamentosView extends JPanel {
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout());
         setBackground(UITheme.BACKGROUND_COLOR);
 
-        txtID = UITheme.createStyledTextField();
-        txtID.setEditable(false);
-        txtID.setBackground(UITheme.SECONDARY_LIGHT);
+        // Campos do formulário
+        cmbTipoEquipamento = new JComboBox<>(new String[]{"Computador", "Periférico"});
+        txtMarca = new JTextField();
+        txtPreco = new JTextField();
+        txtQuantidade = new JTextField();
+        cmbEstado = new JComboBox<>(Equipamento.EstadoEquipamento.values());
 
-        cmbTipoEquipamento = UITheme.createStyledComboBox(new String[]{"Computador", "Periférico"});
-        txtMarca = UITheme.createStyledTextField();
-        txtPreco = UITheme.createStyledTextField();
-        txtQuantidade = UITheme.createStyledTextField();
-        cmbEstado = UITheme.createStyledComboBox(Equipamento.EstadoEquipamento.values());
-        txtFotoPath = UITheme.createStyledTextField();
-        txtFotoPath.setEditable(false);
+        // Estilo dos campos comuns
+        styleTextField(txtMarca, "Marca");
+        styleTextField(txtPreco, "Preço (MT)");
+        styleTextField(txtQuantidade, "Quantidade");
 
-        txtProcessador = UITheme.createStyledTextField();
-        txtMemoriaRAM = UITheme.createStyledTextField();
-        txtArmazenamento = UITheme.createStyledTextField();
-        txtPlacaGrafica = UITheme.createStyledTextField();
+        // Campos específicos de Computador
+        txtProcessador = new JTextField();
+        txtMemoriaRAM = new JTextField();
+        txtArmazenamento = new JTextField();
+        txtPlacaGrafica = new JTextField();
+        styleTextField(txtProcessador, "Processador");
+        styleTextField(txtMemoriaRAM, "Memória RAM");
+        styleTextField(txtArmazenamento, "Armazenamento");
+        styleTextField(txtPlacaGrafica, "Placa Gráfica");
 
-        txtTipoPeriferico = UITheme.createStyledTextField();
+        // Campos específicos de Periférico
+        txtTipoPeriferico = new JTextField();
+        styleTextField(txtTipoPeriferico, "Tipo de Periférico");
 
-        btnCadastrar = UITheme.createPrimaryButton("➕ Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
-        btnRemover = UITheme.createDangerButton("🗑️ Remover");
-        btnLimpar = UITheme.createSecondaryButton("🧹 Limpar");
+        // Foto
+        lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
+        lblFoto.setOpaque(true);
+        lblFoto.setBackground(UITheme.CARD_BACKGROUND);
+        lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
+        lblFoto.setFont(UITheme.FONT_SUBHEADING);
+
+        // Botões
+        btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
+        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
+        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
+        btnEditar = UITheme.createPrimaryButton("Editar");
+        btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnSelecionarFoto = UITheme.createSecondaryButton("📷 Selecionar Foto");
 
-        String[] colunas = {"ID", "Tipo", "Marca", "Preço", "Quantidade", "Estado"};
+        // Tabela
+        String[] colunas = {"ID", "Tipo", "Marca", "Preço", "Qtd.", "Estado"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaEquipamentos = new JTable(modeloTabela);
-        tabelaEquipamentos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabelaEquipamentos.setFont(UITheme.FONT_BODY);
-        tabelaEquipamentos.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
-        tabelaEquipamentos.setRowHeight(30);
-        tabelaEquipamentos.setSelectionBackground(UITheme.PRIMARY_LIGHT);
-        tabelaEquipamentos.setSelectionForeground(UITheme.TEXT_PRIMARY);
-
-        lblFotoPreview = new JLabel("Nenhuma foto selecionada");
-        lblFotoPreview.setHorizontalAlignment(SwingConstants.CENTER);
-        lblFotoPreview.setVerticalAlignment(SwingConstants.CENTER);
-        lblFotoPreview.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT, 2));
-        lblFotoPreview.setBackground(UITheme.CARD_BACKGROUND);
-        lblFotoPreview.setOpaque(true);
-        lblFotoPreview.setPreferredSize(new Dimension(200, 150));
-
-        criarPaineisEspecificos();
+        UITheme.applyTableStyle(tabelaEquipamentos);
     }
 
-    private void criarPaineisEspecificos() {
-        panelComputador = new JPanel(new GridBagLayout());
-        panelComputador.setBackground(UITheme.CARD_BACKGROUND);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        gbc.gridx = 0; gbc.gridy = 0;
-        panelComputador.add(UITheme.createBodyLabel("Processador:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        panelComputador.add(txtProcessador, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        panelComputador.add(UITheme.createBodyLabel("Memória RAM:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        panelComputador.add(txtMemoriaRAM, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        panelComputador.add(UITheme.createBodyLabel("Armazenamento:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        panelComputador.add(txtArmazenamento, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        panelComputador.add(UITheme.createBodyLabel("Placa Gráfica:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        panelComputador.add(txtPlacaGrafica, gbc);
-
-        panelPeriferico = new JPanel(new GridBagLayout());
-        panelPeriferico.setBackground(UITheme.CARD_BACKGROUND);
-        gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        gbc.gridx = 0; gbc.gridy = 0;
-        panelPeriferico.add(UITheme.createBodyLabel("Tipo de Periférico:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        panelPeriferico.add(txtTipoPeriferico, gbc);
+    private void styleTextField(JComponent component, String title) {
+        component.setFont(UITheme.FONT_BODY);
+        Border lineBorder = BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT);
+        component.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(lineBorder, title,
+                        javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                        javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                        UITheme.FONT_SUBHEADING, UITheme.TEXT_SECONDARY),
+                BorderFactory.createEmptyBorder(2, 5, 2, 5)
+        ));
+        component.setBackground(UITheme.CARD_BACKGROUND);
     }
 
     private void setupLayout() {
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        setLayout(new BorderLayout());
 
+        // --- Top Bar ---
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Gestão de Equipamentos");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-        topPanel.add(lblTitulo, BorderLayout.CENTER);
-
+        lblTitulo.setForeground(Color.WHITE);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        voltarPanel.setOpaque(false);
         voltarPanel.add(btnVoltar);
-        topPanel.add(voltarPanel, BorderLayout.WEST);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
 
-        add(topPanel, BorderLayout.NORTH);
-
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        // --- Painel Principal ---
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension(600, 0));
+        // --- Painel Superior (Foto, Formulário, Ações) ---
+        JPanel topContentPanel = new JPanel(new BorderLayout(15, 15));
+        topContentPanel.setOpaque(false);
 
-        JPanel formPanel = criarPainelFormulario();
-        leftPanel.add(formPanel, BorderLayout.CENTER);
+        // Painel da Foto (Esquerda)
+        JPanel fotoPanel = new JPanel(new BorderLayout(10, 10));
+        fotoPanel.setOpaque(false);
+        lblFoto.setPreferredSize(new Dimension(250, 250));
+        fotoPanel.add(lblFoto, BorderLayout.CENTER);
+        JPanel fotoBotoesPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        fotoBotoesPanel.setOpaque(false);
+        fotoBotoesPanel.add(btnAdicionarFoto);
+        fotoBotoesPanel.add(btnRemoverFoto);
+        fotoPanel.add(fotoBotoesPanel, BorderLayout.SOUTH);
+        topContentPanel.add(fotoPanel, BorderLayout.WEST);
 
-        JPanel buttonPanel = criarPainelBotoes();
-        leftPanel.add(buttonPanel, BorderLayout.SOUTH);
+        // Painel do Formulário (Centro)
+        JPanel formWrapper = new JPanel(new BorderLayout(10, 10));
+        formWrapper.setBackground(UITheme.CARD_BACKGROUND);
+        formWrapper.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
 
-        JPanel rightPanel = criarPainelFoto();
-        rightPanel.setPreferredSize(new Dimension(250, 0));
+        // Formulário de campos comuns
+        JPanel commonFieldsPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+        commonFieldsPanel.setOpaque(false);
+        commonFieldsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        commonFieldsPanel.add(cmbTipoEquipamento);
+        commonFieldsPanel.add(cmbEstado);
+        commonFieldsPanel.add(txtMarca);
+        commonFieldsPanel.add(txtPreco);
+        commonFieldsPanel.add(txtQuantidade);
+        formWrapper.add(commonFieldsPanel, BorderLayout.NORTH);
 
-        mainPanel.add(leftPanel, BorderLayout.CENTER);
-        mainPanel.add(rightPanel, BorderLayout.EAST);
+        // Formulário de campos específicos (com CardLayout)
+        JPanel panelComputador = new JPanel(new GridLayout(0, 2, 10, 10));
+        panelComputador.setOpaque(false);
+        panelComputador.add(txtProcessador);
+        panelComputador.add(txtMemoriaRAM);
+        panelComputador.add(txtArmazenamento);
+        panelComputador.add(txtPlacaGrafica);
 
-        JPanel tablePanel = criarPainelTabela();
-        mainPanel.add(tablePanel, BorderLayout.SOUTH);
+        JPanel panelPeriferico = new JPanel(new GridLayout(0, 1, 10, 10));
+        panelPeriferico.setOpaque(false);
+        panelPeriferico.add(txtTipoPeriferico);
 
-        add(mainPanel, BorderLayout.CENTER);
-    }
-
-    private JPanel criarPainelFormulario() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel lblFormTitulo = UITheme.createSubtitleLabel("Dados do Equipamento");
-        lblFormTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblFormTitulo, BorderLayout.NORTH);
-
-        JPanel formContent = new JPanel(new GridBagLayout());
-        formContent.setBackground(UITheme.CARD_BACKGROUND);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        gbc.gridx = 0; gbc.gridy = 0;
-        formContent.add(UITheme.createBodyLabel("ID:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(txtID, gbc);
-
-        gbc.gridx = 2; gbc.gridy = 0; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Tipo:"), gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(cmbTipoEquipamento, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Marca:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(txtMarca, gbc);
-
-        gbc.gridx = 2; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Preço:"), gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(txtPreco, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Quantidade:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(txtQuantidade, gbc);
-
-        gbc.gridx = 2; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Estado:"), gbc);
-        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-        formContent.add(cmbEstado, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(UITheme.createBodyLabel("Foto:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        formContent.add(txtFotoPath, gbc);
-        gbc.gridx = 3; gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-        formContent.add(btnSelecionarFoto, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 4; gbc.fill = GridBagConstraints.BOTH; gbc.weightx = 1.0; gbc.weighty = 1.0;
-
-        JPanel especificacoesPanel = new JPanel(new CardLayout());
+        especificacoesPanel = new JPanel(new CardLayout(10, 10));
+        especificacoesPanel.setOpaque(false);
         especificacoesPanel.setBorder(BorderFactory.createTitledBorder("Especificações"));
         especificacoesPanel.add(panelComputador, "Computador");
         especificacoesPanel.add(panelPeriferico, "Periférico");
-        formContent.add(especificacoesPanel, gbc);
+        formWrapper.add(especificacoesPanel, BorderLayout.CENTER);
 
-        panel.add(formContent, BorderLayout.CENTER);
-        JScrollPane scroll = new JScrollPane(formContent);
-        scroll.setBorder(null);
-        scroll.setPreferredSize(new Dimension(500, 250));
-        panel.add(scroll, BorderLayout.CENTER);
+        topContentPanel.add(formWrapper, BorderLayout.CENTER);
 
-        return panel;
-    }
+        // Painel de Ações (Direita)
+        JPanel acoesPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        acoesPanel.setOpaque(false);
+        acoesPanel.add(btnCadastrar);
+        acoesPanel.add(btnEditar);
+        acoesPanel.add(btnRemover);
+        topContentPanel.add(acoesPanel, BorderLayout.EAST);
 
-    private JPanel criarPainelFoto() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // --- Painel Inferior (Tabela) ---
+        JPanel tabelaPanel = new JPanel(new BorderLayout());
+        tabelaPanel.setBorder(BorderFactory.createTitledBorder("Equipamentos Cadastrados"));
+        tabelaPanel.setBackground(UITheme.CARD_BACKGROUND);
+        tabelaPanel.add(new JScrollPane(tabelaEquipamentos), BorderLayout.CENTER);
 
-        JLabel lblTitulo = UITheme.createSubtitleLabel("Foto do Equipamento");
-        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblTitulo, BorderLayout.NORTH);
-
-        panel.add(lblFotoPreview, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    private JPanel criarPainelBotoes() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        panel.setBackground(UITheme.CARD_BACKGROUND);
-
-        btnCadastrar.setPreferredSize(new Dimension(100, 28));
-        btnEditar.setPreferredSize(new Dimension(100, 28));
-        btnRemover.setPreferredSize(new Dimension(100, 28));
-        btnLimpar.setPreferredSize(new Dimension(100, 28));
-
-        panel.add(btnCadastrar);
-        panel.add(btnEditar);
-        panel.add(btnRemover);
-        panel.add(btnLimpar);
-
-        return panel;
-    }
-
-
-    private JPanel criarPainelTabela() {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setPreferredSize(new Dimension(0, 300));
-
-        JLabel lblTabelaTitulo = UITheme.createSubtitleLabel("Equipamentos Cadastrados");
-        lblTabelaTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblTabelaTitulo, BorderLayout.NORTH);
-
-        JScrollPane scrollPane = new JScrollPane(tabelaEquipamentos);
-        scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT, 1));
-        scrollPane.getViewport().setBackground(UITheme.CARD_BACKGROUND);
-        panel.add(scrollPane, BorderLayout.CENTER);
-
-        return panel;
+        mainPanel.add(topContentPanel, BorderLayout.NORTH);
+        mainPanel.add(tabelaPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
     }
 
     private void setupEvents() {
+        btnAdicionarFoto.addActionListener(e -> adicionarFoto());
+        btnRemoverFoto.addActionListener(e -> removerFoto());
         btnCadastrar.addActionListener(e -> cadastrarEquipamento());
         btnEditar.addActionListener(e -> editarEquipamento());
         btnRemover.addActionListener(e -> removerEquipamento());
-        btnLimpar.addActionListener(e -> limparFormulario());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-        btnSelecionarFoto.addActionListener(e -> selecionarFoto());
 
-        cmbTipoEquipamento.addActionListener(e -> alterarTipoEquipamento());
+        cmbTipoEquipamento.addActionListener(e -> {
+            CardLayout cl = (CardLayout) especificacoesPanel.getLayout();
+            cl.show(especificacoesPanel, (String) cmbTipoEquipamento.getSelectedItem());
+        });
 
         tabelaEquipamentos.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                carregarEquipamentoSelecionado();
-            }
+            if (!e.getValueIsAdjusting()) carregarEquipamentoSelecionado();
         });
     }
 
-    private void selecionarFoto() {
+    private void adicionarFoto() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                "Imagens", "jpg", "jpeg", "png", "gif", "bmp"));
+        fileChooser.setDialogTitle("Selecione uma foto para o equipamento");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Imagens (JPG, PNG)", "jpg", "png"));
 
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            txtFotoPath.setText(selectedFile.getAbsolutePath());
-            carregarImagemPreview(selectedFile.getAbsolutePath());
+            try {
+                File arquivo = fileChooser.getSelectedFile();
+                String extensao = arquivo.getName().substring(arquivo.getName().lastIndexOf("."));
+                String novoNome = UUID.randomUUID().toString() + extensao;
+                File destino = new File(FOTOS_EQUIPAMENTOS_PATH + novoNome);
+
+                Files.copy(arquivo.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                this.caminhoFotoAtual = destino.getPath();
+                exibirImagem(this.caminhoFotoAtual);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao salvar a foto: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    private void carregarImagemPreview(String caminhoImagem) {
-        try {
-            ImageIcon icon = new ImageIcon(caminhoImagem);
-            Image img = icon.getImage().getScaledInstance(180, 130, Image.SCALE_SMOOTH);
-            lblFotoPreview.setIcon(new ImageIcon(img));
-            lblFotoPreview.setText("");
-        } catch (Exception e) {
-            lblFotoPreview.setIcon(null);
-            lblFotoPreview.setText("Erro ao carregar imagem");
-        }
+    private void removerFoto() {
+        this.caminhoFotoAtual = null;
+        exibirImagem(null);
     }
 
-    private void alterarTipoEquipamento() {
-        String tipoSelecionado = (String) cmbTipoEquipamento.getSelectedItem();
-        CardLayout cl = (CardLayout) panelComputador.getParent().getLayout();
-        cl.show(panelComputador.getParent(), tipoSelecionado);
+    private void exibirImagem(String caminho) {
+        if (caminho != null && !caminho.isEmpty() && new File(caminho).exists()) {
+            ImageIcon icon = new ImageIcon(caminho);
+            Image img = icon.getImage().getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), Image.SCALE_SMOOTH);
+            lblFoto.setIcon(new ImageIcon(img));
+            lblFoto.setText("");
+        } else {
+            lblFoto.setIcon(null);
+            lblFoto.setText("Sem Foto");
+        }
     }
 
     private void cadastrarEquipamento() {
         try {
             Equipamento equipamento = criarEquipamentoFromForm();
-            if (equipamento != null && controller.adicionarEquipamento(equipamento)) {
-                JOptionPane.showMessageDialog(this, "Equipamento cadastrado com sucesso!");
-                limparFormulario();
-                carregarEquipamentos();
-            } else {
-                JOptionPane.showMessageDialog(this, "Erro ao cadastrar equipamento. Verifique os dados.");
+            if (equipamento != null) {
+                equipamento.setFotoPath(this.caminhoFotoAtual);
+                if (controller.adicionarEquipamento(equipamento)) {
+                    JOptionPane.showMessageDialog(this, "Equipamento cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparFormulario();
+                    carregarEquipamentos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Falha ao cadastrar o equipamento.", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro de validação: " + ex.getMessage(), "Dados Inválidos", JOptionPane.WARNING_MESSAGE);
         }
     }
 
     private void editarEquipamento() {
-        int selectedRow = tabelaEquipamentos.getSelectedRow();
-        if (selectedRow >= 0) {
-            try {
-                Equipamento equipamentoAntigo = controller.getEquipamentos().get(selectedRow);
-                Equipamento equipamentoNovo = criarEquipamentoFromForm();
+        int row = tabelaEquipamentos.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Selecione um equipamento para editar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-                if (equipamentoNovo != null) {
-                    equipamentoNovo.setId(equipamentoAntigo.getId());
-                    if (controller.atualizarEquipamento(equipamentoAntigo, equipamentoNovo)) {
-                        JOptionPane.showMessageDialog(this, "Equipamento atualizado com sucesso!");
-                        limparFormulario();
-                        carregarEquipamentos();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Erro ao atualizar equipamento.");
-                    }
+        String id = (String) modeloTabela.getValueAt(row, 0);
+        Equipamento equipamentoAntigo = controller.getEquipamentos().stream().filter(eq -> eq.getId().equals(id)).findFirst().orElse(null);
+
+        try {
+            Equipamento equipamentoNovo = criarEquipamentoFromForm();
+            if (equipamentoAntigo != null && equipamentoNovo != null) {
+                equipamentoNovo.setId(equipamentoAntigo.getId());
+                equipamentoNovo.setFotoPath(this.caminhoFotoAtual);
+
+                if (controller.atualizarEquipamento(equipamentoAntigo, equipamentoNovo)) {
+                    JOptionPane.showMessageDialog(this, "Equipamento atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparFormulario();
+                    carregarEquipamentos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Falha ao atualizar o equipamento.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecione um equipamento para editar.");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro de validação: " + ex.getMessage(), "Dados Inválidos", JOptionPane.WARNING_MESSAGE);
         }
     }
 
     private void removerEquipamento() {
-        int selectedRow = tabelaEquipamentos.getSelectedRow();
-        if (selectedRow >= 0) {
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Deseja realmente remover este equipamento?",
-                    "Confirmar Remoção",
-                    JOptionPane.YES_NO_OPTION);
+        int row = tabelaEquipamentos.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Selecione um equipamento para remover.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
+        String id = (String) modeloTabela.getValueAt(row, 0);
+        Equipamento equipamento = controller.getEquipamentos().stream().filter(eq -> eq.getId().equals(id)).findFirst().orElse(null);
+
+        if (equipamento != null) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Deseja remover o equipamento '" + equipamento.getMarca() + "'?", "Confirmar", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    Equipamento equipamento = controller.getEquipamentos().get(selectedRow);
-                    if (controller.removerEquipamento(equipamento)) {
-                        JOptionPane.showMessageDialog(this, "Equipamento removido com sucesso!");
-                        limparFormulario();
-                        carregarEquipamentos();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Erro ao remover equipamento.");
+                if (controller.removerEquipamento(equipamento)) {
+                    // Tenta apagar a foto associada
+                    if (equipamento.getFotoPath() != null) {
+                        try { Files.deleteIfExists(Paths.get(equipamento.getFotoPath())); } catch (IOException ex) { /* Ignora falha */ }
                     }
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
+                    JOptionPane.showMessageDialog(this, "Equipamento removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparFormulario();
+                    carregarEquipamentos();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Falha ao remover o equipamento.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecione um equipamento para remover.");
         }
     }
 
-    private void limparFormulario() {
-        txtID.setText("");
-        txtMarca.setText("");
-        txtPreco.setText("");
-        txtQuantidade.setText("");
-        txtFotoPath.setText("");
-        txtProcessador.setText("");
-        txtMemoriaRAM.setText("");
-        txtArmazenamento.setText("");
-        txtPlacaGrafica.setText("");
-        txtTipoPeriferico.setText("");
-
-        cmbTipoEquipamento.setSelectedIndex(0);
-        cmbEstado.setSelectedIndex(0);
-
-        lblFotoPreview.setIcon(null);
-        lblFotoPreview.setText("Nenhuma foto selecionada");
-
-        tabelaEquipamentos.clearSelection();
-    }
-
-    private void voltarMenuPrincipal() {
-        controller.getCardLayoutManager().showPanel("MenuAdministrador");
-    }
-
-    private void carregarEquipamentos() {
-        modeloTabela.setRowCount(0);
-        List<Equipamento> equipamentos = controller.getEquipamentos();
-
-        for (Equipamento eq : equipamentos) {
-            String tipo = eq instanceof Computador ? "Computador" : "Periférico";
-            Object[] row = {
-                    eq.getId(),
-                    tipo,
-                    eq.getMarca(),
-                    String.format("%.2f MT", eq.getPreco()),
-                    eq.getQuantidadeEstoque(),
-                    eq.getEstado()
-            };
-            modeloTabela.addRow(row);
-        }
-    }
-
-    private void carregarEquipamentoSelecionado() {
-        int selectedRow = tabelaEquipamentos.getSelectedRow();
-        if (selectedRow >= 0) {
-            Equipamento equipamento = controller.getEquipamentos().get(selectedRow);
-
-            txtID.setText(equipamento.getId());
-            txtMarca.setText(equipamento.getMarca());
-            txtPreco.setText(String.valueOf(equipamento.getPreco()));
-            txtQuantidade.setText(String.valueOf(equipamento.getQuantidadeEstoque()));
-            cmbEstado.setSelectedItem(equipamento.getEstado());
-
-            if (equipamento instanceof Computador) {
-                cmbTipoEquipamento.setSelectedItem("Computador");
-                Computador comp = (Computador) equipamento;
-                txtProcessador.setText(comp.getProcessador());
-                txtMemoriaRAM.setText(comp.getMemoriaRAM());
-                txtArmazenamento.setText(comp.getArmazenamento());
-                txtPlacaGrafica.setText(comp.getPlacaGrafica());
-            } else if (equipamento instanceof Periferico) {
-                cmbTipoEquipamento.setSelectedItem("Periférico");
-                Periferico per = (Periferico) equipamento;
-                txtTipoPeriferico.setText(per.getTipo());
-            }
-
-            alterarTipoEquipamento();
-        }
-    }
-
-    private Equipamento criarEquipamentoFromForm() {
+    private Equipamento criarEquipamentoFromForm() throws IllegalArgumentException {
         try {
             String marca = txtMarca.getText().trim();
             double preco = Double.parseDouble(txtPreco.getText().trim());
@@ -506,33 +365,88 @@ public class GerirEquipamentosView extends JPanel {
             Equipamento.EstadoEquipamento estado = (Equipamento.EstadoEquipamento) cmbEstado.getSelectedItem();
             String tipoEquipamento = (String) cmbTipoEquipamento.getSelectedItem();
 
-            if (marca.isEmpty()) {
-                throw new IllegalArgumentException("Marca é obrigatória");
-            }
+            if (!Validador.validarCampoObrigatorio(marca)) throw new IllegalArgumentException("Marca é obrigatória.");
+            if (!Validador.validarValorPositivo(preco)) throw new IllegalArgumentException("Preço deve ser positivo.");
+            if (quantidade < 0) throw new IllegalArgumentException("Quantidade não pode ser negativa.");
 
             if ("Computador".equals(tipoEquipamento)) {
-                String processador = txtProcessador.getText().trim();
-                String memoriaRAM = txtMemoriaRAM.getText().trim();
-                String armazenamento = txtArmazenamento.getText().trim();
-                String placaGrafica = txtPlacaGrafica.getText().trim();
-
-                if (processador.isEmpty() || memoriaRAM.isEmpty() || armazenamento.isEmpty() || placaGrafica.isEmpty()) {
-                    throw new IllegalArgumentException("Todos os campos do computador são obrigatórios");
-                }
-
-                return new Computador(marca, preco, quantidade, estado, "", processador, memoriaRAM, armazenamento, placaGrafica);
+                return new Computador(marca, preco, quantidade, estado, null,
+                        txtProcessador.getText().trim(), txtMemoriaRAM.getText().trim(),
+                        txtArmazenamento.getText().trim(), txtPlacaGrafica.getText().trim());
             } else {
-                String tipoPeriferico = txtTipoPeriferico.getText().trim();
-
-                if (tipoPeriferico.isEmpty()) {
-                    throw new IllegalArgumentException("Tipo de periférico é obrigatório");
-                }
-
-                return new Periferico(marca, preco, quantidade, estado, "", tipoPeriferico);
+                return new Periferico(marca, preco, quantidade, estado, null,
+                        txtTipoPeriferico.getText().trim());
             }
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Preço e quantidade devem ser números válidos");
+            throw new IllegalArgumentException("Preço e Quantidade devem ser números válidos.");
         }
     }
-}
 
+    private void carregarEquipamentos() {
+        modeloTabela.setRowCount(0);
+        for (Equipamento eq : controller.getEquipamentos()) {
+            modeloTabela.addRow(new Object[]{
+                    eq.getId(),
+                    eq instanceof Computador ? "Computador" : "Periférico",
+                    eq.getMarca(),
+                    String.format("%.2f MT", eq.getPreco()),
+                    eq.getQuantidadeEstoque(),
+                    eq.getEstado()
+            });
+        }
+    }
+
+    private void carregarEquipamentoSelecionado() {
+        int row = tabelaEquipamentos.getSelectedRow();
+        if (row < 0) return;
+
+        String id = (String) modeloTabela.getValueAt(row, 0);
+        Equipamento eq = controller.getEquipamentos().stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+
+        if (eq != null) {
+            txtMarca.setText(eq.getMarca());
+            txtPreco.setText(String.valueOf(eq.getPreco()));
+            txtQuantidade.setText(String.valueOf(eq.getQuantidadeEstoque()));
+            cmbEstado.setSelectedItem(eq.getEstado());
+            this.caminhoFotoAtual = eq.getFotoPath();
+            exibirImagem(this.caminhoFotoAtual);
+
+            if (eq instanceof Computador comp) {
+                cmbTipoEquipamento.setSelectedItem("Computador");
+                txtProcessador.setText(comp.getProcessador());
+                txtMemoriaRAM.setText(comp.getMemoriaRAM());
+                txtArmazenamento.setText(comp.getArmazenamento());
+                txtPlacaGrafica.setText(comp.getPlacaGrafica());
+            } else if (eq instanceof Periferico per) {
+                cmbTipoEquipamento.setSelectedItem("Periférico");
+                txtTipoPeriferico.setText(per.getTipo());
+            }
+        }
+    }
+
+    private void limparFormulario() {
+        txtMarca.setText("");
+        txtPreco.setText("");
+        txtQuantidade.setText("");
+        txtProcessador.setText("");
+        txtMemoriaRAM.setText("");
+        txtArmazenamento.setText("");
+        txtPlacaGrafica.setText("");
+        txtTipoPeriferico.setText("");
+        cmbTipoEquipamento.setSelectedIndex(0);
+        cmbEstado.setSelectedIndex(0);
+        tabelaEquipamentos.clearSelection();
+        removerFoto();
+    }
+
+    private void voltarMenuPrincipal() {
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        String painel = switch (tipoUsuario) {
+            case "Gestor" -> "MenuGestor";
+            case "Vendedor" -> "MenuVendedor";
+            case "Administrador" -> "MenuAdministrador";
+            default -> "Login";
+        };
+        controller.getCardLayoutManager().showPanel(painel);
+    }
+}

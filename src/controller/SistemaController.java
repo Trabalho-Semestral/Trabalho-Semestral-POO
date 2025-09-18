@@ -8,11 +8,7 @@ import model.concretas.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Controlador principal do sistema.
@@ -22,6 +18,7 @@ public class SistemaController {
 
     // Listas para simular base de dados
     private List<Administrador> administradores;
+    private List<Gestor> gestores; // ✅ Nova lista para gestores
     private List<Vendedor> vendedores;
     private List<Cliente> clientes;
     private List<Equipamento> equipamentos;
@@ -44,6 +41,7 @@ public class SistemaController {
      */
     private void inicializarDados() {
         administradores = new ArrayList<>();
+        gestores = new ArrayList<>(); // ✅ Inicializar lista de gestores
         vendedores = new ArrayList<>();
         clientes = new ArrayList<>();
         equipamentos = new ArrayList<>();
@@ -63,6 +61,12 @@ public class SistemaController {
                 "123456789", "+258123456789", 50000.0, BCryptHasher.hashPassword("admin123"));
         admin.setId("ADMIN");
         administradores.add(admin);
+
+        // Gestor
+        Gestor gestor = new Gestor("Carlos Gestor", "555666777888D",
+                "555666777", "+258555666777", 35000.0, BCryptHasher.hashPassword("gest123"));
+        gestor.setId("GEST1");
+        gestores.add(gestor);
 
         // Vendedor
         Vendedor vendedor = new Vendedor("João Vendedor", "987654321098B",
@@ -100,7 +104,7 @@ public class SistemaController {
      * Autentica um usuário no sistema.
      * @param id ID do usuário
      * @param senha Senha do usuário
-     * @param tipoUsuario Tipo de usuário (Administrador, Vendedor, Cliente)
+     * @param tipoUsuario Tipo de usuário (Administrador, Gestor, Vendedor)
      * @return true se autenticado com sucesso, false caso contrário
      */
     public boolean autenticarUsuario(String id, String senha, String tipoUsuario) {
@@ -109,7 +113,17 @@ public class SistemaController {
                 for (Administrador admin : administradores) {
                     if (admin.getId().equals(id) && BCryptHasher.checkPassword(senha, admin.getSenha())) {
                         usuarioLogado = admin;
-                        tipoUsuarioLogado = tipoUsuario;
+                        tipoUsuarioLogado = admin.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
+                        return true;
+                    }
+                }
+                break;
+
+            case "Gestor":
+                for (Gestor gestor : gestores) {
+                    if (gestor.getId().equals(id) && BCryptHasher.checkPassword(senha, gestor.getSenha())) {
+                        usuarioLogado = gestor;
+                        tipoUsuarioLogado = gestor.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
                         return true;
                     }
                 }
@@ -119,13 +133,11 @@ public class SistemaController {
                 for (Vendedor vendedor : vendedores) {
                     if (vendedor.getId().equals(id) && BCryptHasher.checkPassword(senha, vendedor.getSenha())) {
                         usuarioLogado = vendedor;
-                        tipoUsuarioLogado = tipoUsuario;
+                        tipoUsuarioLogado = vendedor.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
                         return true;
                     }
                 }
                 break;
-
-
         }
 
         return false;
@@ -138,6 +150,117 @@ public class SistemaController {
         usuarioLogado = null;
         tipoUsuarioLogado = null;
     }
+
+    // ✅ ========== MÉTODOS PARA GESTÃO DE GESTORES ==========
+
+    /**
+     * Adiciona um gestor à lista.
+     * @param gestor Gestor a ser adicionado
+     * @return true se adicionado com sucesso, false caso contrário
+     */
+    public boolean adicionarGestor(Gestor gestor) {
+        if (gestor != null && gestor.validarDados()) {
+            gestor.setId(GeradorID.gerarID());
+            gestor.setSenha(BCryptHasher.hashPassword(gestor.getSenha()));
+            gestores.add(gestor);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Remove um gestor da lista.
+     * @param gestor Gestor a ser removido
+     * @return true se removido com sucesso, false caso contrário
+     */
+    public boolean removerGestor(Gestor gestor) {
+        return gestores.remove(gestor);
+    }
+
+    /**
+     * Atualiza um gestor na lista.
+     * @param gestorAntigo Gestor a ser atualizado
+     * @param gestorNovo Novos dados do gestor
+     * @return true se atualizado com sucesso, false caso contrário
+     */
+    public boolean atualizarGestor(Gestor gestorAntigo, Gestor gestorNovo) {
+        int index = gestores.indexOf(gestorAntigo);
+        if (index >= 0 && gestorNovo.validarDados()) {
+            gestorNovo.setId(gestorAntigo.getId()); // Manter o ID original
+            // A senha já deve vir hasheada do formulário ou ser tratada separadamente
+            gestores.set(index, gestorNovo);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Getter para a lista de gestores.
+     * @return Lista de gestores
+     */
+    public List<Gestor> getGestores() {
+        return gestores;
+    }
+
+    // ✅ ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
+
+    /**
+     * Verifica se o usuário logado tem permissão para gerir operações.
+     * @return true se tem permissão, false caso contrário
+     */
+    public boolean podeGerirOperacoes() {
+        if (usuarioLogado == null) return false;
+
+        switch (tipoUsuarioLogado) {
+            case "Administrador":
+                return true;
+            case "Gestor":
+                return ((Gestor) usuarioLogado).podeGerirOperacoes();
+            case "Vendedor":
+                return false; // Vendedores têm acesso limitado
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Verifica se o usuário logado tem permissão para configurar o sistema.
+     * @return true se tem permissão, false caso contrário
+     */
+    public boolean podeConfigurarSistema() {
+        if (usuarioLogado == null) return false;
+
+        switch (tipoUsuarioLogado) {
+            case "Administrador":
+                return true;
+            case "Gestor":
+                return ((Gestor) usuarioLogado).podeConfigurarSistema(); // false
+            case "Vendedor":
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Verifica se o usuário logado pode acessar relatórios.
+     * @return true se tem permissão, false caso contrário
+     */
+    public boolean podeAcessarRelatorios() {
+        if (usuarioLogado == null) return false;
+
+        switch (tipoUsuarioLogado) {
+            case "Administrador":
+            case "Gestor":
+                return true;
+            case "Vendedor":
+                return true; // Vendedores podem ver relatórios limitados
+            default:
+                return false;
+        }
+    }
+
+    // ========== MÉTODOS EXISTENTES (sem alteração) ==========
 
     /**
      * Adiciona um equipamento à lista.
@@ -272,7 +395,35 @@ public class SistemaController {
         return false;
     }
 
-    // Getters
+    public boolean adicionarReserva(Reserva reserva) {
+        if (reserva != null && reserva.getEquipamento().getQuantidadeEstoque() >= reserva.getQuantidade()) {
+            reservas.add(reserva);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removerReserva(Reserva reserva) {
+        return reservas.remove(reserva);
+    }
+
+    public boolean atualizarReserva(Reserva reservaAntiga, Reserva reservaNova) {
+        int index = reservas.indexOf(reservaAntiga);
+        if (index >= 0) {
+            reservas.set(index, reservaNova);
+            return true;
+        }
+        return false;
+    }
+
+    public List<Reserva> getReservasPorCliente(Cliente cliente) {
+        return reservas.stream()
+                .filter(r -> r.getCliente().getId().equals(cliente.getId()) &&
+                        r.getStatus() == Reserva.StatusReserva.ATIVA)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    // ========== GETTERS ==========
     public Object getUsuarioLogado() {
         return usuarioLogado;
     }
@@ -305,34 +456,6 @@ public class SistemaController {
         return reservas;
     }
 
-    public boolean adicionarReserva(Reserva reserva) {
-        if (reserva != null && reserva.getEquipamento().getQuantidadeEstoque() >= reserva.getQuantidade()) {
-            reservas.add(reserva);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removerReserva(Reserva reserva) {
-        return reservas.remove(reserva);
-    }
-
-    public boolean atualizarReserva(Reserva reservaAntiga, Reserva reservaNova) {
-        int index = reservas.indexOf(reservaAntiga);
-        if (index >= 0) {
-            reservas.set(index, reservaNova);
-            return true;
-        }
-        return false;
-    }
-
-    public List<Reserva> getReservasPorCliente(Cliente cliente) {
-        return reservas.stream()
-                .filter(r -> r.getCliente().getId().equals(cliente.getId()) &&
-                        r.getStatus() == Reserva.StatusReserva.ATIVA)
-                .collect(java.util.stream.Collectors.toList());
-    }
-
     public CardLayoutManager getCardLayoutManager() {
         return cardLayoutManager;
     }
@@ -341,4 +464,3 @@ public class SistemaController {
         this.cardLayoutManager = cardLayoutManager;
     }
 }
-

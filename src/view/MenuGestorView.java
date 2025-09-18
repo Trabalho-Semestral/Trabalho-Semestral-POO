@@ -1,7 +1,7 @@
 package view;
 
 import controller.SistemaController;
-import model.concretas.Vendedor;
+import model.concretas.Gestor;
 import util.UITheme;
 
 import javax.swing.*;
@@ -10,16 +10,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Window;
 
-public class MenuVendedorView extends JPanel {
+public class MenuGestorView extends JPanel {
 
     private SistemaController controller;
-    private Vendedor vendedorLogado;
+    private Gestor gestorLogado;
     private JPanel sidebarPanel;
     private JButton btnToggleSidebar;
 
-    public MenuVendedorView(SistemaController controller, Vendedor vendedorLogado) {
+    public MenuGestorView(SistemaController controller, Gestor gestorLogado) {
         this.controller = controller;
-        this.vendedorLogado = vendedorLogado;
+        this.gestorLogado = gestorLogado;
         initComponents();
         setupLayout();
         setupEvents();
@@ -46,20 +46,24 @@ public class MenuVendedorView extends JPanel {
         sidebarPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
         sidebarPanel.setPreferredSize(new Dimension(UITheme.SIDEBAR_WIDTH, 0));
 
-        JLabel lblMenuTitulo = UITheme.createSubtitleLabel("👤 PAINEL VENDEDOR");
+        JLabel lblMenuTitulo = UITheme.createSubtitleLabel("👨‍💼 PAINEL GESTOR");
         lblMenuTitulo.setForeground(UITheme.TEXT_WHITE);
         lblMenuTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblMenuTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         sidebarPanel.add(lblMenuTitulo);
 
         // Botões do menu com emojis
-        sidebarPanel.add(criarBotaoMenu("👤 Registrar Cliente", "RegistrarCliente"));
+        sidebarPanel.add(criarBotaoMenu("👥 Gerir Vendedores", "GerirVendedores"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("👤 Gerir Clientes", "GerirClientes"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("💻 Gerir Equipamentos", "GerirEquipamentos"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("📦 Gerir Reservas", "GerirReservas"));
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("🛒 Registrar Venda", "RegistrarVenda"));
         sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(criarBotaoMenu("📋 Minhas Vendas", "MinhasVendas"));
-        sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(criarBotaoMenu("📦 Gerir Reservas", "GerirReservas"));
+        sidebarPanel.add(criarBotaoMenu("📊 Relatórios de Vendas", "RelatoriosVendas"));
 
         sidebarPanel.add(Box.createVerticalGlue());
 
@@ -84,7 +88,7 @@ public class MenuVendedorView extends JPanel {
 
         JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        JLabel lblUserInfo = UITheme.createBodyLabel("👤 " + vendedorLogado.getNome() + " (Vendedor)");
+        JLabel lblUserInfo = UITheme.createBodyLabel("👨‍💼 " + gestorLogado.getNome() + " (Gestor)");
         lblUserInfo.setForeground(UITheme.TEXT_WHITE);
         userInfoPanel.add(lblUserInfo);
         topBarPanel.add(userInfoPanel, BorderLayout.EAST);
@@ -102,14 +106,14 @@ public class MenuVendedorView extends JPanel {
         JPanel welcomePanel = UITheme.createCardPanel();
         welcomePanel.setLayout(new BorderLayout());
 
-        JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel do Vendedor");
+        JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel do Gestor");
         lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
         lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
-                        "Como Vendedor, você pode 👤 registrar clientes, 🛒 registrar vendas, 📋 consultar suas vendas e 📦 gerir reservas.</center></html>"
+                "<html><center>Olá, " + gestorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
+                        "Como Gestor, você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 📦 reservas e visualizar 📊 relatórios.</center></html>"
         );
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
@@ -127,7 +131,7 @@ public class MenuVendedorView extends JPanel {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         JLabel lblCopyright =
-                new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos - Painel Vendedor");
+                new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos - Painel Gestor");
         lblCopyright.setFont(UITheme.FONT_SMALL);
         lblCopyright.setForeground(UITheme.TEXT_MUTED);
         bottomPanel.add(lblCopyright);
@@ -196,18 +200,21 @@ public class MenuVendedorView extends JPanel {
             if (comp instanceof JButton btn) {
                 btn.addActionListener(e -> {
                     switch (btn.getActionCommand()) {
-                        case "RegistrarCliente" -> abrirRegistrarCliente();
-                        case "RegistrarVenda" -> abrirRegistrarVenda();
-                        case "MinhasVendas" -> abrirMinhasVendas();
+                        case "GerirVendedores" -> abrirGerirVendedores();
+                        case "GerirClientes" -> abrirGerirClientes();
+                        case "GerirEquipamentos" -> abrirGerirEquipamentos();
                         case "GerirReservas" -> abrirGerirReservas();
+                      //  case "RegistrarVenda" -> abrirRegistrarVenda();
+                        case "RelatoriosVendas" -> abrirRelatoriosVendas();
                         case "Logout" -> {
-                            int confirm = JOptionPane.showConfirmDialog(MenuVendedorView.this,
+                            int confirm = JOptionPane.showConfirmDialog(MenuGestorView.this,
                                     "Deseja realmente sair do sistema?",
                                     "Confirmar Logout",
                                     JOptionPane.YES_NO_OPTION);
                             if (confirm == JOptionPane.YES_OPTION) {
                                 controller.logout();
-                                Window window = SwingUtilities.getWindowAncestor(MenuVendedorView.this);
+
+                                Window window = SwingUtilities.getWindowAncestor(MenuGestorView.this);
                                 if (window instanceof JFrame) {
                                     window.dispose();
                                 }
@@ -226,34 +233,33 @@ public class MenuVendedorView extends JPanel {
         splitPane.setDividerLocation(sidebarPanel.isVisible() ? UITheme.SIDEBAR_WIDTH : 0);
     }
 
-    private void abrirRegistrarCliente() {
+    private void abrirGerirVendedores() {
+        try {
+            GerirVendedoresView view = new GerirVendedoresView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GerirVendedores");
+            controller.getCardLayoutManager().showPanel("GerirVendedores");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de vendedores: " + e.getMessage());
+        }
+    }
+
+    private void abrirGerirClientes() {
         try {
             GerirClientesView view = new GerirClientesView(controller);
             controller.getCardLayoutManager().addPanel(view, "GerirClientes");
             controller.getCardLayoutManager().showPanel("GerirClientes");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de clientes: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de clientes: " + e.getMessage());
         }
     }
 
-    private void abrirRegistrarVenda() {
+    private void abrirGerirEquipamentos() {
         try {
-            RegistrarVendaView view = new RegistrarVendaView(controller, vendedorLogado);
-            controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
-            controller.getCardLayoutManager().showPanel("RegistrarVenda");
+            GerirEquipamentosView view = new GerirEquipamentosView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GerirEquipamentos");
+            controller.getCardLayoutManager().showPanel("GerirEquipamentos");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
-        }
-    }
-
-    private void abrirMinhasVendas() {
-        try {
-            // Criar uma view personalizada para mostrar apenas as vendas do vendedor logado
-            RelatoriosVendasView view = new RelatoriosVendasView(controller);
-            controller.getCardLayoutManager().addPanel(view, "MinhasVendas");
-            controller.getCardLayoutManager().showPanel("MinhasVendas");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de equipamentos: " + e.getMessage());
         }
     }
 
@@ -264,6 +270,26 @@ public class MenuVendedorView extends JPanel {
             controller.getCardLayoutManager().showPanel("GerirReservas");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de reservas: " + e.getMessage());
+        }
+    }
+
+//    private void abrirRegistrarVenda() {
+//        try {
+//            RegistrarVendaView view = new RegistrarVendaView(controller, VendedorLogado);
+//            controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
+//            controller.getCardLayoutManager().showPanel("RegistrarVenda");
+//        } catch (Exception e) {
+//            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
+//        }
+//    }
+
+    private void abrirRelatoriosVendas() {
+        try {
+            RelatoriosVendasView view = new RelatoriosVendasView(controller);
+            controller.getCardLayoutManager().addPanel(view, "RelatoriosVendas");
+            controller.getCardLayoutManager().showPanel("RelatoriosVendas");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de relatórios de vendas: " + e.getMessage());
         }
     }
 }

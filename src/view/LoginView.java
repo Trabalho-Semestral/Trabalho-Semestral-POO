@@ -1,7 +1,9 @@
+
 package view;
 
 import controller.SistemaController;
 import model.concretas.Vendedor;
+import model.concretas.Gestor;
 import util.UITheme;
 
 import javax.swing.*;
@@ -48,7 +50,7 @@ public class LoginView extends JFrame {
         txtSenha.setPreferredSize(new Dimension(250, 35));
         txtSenha.setMinimumSize(new Dimension(200, 30));
 
-        cmbTipoUsuario = UITheme.createStyledComboBox(new String[]{"Administrador", "Vendedor"});
+        cmbTipoUsuario = UITheme.createStyledComboBox(new String[]{"Administrador", "Gestor", "Vendedor"});
         cmbTipoUsuario.setPreferredSize(new Dimension(250, 35));
         cmbTipoUsuario.setMinimumSize(new Dimension(200, 30));
 
@@ -208,29 +210,41 @@ public class LoginView extends JFrame {
             lblMensagem.setText("Credenciais inválidas. Tente novamente.");
             lblMensagem.setForeground(UITheme.ACCENT_COLOR);
         }
+
     }
 
     private void abrirTelaPrincipal(String tipoUsuario) {
         try {
+            // 1. Crie uma única instância da MainView para todos os utilizadores.
+            MainView mainView = new MainView(controller, tipoUsuario);
+
+            // 2. Defina o CardLayoutManager no controlador. Este passo é essencial!
+            controller.setCardLayoutManager(mainView.getCardLayoutManager());
+
+            // 3. Adicione e mostre o painel de menu correto dentro da MainView.
             switch (tipoUsuario) {
                 case "Administrador":
-                    MainView mainView = new MainView(controller, tipoUsuario);
-                    mainView.setVisible(true);
+                    // A MainView provavelmente já lida com a exibição inicial para o Administrador,
+                    // então apenas garantir que ela seja visível é suficiente.
+                    break;
+                case "Gestor":
+                    MenuGestorView gestorView = new MenuGestorView(controller, (Gestor) controller.getUsuarioLogado());
+                    mainView.getCardLayoutManager().addPanel(gestorView, "MenuGestor");
+                    mainView.getCardLayoutManager().showPanel("MenuGestor");
                     break;
                 case "Vendedor":
-                    JFrame vendedorFrame = new JFrame("Sistema de Vendas - Vendedor");
-                    vendedorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    vendedorFrame.setSize(1200, 800);
-                    vendedorFrame.setLocationRelativeTo(null);
-
                     MenuVendedorView vendedorView = new MenuVendedorView(controller, (Vendedor) controller.getUsuarioLogado());
-                    vendedorFrame.add(vendedorView);
-                    vendedorFrame.setVisible(true);
+                    mainView.getCardLayoutManager().addPanel(vendedorView, "MenuVendedor");
+                    mainView.getCardLayoutManager().showPanel("MenuVendedor");
                     break;
             }
+
+            // 4. Torne a MainView visível e feche a janela de login.
+            mainView.setVisible(true);
             this.dispose();
+
         } catch (Exception e) {
-            lblMensagem.setText("Erro ao abrir a tela principal.");
+            lblMensagem.setText("Erro ao abrir a tela principal: " + e.getMessage());
             lblMensagem.setForeground(UITheme.ACCENT_COLOR);
             e.printStackTrace();
         }

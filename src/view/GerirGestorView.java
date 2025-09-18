@@ -1,9 +1,10 @@
 package view;
 
 import controller.SistemaController;
-import model.concretas.Vendedor;
-import util.Validador;
+import model.concretas.Gestor;
+import util.BCryptHasher;
 import util.UITheme;
+import util.Validador;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -18,10 +19,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
-public class GerirVendedoresView extends JPanel {
+public class GerirGestorView extends JPanel {
 
     // --- CONSTANTE PARA O DIRETÓRIO DE FOTOS ---
-    private static final String FOTOS_VENDEDORES_PATH = "resources/fotos/vendedores/";
+    private static final String FOTOS_GESTORES_PATH = "resources/fotos/gestores/";
 
     private SistemaController controller;
 
@@ -38,7 +39,7 @@ public class GerirVendedoresView extends JPanel {
     private String caminhoFotoAtual;
 
     // Tabela
-    private JTable tabelaVendedores;
+    private JTable tabelaGestores;
     private DefaultTableModel modeloTabela;
 
     // Botões
@@ -49,20 +50,19 @@ public class GerirVendedoresView extends JPanel {
     private JButton btnRemover;
     private JButton btnVoltar;
 
-    public GerirVendedoresView(SistemaController controller) {
+    public GerirGestorView(SistemaController controller) {
         this.controller = controller;
-        // Garante que o diretório de fotos exista
-        new File(FOTOS_VENDEDORES_PATH).mkdirs();
+        new File(FOTOS_GESTORES_PATH).mkdirs(); // Garante que o diretório de fotos exista
         initComponents();
         setupLayout();
         setupEvents();
-        carregarVendedores();
+        carregarGestores();
     }
 
     private void initComponents() {
         setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Campos de texto com bordas de título
+        // Campos de texto
         txtNome = new JTextField();
         txtNrBI = new JTextField();
         txtNuit = new JTextField();
@@ -70,8 +70,8 @@ public class GerirVendedoresView extends JPanel {
         txtSalario = new JTextField();
         txtSenha = new JPasswordField();
 
-        styleTextField(txtNome, "Nome");
-        styleTextField(txtNrBI, "Nr. BI");
+        styleTextField(txtNome, "Nome Completo");
+        styleTextField(txtNrBI, "Nº do BI");
         styleTextField(txtNuit, "NUIT");
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
@@ -85,7 +85,6 @@ public class GerirVendedoresView extends JPanel {
         lblFoto.setBackground(UITheme.CARD_BACKGROUND);
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
 
-
         // Botões de Ação
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
         btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
@@ -95,14 +94,14 @@ public class GerirVendedoresView extends JPanel {
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
 
         // Tabela
-        String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Salário"};
+        String[] colunas = {"ID", "Nome", "Nº BI", "NUIT", "Telefone", "Salário"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
-        tabelaVendedores = new JTable(modeloTabela);
-        UITheme.applyTableStyle(tabelaVendedores);
-        tabelaVendedores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabelaGestores = new JTable(modeloTabela);
+        UITheme.applyTableStyle(tabelaGestores);
+        tabelaGestores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
     private void styleTextField(JComponent component, String title) {
@@ -127,7 +126,7 @@ public class GerirVendedoresView extends JPanel {
         topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
 
-        JLabel lblTitulo = UITheme.createHeadingLabel("👥 Gestão de Vendedores");
+        JLabel lblTitulo = UITheme.createHeadingLabel("👑 Gestão de Gestores");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
         topPanel.add(lblTitulo, BorderLayout.CENTER);
@@ -136,7 +135,6 @@ public class GerirVendedoresView extends JPanel {
         voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         voltarPanel.add(btnVoltar);
         topPanel.add(voltarPanel, BorderLayout.WEST);
-
         add(topPanel, BorderLayout.NORTH);
 
         // --- PAINEL PRINCIPAL ---
@@ -148,8 +146,7 @@ public class GerirVendedoresView extends JPanel {
         JPanel topContentPanel = new JPanel(new BorderLayout(15, 15));
         topContentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Painel da Foto (com botões)
-        JPanel fotoPainelWrapper = new JPanel(new BorderLayout(10,10));
+        JPanel fotoPainelWrapper = new JPanel(new BorderLayout(10, 10));
         fotoPainelWrapper.setBackground(UITheme.BACKGROUND_COLOR);
         lblFoto.setPreferredSize(new Dimension(250, 250));
         fotoPainelWrapper.add(lblFoto, BorderLayout.CENTER);
@@ -159,10 +156,8 @@ public class GerirVendedoresView extends JPanel {
         fotoBotoesPanel.add(btnAdicionarFoto);
         fotoBotoesPanel.add(btnRemoverFoto);
         fotoPainelWrapper.add(fotoBotoesPanel, BorderLayout.SOUTH);
-
         topContentPanel.add(fotoPainelWrapper, BorderLayout.WEST);
 
-        // Formulário ao centro
         JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
         formPanel.setBackground(UITheme.CARD_BACKGROUND);
         formPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -175,41 +170,36 @@ public class GerirVendedoresView extends JPanel {
         formPanel.add(txtTelefone);
         formPanel.add(txtSalario);
         formPanel.add(txtSenha);
-
         topContentPanel.add(formPanel, BorderLayout.CENTER);
 
-        // Botões de Ação Principais à direita
         JPanel acoesPanel = new JPanel(new GridLayout(0, 1, 10, 10));
         acoesPanel.setBackground(UITheme.BACKGROUND_COLOR);
         acoesPanel.add(btnCadastrar);
         acoesPanel.add(btnEditar);
         acoesPanel.add(btnRemover);
-
         topContentPanel.add(acoesPanel, BorderLayout.EAST);
 
         // --- PAINEL INFERIOR (tabela) ---
         JPanel tabelaPanel = new JPanel(new BorderLayout());
-        tabelaPanel.setBorder(BorderFactory.createTitledBorder("Vendedores Cadastrados"));
+        tabelaPanel.setBorder(BorderFactory.createTitledBorder("Gestores Cadastrados"));
         tabelaPanel.setBackground(UITheme.CARD_BACKGROUND);
-        JScrollPane scroll = new JScrollPane(tabelaVendedores);
+        JScrollPane scroll = new JScrollPane(tabelaGestores);
         tabelaPanel.add(scroll, BorderLayout.CENTER);
 
         mainPanel.add(topContentPanel, BorderLayout.NORTH);
         mainPanel.add(tabelaPanel, BorderLayout.CENTER);
-
         add(mainPanel, BorderLayout.CENTER);
     }
 
     private void setupEvents() {
         btnAdicionarFoto.addActionListener(e -> adicionarFoto());
         btnRemoverFoto.addActionListener(e -> removerFoto());
-        btnCadastrar.addActionListener(e -> cadastrarVendedor());
-        btnEditar.addActionListener(e -> editarVendedor());
-        btnRemover.addActionListener(e -> removerVendedor());
+        btnCadastrar.addActionListener(e -> cadastrarGestor());
+        btnEditar.addActionListener(e -> editarGestor());
+        btnRemover.addActionListener(e -> removerGestor());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
-        tabelaVendedores.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) carregarVendedorSelecionado();
+        tabelaGestores.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) carregarGestorSelecionado();
         });
     }
 
@@ -221,36 +211,28 @@ public class GerirVendedoresView extends JPanel {
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File arquivoSelecionado = fileChooser.getSelectedFile();
             try {
-                // Cria um nome de arquivo único para evitar conflitos
                 String extensao = arquivoSelecionado.getName().substring(arquivoSelecionado.getName().lastIndexOf("."));
                 String novoNome = UUID.randomUUID().toString() + extensao;
-                File destino = new File(FOTOS_VENDEDORES_PATH + novoNome);
-
-                // Copia o arquivo para o diretório de fotos do projeto
+                File destino = new File(FOTOS_GESTORES_PATH + novoNome);
                 Files.copy(arquivoSelecionado.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                // Armazena o caminho relativo e exibe a imagem
                 this.caminhoFotoAtual = destino.getPath();
                 exibirImagem(this.caminhoFotoAtual);
-
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Erro ao salvar a foto: " + e.getMessage(), "Erro de Arquivo", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Erro ao salvar a foto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     private void removerFoto() {
         this.caminhoFotoAtual = null;
-        exibirImagem(null); // Limpa a imagem exibida
+        exibirImagem(null);
     }
 
     private void exibirImagem(String caminho) {
         if (caminho != null && !caminho.isEmpty() && new File(caminho).exists()) {
             ImageIcon icon = new ImageIcon(caminho);
-            Image img = icon.getImage();
-            // Redimensiona a imagem para caber no JLabel, mantendo a proporção
-            Image newImg = img.getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), Image.SCALE_SMOOTH);
-            lblFoto.setIcon(new ImageIcon(newImg));
+            Image img = icon.getImage().getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), Image.SCALE_SMOOTH);
+            lblFoto.setIcon(new ImageIcon(img));
             lblFoto.setText("");
         } else {
             lblFoto.setIcon(null);
@@ -258,15 +240,17 @@ public class GerirVendedoresView extends JPanel {
         }
     }
 
-    private void cadastrarVendedor() {
+    private void cadastrarGestor() {
         try {
-            Vendedor vendedor = criarVendedorFromForm(false);
-            if (vendedor != null) {
-                vendedor.setFotoPath(this.caminhoFotoAtual); // Associa a foto ao vendedor
-                if (controller.adicionarVendedor(vendedor)) {
-                    JOptionPane.showMessageDialog(this, "Vendedor cadastrado com sucesso!");
+            Gestor gestor = criarGestorFromForm(false);
+            if (gestor != null) {
+                gestor.setFotoPath(this.caminhoFotoAtual);
+                if (controller.adicionarGestor(gestor)) {
+                    JOptionPane.showMessageDialog(this, "Gestor cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                     limparFormulario();
-                    carregarVendedores();
+                    carregarGestores();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Não foi possível cadastrar o gestor.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } catch (Exception ex) {
@@ -274,68 +258,65 @@ public class GerirVendedoresView extends JPanel {
         }
     }
 
-    private void editarVendedor() {
-        int row = tabelaVendedores.getSelectedRow();
+    private void editarGestor() {
+        int row = tabelaGestores.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Selecione um vendedor na tabela para editar.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Selecione um gestor para editar.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String vendedorId = (String) modeloTabela.getValueAt(row, 0);
-        Vendedor vendedorAntigo = controller.getVendedores().stream()
-                .filter(v -> v.getId().equals(vendedorId)).findFirst().orElse(null);
+        String gestorId = (String) modeloTabela.getValueAt(row, 0);
+        Gestor gestorAntigo = controller.getGestores().stream().filter(g -> g.getId().equals(gestorId)).findFirst().orElse(null);
 
-        Vendedor vendedorNovo = criarVendedorFromForm(true);
-        if (vendedorAntigo != null && vendedorNovo != null) {
-            vendedorNovo.setId(vendedorAntigo.getId());
-            vendedorNovo.setFotoPath(this.caminhoFotoAtual); // Atualiza o caminho da foto
+        Gestor gestorNovo = criarGestorFromForm(true);
+        if (gestorAntigo != null && gestorNovo != null) {
+            gestorNovo.setId(gestorAntigo.getId());
+            gestorNovo.setFotoPath(this.caminhoFotoAtual);
 
-            if (vendedorNovo.getSenha() == null || vendedorNovo.getSenha().isEmpty()) {
-                vendedorNovo.setSenha(vendedorAntigo.getSenha());
+            if (gestorNovo.getSenha().isEmpty()) {
+                gestorNovo.setSenha(gestorAntigo.getSenha());
             } else {
-                vendedorNovo.setSenha(util.BCryptHasher.hashPassword(vendedorNovo.getSenha()));
+                gestorNovo.setSenha(BCryptHasher.hashPassword(gestorNovo.getSenha()));
             }
 
-            if (controller.atualizarVendedor(vendedorAntigo, vendedorNovo)) {
-                JOptionPane.showMessageDialog(this, "Vendedor atualizado com sucesso!");
-                carregarVendedores();
+            if (controller.atualizarGestor(gestorAntigo, gestorNovo)) {
+                JOptionPane.showMessageDialog(this, "Gestor atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                carregarGestores();
                 limparFormulario();
             } else {
-                JOptionPane.showMessageDialog(this, "Não foi possível atualizar o vendedor.", "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Não foi possível atualizar o gestor.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private void removerVendedor() {
-        int row = tabelaVendedores.getSelectedRow();
+    private void removerGestor() {
+        int row = tabelaGestores.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Selecione um vendedor na tabela para remover.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Selecione um gestor para remover.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        String vendedorId = (String) modeloTabela.getValueAt(row, 0);
-        Vendedor v = controller.getVendedores().stream()
-                .filter(vend -> vend.getId().equals(vendedorId)).findFirst().orElse(null);
+        String gestorId = (String) modeloTabela.getValueAt(row, 0);
+        Gestor gestor = controller.getGestores().stream().filter(g -> g.getId().equals(gestorId)).findFirst().orElse(null);
 
-        if (v != null) {
-            int confirm = JOptionPane.showConfirmDialog(this, "Deseja realmente remover o vendedor '" + v.getNome() + "'?", "Confirmar Remoção", JOptionPane.YES_NO_OPTION);
+        if (gestor != null) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Deseja realmente remover '" + gestor.getNome() + "'?", "Confirmar Remoção", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                if (controller.removerVendedor(v)) {
-                    // Opcional: remover o arquivo da foto
-                    if(v.getFotoPath() != null) {
-                        try { Files.deleteIfExists(Paths.get(v.getFotoPath())); } catch (IOException e) { /* Ignorar falha na deleção */ }
+                if (controller.removerGestor(gestor)) {
+                    if (gestor.getFotoPath() != null) {
+                        try { Files.deleteIfExists(Paths.get(gestor.getFotoPath())); } catch (IOException e) { /* Ignorar */ }
                     }
-                    JOptionPane.showMessageDialog(this, "Vendedor removido com sucesso!");
-                    carregarVendedores();
+                    JOptionPane.showMessageDialog(this, "Gestor removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    carregarGestores();
                     limparFormulario();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Não foi possível remover o vendedor.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Não foi possível remover o gestor.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
     }
 
-    private Vendedor criarVendedorFromForm(boolean isEdit) {
+    private Gestor criarGestorFromForm(boolean isEdit) {
         try {
             String nome = txtNome.getText().trim();
             String nrBI = txtNrBI.getText().trim();
@@ -344,52 +325,47 @@ public class GerirVendedoresView extends JPanel {
             double salario = Double.parseDouble(txtSalario.getText().trim());
             String senha = new String(txtSenha.getPassword());
 
-            if (!Validador.validarCampoObrigatorio(nome)) throw new IllegalArgumentException("O campo 'Nome' é obrigatório.");
-            if (!Validador.validarBI(nrBI)) throw new IllegalArgumentException("O formato do 'Nr. BI' é inválido.");
-            if (!Validador.validarTelefone(telefone)) throw new IllegalArgumentException("O formato do 'Telefone' é inválido.");
-            if (!Validador.validarValorPositivo(salario)) throw new IllegalArgumentException("O 'Salário' deve ser um valor positivo.");
-            if (!isEdit && !Validador.validarCampoObrigatorio(senha)) throw new IllegalArgumentException("A 'Senha' é obrigatória para novos cadastros.");
+            if (!Validador.validarCampoObrigatorio(nome)) throw new IllegalArgumentException("'Nome' é obrigatório.");
+            if (!Validador.validarBI(nrBI)) throw new IllegalArgumentException("'Nr. BI' inválido.");
+            if (!Validador.validarTelefone(telefone)) throw new IllegalArgumentException("'Telefone' inválido.");
+            if (!Validador.validarValorPositivo(salario)) throw new IllegalArgumentException("'Salário' deve ser positivo.");
+            if (!isEdit && !Validador.validarCampoObrigatorio(senha)) throw new IllegalArgumentException("'Senha' é obrigatória.");
 
-            return new Vendedor(nome, nrBI, nuit, telefone, salario, senha);
-
+            return new Gestor(nome, nrBI, nuit, telefone, salario, senha);
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Erro: O campo 'Salário' deve ser um valor numérico.", "Erro de Formato", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "'Salário' deve ser um valor numérico.", "Erro", JOptionPane.ERROR_MESSAGE);
             return null;
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Erro de Validação: " + e.getMessage(), "Dados Inválidos", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Dados Inválidos", JOptionPane.WARNING_MESSAGE);
             return null;
         }
     }
 
-    private void carregarVendedores() {
+    private void carregarGestores() {
         modeloTabela.setRowCount(0);
-        List<Vendedor> vendedores = controller.getVendedores();
-        for (Vendedor v : vendedores) {
+        List<Gestor> gestores = controller.getGestores();
+        for (Gestor gestor : gestores) {
             modeloTabela.addRow(new Object[]{
-                    v.getId(), v.getNome(), v.getNrBI(), v.getNuit(),
-                    v.getTelefone(), String.format("%.2f MT", v.getSalario())
+                    gestor.getId(), gestor.getNome(), gestor.getNrBI(),
+                    gestor.getNuit(), gestor.getTelefone(), String.format("%.2f MT", gestor.getSalario())
             });
         }
     }
 
-    private void carregarVendedorSelecionado() {
-        int row = tabelaVendedores.getSelectedRow();
+    private void carregarGestorSelecionado() {
+        int row = tabelaGestores.getSelectedRow();
         if (row >= 0) {
-            String vendedorId = (String) modeloTabela.getValueAt(row, 0);
-            Vendedor v = controller.getVendedores().stream()
-                    .filter(vend -> vend.getId().equals(vendedorId)).findFirst().orElse(null);
-
-            if (v != null) {
-                txtNome.setText(v.getNome());
-                txtNrBI.setText(v.getNrBI());
-                txtNuit.setText(v.getNuit());
-                txtTelefone.setText(v.getTelefone());
-                txtSalario.setText(String.valueOf(v.getSalario()));
+            String gestorId = (String) modeloTabela.getValueAt(row, 0);
+            Gestor g = controller.getGestores().stream().filter(gst -> gst.getId().equals(gestorId)).findFirst().orElse(null);
+            if (g != null) {
+                txtNome.setText(g.getNome());
+                txtNrBI.setText(g.getNrBI());
+                txtNuit.setText(g.getNuit());
+                txtTelefone.setText(g.getTelefone());
+                txtSalario.setText(String.valueOf(g.getSalario()));
                 txtSenha.setText("");
                 styleTextField(txtSenha, "Nova Senha (opcional)");
-
-                // Carrega a foto
-                this.caminhoFotoAtual = v.getFotoPath();
+                this.caminhoFotoAtual = g.getFotoPath();
                 exibirImagem(this.caminhoFotoAtual);
             }
         }
@@ -403,30 +379,11 @@ public class GerirVendedoresView extends JPanel {
         txtSalario.setText("");
         txtSenha.setText("");
         styleTextField(txtSenha, "Senha");
-        tabelaVendedores.clearSelection();
-
-        // Limpa a foto
+        tabelaGestores.clearSelection();
         removerFoto();
     }
 
     private void voltarMenuPrincipal() {
-        String tipoUsuario = controller.getTipoUsuarioLogado();
-        if (tipoUsuario == null) {
-            controller.getCardLayoutManager().showPanel("Login");
-            return;
-        }
-
-        switch (tipoUsuario) {
-            case "Gestor":
-                controller.getCardLayoutManager().showPanel("MenuGestor");
-                break;
-            case "Vendedor":
-                controller.getCardLayoutManager().showPanel("MenuVendedor");
-                break;
-            case "Administrador":
-            default:
-                controller.getCardLayoutManager().showPanel("MenuAdministrador");
-                break;
-        }
+        controller.getCardLayoutManager().showPanel("MenuAdministrador");
     }
 }
