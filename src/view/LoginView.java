@@ -33,8 +33,12 @@ public class LoginView extends JFrame {
     }
 
     private void initComponents() {
+<<<<<<< Updated upstream
         setTitle("Sistema de Venda de Equipamentos Informáticos - Login");
         setIconImage(new ImageIcon("C:\\Users\\TECNOCONTROL\\Desktop\\TECHNAE.png").getImage());
+=======
+        setTitle("💻 Sistema de Venda de Equipamentos Informáticos - Login");
+>>>>>>> Stashed changes
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(870, 500);
         setLocationRelativeTo(null);
@@ -72,8 +76,12 @@ public class LoginView extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Logo
+<<<<<<< Updated upstream
         //JLabel lblLogo = new JLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png"");
         JLabel lblLogo = new JLabel(new ImageIcon("C:/Users/TECNOCONTROL/Desktop/TECHNAE.png"));
+=======
+        JLabel lblLogo = new JLabel("🖥️");
+>>>>>>> Stashed changes
         lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
@@ -81,7 +89,11 @@ public class LoginView extends JFrame {
         mainPanel.add(lblLogo, gbc);
 
         // Título
+<<<<<<< Updated upstream
         JLabel lblTitulo = UITheme.createTitleLabel("SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS - LOGIN");
+=======
+        JLabel lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
+>>>>>>> Stashed changes
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 10, 5, 10);
