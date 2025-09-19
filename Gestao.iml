@@ -7,5 +7,27 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/resources/Bibliotecas" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/resources/Bibliotecas" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/resources/Bibliotecas/jdatechooser_bin_doc_1_1_1" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="file://$MODULE_DIR$/resources/Bibliotecas/jdatechooser_bin_doc_1_1_1/javadoc" />
+        </JAVADOC>
+        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/resources/Bibliotecas/jdatechooser_bin_doc_1_1_1" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>
