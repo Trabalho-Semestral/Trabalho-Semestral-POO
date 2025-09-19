@@ -11,7 +11,7 @@ import java.awt.*;
 public class UITheme {
 
     // Paleta de cores principal
-    public static final Color PRIMARY_COLOR = new Color(135, 206, 250);       // Azul claro (SkyBlue)
+    public static final Color PRIMARY_COLOR = new Color(17, 146, 227);       // Azul escuro (Dark-blue)
     public static final Color PRIMARY_DARK = new Color(30, 144, 255);         // Azul escuro (DodgerBlue)
     public static final Color PRIMARY_LIGHT = new Color(173, 216, 230);       // Azul muito claro (LightBlue)
 
@@ -78,8 +78,7 @@ public class UITheme {
      */
     public static JButton createPrimaryButton(String text) {
         JButton button = new JButton(text);
-        // Fundo claro (SkyBlue) -> Texto escuro (TEXT_PRIMARY)
-        styleButton(button, BUTTON_PRIMARY, BUTTON_PRIMARY_HOVER, TEXT_PRIMARY);
+        styleButton(button, BUTTON_PRIMARY, BUTTON_PRIMARY_HOVER, TEXT_WHITE);
         return button;
     }
 
@@ -88,7 +87,6 @@ public class UITheme {
      */
     public static JButton createSecondaryButton(String text) {
         JButton button = new JButton(text);
-        // Fundo escuro (cinza azulado) -> Texto branco -> Hover mais escuro
         styleButton(button, BUTTON_SECONDARY, BUTTON_SECONDARY_HOVER, TEXT_WHITE);
         return button;
     }
@@ -112,39 +110,63 @@ public class UITheme {
     }
 
     /**
-     * Aplica estilo a um botão com um efeito de "brilho" (glow) bem visível.
+     * Aplica estilo a um botão com efeitos hover melhorados.
      */
     private static void styleButton(JButton button, Color bgColor, Color hoverColor, Color textColor) {
         button.setBackground(bgColor);
         button.setForeground(textColor);
         button.setFont(FONT_BUTTON);
+        button.setBorder(BORDER_BUTTON);
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setPreferredSize(BUTTON_SIZE);
         button.setOpaque(true);
+        button.setBorderPainted(false);
 
-        // Borda 3D para dar profundidade
-        Border raisedBevel = BorderFactory.createRaisedBevelBorder();
-        Border loweredBevel = BorderFactory.createLoweredBevelBorder();
-        Border padding = BorderFactory.createEmptyBorder(8, 16, 8, 16);
-        button.setBorder(BorderFactory.createCompoundBorder(raisedBevel, padding));
+        // Adicionar sombra sutil
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createRaisedBevelBorder(),
+                BorderFactory.createEmptyBorder(8, 16, 8, 16)
+        ));
 
+        // Efeito hover suave com transição
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(bgColor.brighter().brighter());
-                button.setForeground(hoverColor);
-                button.setBorder(BorderFactory.createCompoundBorder(raisedBevel, padding));
+                button.setBackground(hoverColor);
+                // Adicionar efeito de elevação
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createRaisedBevelBorder(),
+                        BorderFactory.createEmptyBorder(6, 14, 10, 18)
+                ));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(bgColor);
-                button.setForeground(textColor);
-                button.setBorder(BorderFactory.createCompoundBorder(raisedBevel, padding));
+                // Restaurar borda original
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createRaisedBevelBorder(),
+                        BorderFactory.createEmptyBorder(8, 16, 8, 16)
+                ));
             }
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                button.setBorder(BorderFactory.createCompoundBorder(loweredBevel, padding));
+                // Efeito de clique
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLoweredBevelBorder(),
+                        BorderFactory.createEmptyBorder(9, 17, 7, 15)
+                ));
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                button.setBorder(BorderFactory.createCompoundBorder(raisedBevel, padding));
+                // Restaurar após clique
+                if (button.contains(evt.getPoint())) {
+                    button.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createRaisedBevelBorder(),
+                            BorderFactory.createEmptyBorder(6, 14, 10, 18)
+                    ));
+                } else {
+                    button.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createRaisedBevelBorder(),
+                            BorderFactory.createEmptyBorder(8, 16, 8, 16)
+                    ));
+                }
             }
         });
     }
@@ -302,10 +324,8 @@ public class UITheme {
         try {
             // Configurar UIManager para cores personalizadas
             UIManager.put("Panel.background", BACKGROUND_COLOR);
-            // As duas linhas abaixo foram removidas para evitar conflitos.
-            // O estilo dos botões será gerido pelos métodos create...Button.
-            // UIManager.put("Button.background", BUTTON_PRIMARY);
-            // UIManager.put("Button.foreground", TEXT_WHITE);
+            UIManager.put("Button.background", BUTTON_PRIMARY);
+            UIManager.put("Button.foreground", TEXT_WHITE);
             UIManager.put("Button.font", FONT_BUTTON);
             UIManager.put("TextField.font", FONT_BODY);
             UIManager.put("Label.font", FONT_BODY);
@@ -318,6 +338,5 @@ public class UITheme {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
