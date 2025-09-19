@@ -2,353 +2,348 @@ package view;
 
 import controller.SistemaController;
 import model.concretas.Cliente;
-import util.Validador;
 import util.UITheme;
+import util.Validador;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Tela para gestão de clientes com layout final, títulos e botões estilizados.
+ */
+public class GerirClientesView extends JPanel {
+
+    private final SistemaController controller;
+
+    // --- Componentes da Interface ---
+    private JTextField txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail;
+    private JTextField txtPesquisar;
+
+    private JTable tabelaClientes;
+    private DefaultTableModel modeloTabela;
+    private TableRowSorter<DefaultTableModel> sorter;
+
+    private JButton btnCadastrar, btnEditar, btnRemover, btnLimpar, btnVoltar;
+
+    public GerirClientesView(SistemaController controller) {
+        this.controller = controller;
+        initComponents();
+        setupLayout();
+        setupEvents();
+        carregarClientes();
+        atualizarEstadoBotoes(false);
+    }
+
+    private TitledBorder criarTitulo(String titulo) {
+        TitledBorder border = BorderFactory.createTitledBorder(titulo);
+        border.setTitleColor(new Color(19, 56, 94)); // Azul escuro da topbar
+        border.setTitleFont(new Font("Segoe UI", Font.BOLD, 13));
+        return border;
+    }
+
+    private void initComponents() {
+        txtNome = UITheme.createStyledTextField();
+        txtNome.setBorder(criarTitulo("Nome Completo"));
+
+        txtNrBI = UITheme.createStyledTextField();
+        txtNrBI.setBorder(criarTitulo("Nº do BI"));
+
+        txtNuit = UITheme.createStyledTextField();
+        txtNuit.setBorder(criarTitulo("NUIT"));
+
+        txtTelefone = UITheme.createStyledTextField();
+        txtTelefone.setBorder(criarTitulo("Telefone"));
+
+        txtEndereco = UITheme.createStyledTextField();
+        txtEndereco.setBorder(criarTitulo("Endereço"));
+
+        txtEmail = UITheme.createStyledTextField();
+        txtEmail.setBorder(criarTitulo("Email"));
+
+        txtPesquisar = UITheme.createStyledTextField();
+        txtPesquisar.setBorder(criarTitulo("Pesquisar"));
+
+        // --- Botões ---
+        btnCadastrar = new JButton("➕ Cadastrar");
+        btnEditar = new JButton("✏️ Editar");
+        btnRemover = new JButton("🗑️ Remover");
+        btnLimpar = new JButton("🧹 Limpar");
+        btnVoltar = UITheme.createSecondaryButton("🔙 Voltar");
+
+        JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover, btnLimpar};
+        for (JButton btn : actionButtons) {
+            styleActionButton(btn);
+        }
+
+        // --- Tabela com visibilidade do header corrigida ---
+        modeloTabela = new DefaultTableModel(
+                new String[]{"ID", "Nome", "BI", "NUIT", "Telefone", "Endereço", "Email"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tabelaClientes = new JTable(modeloTabela);
+        tabelaClientes.setBackground(Color.WHITE);
+        tabelaClientes.setForeground(Color.BLACK);
+        tabelaClientes.setSelectionBackground(new Color(173, 216, 230));
+        tabelaClientes.setSelectionForeground(Color.BLACK);
+        tabelaClientes.setRowSelectionAllowed(true);
+        tabelaClientes.setCellSelectionEnabled(false);
+        tabelaClientes.setFocusable(false);
+        tabelaClientes.setRowHeight(25);
+
+        // Estilo explícito para o Header da tabela para garantir visibilidade
+        JTableHeader header = tabelaClientes.getTableHeader();
+        header.setBackground(new Color(19, 56, 94));
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        sorter = new TableRowSorter<>(modeloTabela);
+        tabelaClientes.setRowSorter(sorter);
+    }
+
     /**
-     * Tela para gestão de clientes com layout padronizado e emojis funcionais.
+     * Estilo de botão estático, sem efeito hover, para máxima clareza.
      */
-    public class GerirClientesView extends JPanel {
+    private void styleActionButton(JButton button) {
+        Font emojiFont = new Font("Segoe UI Emoji", Font.BOLD, 15);
+        Color baseColor = new Color(19, 56, 94); // Azul escuro e sóbrio
 
-        private SistemaController controller;
+        button.setFont(emojiFont);
+        button.setBackground(baseColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
 
-        // Componentes da interface
-        private JTextField txtID;
-        private JTextField txtNome;
-        private JTextField txtNrBI;
-        private JTextField txtNuit;
-        private JTextField txtTelefone;
-        private JTextField txtEndereco;
-        private JTextField txtEmail;
+        button.setPreferredSize(new Dimension(160, 45));
+        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+    }
 
-        // Tabela de clientes
-        private JTable tabelaClientes;
-        private DefaultTableModel modeloTabela;
 
-        // Botões
-        private JButton btnCadastrar;
-        private JButton btnEditar;
-        private JButton btnRemover;
-        private JButton btnLimpar;
-        private JButton btnVoltar;
+    private void setupLayout() {
+        setLayout(new BorderLayout(10, 10));
+        setBackground(UITheme.BACKGROUND_COLOR);
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10)); // Margem inferior removida para dar espaço ao rodapé
 
-        public GerirClientesView(SistemaController controller) {
-            this.controller = controller;
-            initComponents();
-            setupLayout();
-            setupEvents();
-            carregarClientes();
-        }
+        // --- Barra Superior ---
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        JLabel lblTitulo = UITheme.createHeadingLabel("👤 Gestão de Clientes");
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
+        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        voltarPanel.setOpaque(false);
+        voltarPanel.add(btnVoltar);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
 
-        private void initComponents() {
-            setLayout(new BorderLayout());
-            setBackground(UITheme.BACKGROUND_COLOR);
+        // --- Painel principal com JSplitPane ---
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                criarPainelFormularioE_Acoes(),
+                criarPainelTabela());
+        splitPane.setResizeWeight(0.4); // Aumentar um pouco o espaço para o formulário
+        splitPane.setOpaque(false);
+        splitPane.setBorder(null);
+        add(splitPane, BorderLayout.CENTER);
 
-            // Campos de texto com tema personalizado
-            txtID = UITheme.createStyledTextField();
-            txtID.setEditable(false);
-            txtID.setBackground(UITheme.SECONDARY_LIGHT);
-            txtNome = UITheme.createStyledTextField();
-            txtNrBI = UITheme.createStyledTextField();
-            txtNuit = UITheme.createStyledTextField();
-            txtTelefone = UITheme.createStyledTextField();
-            txtEndereco = UITheme.createStyledTextField();
-            txtEmail = UITheme.createStyledTextField();
+        // --- Rodapé ---
+        add(createFooterPanel(), BorderLayout.SOUTH);
 
-            // Botões com tema personalizado
-            btnCadastrar = UITheme.createPrimaryButton("➕ Cadastrar");
-            btnEditar = UITheme.createPrimaryButton("✏️ Editar");
-            btnRemover = UITheme.createDangerButton("🗑️ Remover");
-            btnLimpar = UITheme.createSecondaryButton("🧹 Limpar");
-            btnVoltar = UITheme.createSecondaryButton("🔙 Voltar");
+        // Ocultar coluna de ID
+        TableColumn idColumn = tabelaClientes.getColumnModel().getColumn(0);
+        idColumn.setMinWidth(0);
+        idColumn.setMaxWidth(0);
+        idColumn.setWidth(0);
+    }
 
-            // Fonte para emojis
-            Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
-            btnCadastrar.setFont(emojiFont);
-            btnEditar.setFont(emojiFont);
-            btnRemover.setFont(emojiFont);
-            btnLimpar.setFont(emojiFont);
-            btnVoltar.setFont(emojiFont);
+    private JPanel criarPainelFormularioE_Acoes() {
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 0));
+        mainPanel.setOpaque(false);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-            // Tabela
-            String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Endereço", "Email"};
-            modeloTabela = new DefaultTableModel(colunas, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            tabelaClientes = new JTable(modeloTabela);
-            tabelaClientes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            tabelaClientes.setFont(UITheme.FONT_BODY);
-            tabelaClientes.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
-            tabelaClientes.setRowHeight(30);
-            tabelaClientes.setSelectionBackground(UITheme.PRIMARY_LIGHT);
-            tabelaClientes.setSelectionForeground(UITheme.TEXT_PRIMARY);
-        }
+        JPanel formPanel = new JPanel(new GridLayout(2, 3, 15, 15));
+        formPanel.setOpaque(false);
+        formPanel.add(txtNome);
+        formPanel.add(txtNrBI);
+        formPanel.add(txtNuit);
+        formPanel.add(txtTelefone);
+        formPanel.add(txtEmail);
+        formPanel.add(txtEndereco);
 
-        private void setupLayout() {
-            // Painel superior com título
-            JPanel topPanel = new JPanel(new BorderLayout());
-            topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-            topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-            topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        JPanel buttonGridPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        buttonGridPanel.setOpaque(false);
+        buttonGridPanel.add(btnCadastrar);
+        buttonGridPanel.add(btnEditar);
+        buttonGridPanel.add(btnRemover);
+        buttonGridPanel.add(btnLimpar);
 
-            JLabel lblTitulo = UITheme.createHeadingLabel("👤 Gestão de Clientes");
-            lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-            lblTitulo.setForeground(UITheme.TEXT_WHITE);
-            lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-            topPanel.add(lblTitulo, BorderLayout.CENTER);
+        JPanel buttonWrapper = new JPanel(new GridBagLayout());
+        buttonWrapper.setOpaque(false);
+        buttonWrapper.add(buttonGridPanel);
 
-            JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-            voltarPanel.add(btnVoltar);
-            topPanel.add(voltarPanel, BorderLayout.WEST);
+        mainPanel.add(formPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonWrapper, BorderLayout.EAST);
 
-            add(topPanel, BorderLayout.NORTH);
+        return mainPanel;
+    }
 
-            // Painel principal com BoxLayout vertical
-            JPanel mainPanel = new JPanel();
-            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-            mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
+    private JPanel criarPainelTabela() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setOpaque(false);
 
-            // Painel de formulário
-            JPanel formPanel = criarPainelFormulario();
-            mainPanel.add(formPanel);
+        TitledBorder border = BorderFactory.createTitledBorder("Clientes Cadastrados");
+        border.setTitleColor(new Color(19, 56, 94));
+        border.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
+        panel.setBorder(border);
 
-            // Painel de botões de ação
-            JPanel buttonPanel = criarPainelBotoes();
-            buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-            mainPanel.add(buttonPanel);
+        JPanel pesquisaPanel = new JPanel(new BorderLayout(5, 5));
+        pesquisaPanel.setOpaque(false);
+        pesquisaPanel.add(txtPesquisar, BorderLayout.CENTER);
+        panel.add(pesquisaPanel, BorderLayout.NORTH);
 
-            // Painel de tabela
-            JPanel tablePanel = criarPainelTabela();
-            mainPanel.add(tablePanel);
+        JScrollPane scrollPane = new JScrollPane(tabelaClientes);
+        scrollPane.getViewport().setBackground(UITheme.BACKGROUND_COLOR);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
+    }
 
-            add(mainPanel, BorderLayout.CENTER);
-        }
+    /**
+     * Cria o painel de rodapé com a nota de copyright.
+     */
+    private JPanel createFooterPanel() {
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(new Color(19, 56, 94)); // Cor de fundo do TopBar
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
+        lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 10)); // Fonte pequena
+        lblCopyright.setForeground(Color.GRAY); // Cor de texto suave
+        bottomPanel.add(lblCopyright);
+        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
+        return bottomPanel;
+    }
 
-        private JPanel criarPainelFormulario() {
-            JPanel panel = UITheme.createCardPanel();
-            panel.setLayout(new BorderLayout());
-            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    private void setupEvents() {
+        btnCadastrar.addActionListener(e -> cadastrarCliente());
+        btnEditar.addActionListener(e -> editarCliente());
+        btnRemover.addActionListener(e -> removerCliente());
+        btnLimpar.addActionListener(e -> limparFormulario());
+        btnVoltar.addActionListener(e -> voltarMenuPrincipal());
 
-            JLabel lblFormTitulo = UITheme.createSubtitleLabel("📋 Dados do Cliente");
-            lblFormTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
-            lblFormTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-            panel.add(lblFormTitulo, BorderLayout.NORTH);
-
-            JPanel formContent = new JPanel(new GridBagLayout());
-            formContent.setBackground(UITheme.CARD_BACKGROUND);
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(8, 8, 8, 8);
-            gbc.anchor = GridBagConstraints.WEST;
-
-            // Primeira linha
-            gbc.gridx = 0; gbc.gridy = 0;
-            formContent.add(UITheme.createBodyLabel("ID:"), gbc);
-            gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.3;
-            formContent.add(txtID, gbc);
-
-            gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("Nome:"), gbc);
-            gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-            formContent.add(txtNome, gbc);
-
-            gbc.gridx = 4; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("Nr. BI:"), gbc);
-            gbc.gridx = 5; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-            formContent.add(txtNrBI, gbc);
-
-            // Segunda linha
-            gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("NUIT:"), gbc);
-            gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.3;
-            formContent.add(txtNuit, gbc);
-
-            gbc.gridx = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("Telefone:"), gbc);
-            gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 0.5;
-            formContent.add(txtTelefone, gbc);
-
-            gbc.gridx = 4; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("Email:"), gbc);
-            gbc.gridx = 5; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-            formContent.add(txtEmail, gbc);
-
-            // Terceira linha
-            gbc.gridx = 0; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0.0;
-            formContent.add(UITheme.createBodyLabel("Endereço:"), gbc);
-            gbc.gridx = 1; gbc.gridwidth = GridBagConstraints.REMAINDER;
-            formContent.add(txtEndereco, gbc);
-            panel.add(formContent, BorderLayout.CENTER);
-            return panel;
-        }
-
-        private JPanel criarPainelBotoes() {
-            JPanel panel = UITheme.createCardPanel();
-            panel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 20));
-            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-            btnCadastrar.setPreferredSize(new Dimension(140, 40));
-            btnEditar.setPreferredSize(new Dimension(140, 40));
-            btnRemover.setPreferredSize(new Dimension(140, 40));
-            btnLimpar.setPreferredSize(new Dimension(140, 40));
-
-            panel.add(btnCadastrar);
-            panel.add(btnEditar);
-            panel.add(btnRemover);
-            panel.add(btnLimpar);
-
-            return panel;
-        }
-
-        private JPanel criarPainelTabela() {
-            JPanel panel = UITheme.createCardPanel();
-            panel.setLayout(new BorderLayout());
-            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            panel.setPreferredSize(new Dimension(0, 400));
-
-            JLabel lblTabelaTitulo = UITheme.createSubtitleLabel("📊 Clientes Cadastrados");
-            lblTabelaTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
-            lblTabelaTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-            panel.add(lblTabelaTitulo, BorderLayout.NORTH);
-
-            JScrollPane scrollPane = new JScrollPane(tabelaClientes);
-            scrollPane.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT, 1));
-            scrollPane.getViewport().setBackground(UITheme.CARD_BACKGROUND);
-            panel.add(scrollPane, BorderLayout.CENTER);
-
-            JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            infoPanel.setBackground(UITheme.CARD_BACKGROUND);
-            JLabel lblInfo = UITheme.createBodyLabel("💡 Selecione um cliente na tabela para editar ou remover");
-            lblInfo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
-            lblInfo.setForeground(UITheme.TEXT_SECONDARY);
-            infoPanel.add(lblInfo);
-            panel.add(infoPanel, BorderLayout.SOUTH);
-
-            return panel;
-        }
-
-        private void setupEvents() {
-            btnCadastrar.addActionListener(e -> cadastrarCliente());
-            btnEditar.addActionListener(e -> editarCliente());
-            btnRemover.addActionListener(e -> removerCliente());
-            btnLimpar.addActionListener(e -> limparFormulario());
-            btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
-            tabelaClientes.getSelectionModel().addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting()) {
+        tabelaClientes.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                boolean clienteSelecionado = tabelaClientes.getSelectedRow() != -1;
+                atualizarEstadoBotoes(clienteSelecionado);
+                if (clienteSelecionado) {
                     carregarClienteSelecionado();
                 }
-            });
-        }
+            }
+        });
 
+        txtPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { filtrarClientes(); }
+            @Override public void removeUpdate(DocumentEvent e) { filtrarClientes(); }
+            @Override public void changedUpdate(DocumentEvent e) { filtrarClientes(); }
+        });
+    }
 
-        /**
-     * Cadastra um novo cliente.
-     */
     private void cadastrarCliente() {
-        try {
-            Cliente cliente = criarClienteFromForm();
-            if (cliente != null && controller.adicionarCliente(cliente)) {
-                JOptionPane.showMessageDialog(this, "Cliente cadastrado com sucesso!");
+        Cliente cliente = criarClienteFromForm();
+        if (cliente != null) {
+            if (controller.adicionarCliente(cliente)) {
+                JOptionPane.showMessageDialog(this, "Cliente cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 limparFormulario();
                 carregarClientes();
             } else {
-                JOptionPane.showMessageDialog(this, "Erro ao cadastrar cliente. Verifique os dados.");
+                JOptionPane.showMessageDialog(this, "Erro ao cadastrar cliente.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Edita o cliente selecionado.
-     */
-    private void editarCliente() {
-        int selectedRow = tabelaClientes.getSelectedRow();
-        if (selectedRow >= 0) {
-            try {
-                Cliente clienteAntigo = controller.getClientes().get(selectedRow);
-                Cliente clienteNovo = criarClienteFromForm();
-                
-                if (clienteNovo != null) {
-                    clienteNovo.setId(clienteAntigo.getId()); // Manter o ID original
-                    if (controller.atualizarCliente(clienteAntigo, clienteNovo)) {
-                        JOptionPane.showMessageDialog(this, "Cliente atualizado com sucesso!");
-                        limparFormulario();
-                        carregarClientes();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Erro ao atualizar cliente.");
-                    }
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecione um cliente para editar.");
-        }
-    }
-    
-    /**
-     * Remove o cliente selecionado.
-     */
-    private void removerCliente() {
-        int selectedRow = tabelaClientes.getSelectedRow();
-        if (selectedRow >= 0) {
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                "Tem certeza que deseja remover este cliente?", 
-                "Confirmar Remoção", 
-                JOptionPane.YES_NO_OPTION);
-                
-            if (confirm == JOptionPane.YES_OPTION) {
-                Cliente cliente = controller.getClientes().get(selectedRow);
-                if (controller.removerCliente(cliente)) {
-                    JOptionPane.showMessageDialog(this, "Cliente removido com sucesso!");
-                    limparFormulario();
-                    carregarClientes();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Erro ao remover cliente.");
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Selecione um cliente para remover.");
         }
     }
 
-        /**
-         * Volta ao menu principal correto com base no tipo de usuário logado.
-         */
-        private void voltarMenuPrincipal() {
-            String tipoUsuario = controller.getTipoUsuarioLogado();
-            if (tipoUsuario == null) {
-                controller.getCardLayoutManager().showPanel("Login");
+    private void editarCliente() {
+        int viewRow = tabelaClientes.getSelectedRow();
+        if (viewRow >= 0) {
+            int modelRow = tabelaClientes.convertRowIndexToModel(viewRow);
+            String clienteId = (String) modeloTabela.getValueAt(modelRow, 0);
+            Cliente clienteAntigo = controller.getClientes().stream()
+                    .filter(c -> c.getId().equals(clienteId))
+                    .findFirst().orElse(null);
+
+            if (clienteAntigo == null) {
+                JOptionPane.showMessageDialog(this, "Erro ao encontrar o cliente para atualizar.", "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            switch (tipoUsuario) {
-                case "Gestor":
-                    controller.getCardLayoutManager().showPanel("MenuGestor");
-                    break;
-                case "Vendedor":
-                    controller.getCardLayoutManager().showPanel("MenuVendedor");
-                    break;
-                case "Administrador":
-                default:
-                    controller.getCardLayoutManager().showPanel("MenuAdministrador");
-                    break;
+            Cliente clienteNovo = criarClienteFromForm();
+            if (clienteNovo != null) {
+                if (controller.atualizarCliente(clienteAntigo, clienteNovo)) {
+                    JOptionPane.showMessageDialog(this, "Cliente atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparFormulario();
+                    carregarClientes();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Erro ao atualizar cliente.", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
-    /**
-     * Cria um cliente a partir dos dados do formulário.
-     * @return Cliente criado ou null se houver erro
-     */
+    }
+
+    private void removerCliente() {
+        int viewRow = tabelaClientes.getSelectedRow();
+        if (viewRow >= 0) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Tem certeza que deseja remover este cliente?",
+                    "Confirmar Remoção", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                int modelRow = tabelaClientes.convertRowIndexToModel(viewRow);
+                String clienteId = (String) modeloTabela.getValueAt(modelRow, 0);
+                Cliente cliente = controller.getClientes().stream()
+                        .filter(c -> c.getId().equals(clienteId))
+                        .findFirst().orElse(null);
+
+                if (cliente != null && controller.removerCliente(cliente)) {
+                    JOptionPane.showMessageDialog(this, "Cliente removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparFormulario();
+                    carregarClientes();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Erro ao remover cliente.", "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+
+    private void limparFormulario() {
+        txtNome.setText("");
+        txtNrBI.setText("");
+        txtNuit.setText("");
+        txtTelefone.setText("");
+        txtEndereco.setText("");
+        txtEmail.setText("");
+        txtPesquisar.setText("");
+        tabelaClientes.clearSelection();
+    }
+
+    private void voltarMenuPrincipal() {
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        String painel = (tipoUsuario == null) ? "Login" : "Menu" + tipoUsuario;
+        controller.getCardLayoutManager().showPanel(painel);
+    }
+
     private Cliente criarClienteFromForm() {
         try {
             String nome = txtNome.getText().trim();
@@ -357,88 +352,57 @@ import java.util.List;
             String telefone = txtTelefone.getText().trim();
             String endereco = txtEndereco.getText().trim();
             String email = txtEmail.getText().trim();
-            
-            // Validações
-            if (!Validador.validarCampoObrigatorio(nome)) {
-                throw new IllegalArgumentException("Nome é obrigatório.");
-            }
-            if (!Validador.validarBI(nrBI)) {
-                throw new IllegalArgumentException("Número de BI inválido. Formato: 12 dígitos + 1 letra maiúscula.");
-            }
-            if (!Validador.validarCampoObrigatorio(nuit)) {
-                throw new IllegalArgumentException("NUIT é obrigatório.");
-            }
-            if (!Validador.validarTelefone(telefone)) {
-                throw new IllegalArgumentException("Telefone inválido. Formato: +258 seguidos de 9 dígitos.");
-            }
-            if (!Validador.validarCampoObrigatorio(endereco)) {
-                throw new IllegalArgumentException("Endereço é obrigatório.");
-            }
-            if (!Validador.validarCampoObrigatorio(email)) {
-                throw new IllegalArgumentException("Email é obrigatório.");
-            }
-            
+
+            if (!Validador.validarCampoObrigatorio(nome)) throw new IllegalArgumentException("O campo Nome é obrigatório.");
+            if (!Validador.validarBI(nrBI)) throw new IllegalArgumentException("O BI é inválido. Formato: 12 dígitos e 1 letra maiúscula.");
+            if (!Validador.validarNuit(nuit)) throw new IllegalArgumentException("O NUIT é inválido. Formato: 9 dígitos.");
+            if (!Validador.validarTelefone(telefone)) throw new IllegalArgumentException("O Telefone é inválido. Formato: +2588[2/3/4/5/6/7]xxxxxxx.");
+            if (!Validador.validarCampoObrigatorio(endereco)) throw new IllegalArgumentException("O campo Endereço é obrigatório.");
+            if (!Validador.validarEmail(email)) throw new IllegalArgumentException("O Email é inválido.");
+
             return new Cliente(nome, nrBI, nuit, telefone, endereco, email);
+
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Erro de validação: " + e.getMessage());
-            return null;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao criar cliente: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro de validação: " + e.getMessage(), "Dados Inválidos", JOptionPane.WARNING_MESSAGE);
             return null;
         }
     }
-    
-    /**
-     * Carrega os clientes na tabela.
-     */
+
     private void carregarClientes() {
         modeloTabela.setRowCount(0);
         List<Cliente> clientes = controller.getClientes();
-        
         for (Cliente cli : clientes) {
-            Object[] row = {
-                cli.getId(),
-                cli.getNome(),
-                cli.getNrBI(),
-                cli.getNuit(),
-                cli.getTelefone(),
-                cli.getEndereco(),
-                cli.getEmail()
-            };
-            modeloTabela.addRow(row);
+            modeloTabela.addRow(new Object[]{
+                    cli.getId(), cli.getNome(), cli.getNrBI(), cli.getNuit(),
+                    cli.getTelefone(), cli.getEndereco(), cli.getEmail()
+            });
         }
     }
-    
-    /**
-     * Carrega os dados do cliente selecionado no formulário.
-     */
+
     private void carregarClienteSelecionado() {
-        int selectedRow = tabelaClientes.getSelectedRow();
-        if (selectedRow >= 0) {
-            Cliente cli = controller.getClientes().get(selectedRow);
-            
-            txtID.setText(cli.getId());
-            txtNome.setText(cli.getNome());
-            txtNrBI.setText(cli.getNrBI());
-            txtNuit.setText(cli.getNuit());
-            txtTelefone.setText(cli.getTelefone());
-            txtEndereco.setText(cli.getEndereco());
-            txtEmail.setText(cli.getEmail());
+        int viewRow = tabelaClientes.getSelectedRow();
+        if (viewRow >= 0) {
+            int modelRow = tabelaClientes.convertRowIndexToModel(viewRow);
+            txtNome.setText((String) modeloTabela.getValueAt(modelRow, 1));
+            txtNrBI.setText((String) modeloTabela.getValueAt(modelRow, 2));
+            txtNuit.setText((String) modeloTabela.getValueAt(modelRow, 3));
+            txtTelefone.setText((String) modeloTabela.getValueAt(modelRow, 4));
+            txtEndereco.setText((String) modeloTabela.getValueAt(modelRow, 5));
+            txtEmail.setText((String) modeloTabela.getValueAt(modelRow, 6));
         }
     }
-    
-    /**
-     * Limpa o formulário.
-     */
-    private void limparFormulario() {
-        txtID.setText("");
-        txtNome.setText("");
-        txtNrBI.setText("");
-        txtNuit.setText("");
-        txtTelefone.setText("");
-        txtEndereco.setText("");
-        txtEmail.setText("");
-        tabelaClientes.clearSelection();
+
+    private void filtrarClientes() {
+        String texto = txtPesquisar.getText();
+        if (texto.trim().length() == 0) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
+        }
+    }
+
+    private void atualizarEstadoBotoes(boolean habilitar) {
+        btnEditar.setEnabled(habilitar);
+        btnRemover.setEnabled(habilitar);
     }
 }
-

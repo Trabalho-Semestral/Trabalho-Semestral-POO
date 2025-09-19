@@ -14,7 +14,6 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         SwingUtilities.invokeLater(() -> {
             SistemaController controller = new SistemaController();
 
