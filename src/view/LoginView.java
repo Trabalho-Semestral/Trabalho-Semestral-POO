@@ -81,7 +81,7 @@ public class LoginView extends JFrame {
         mainPanel.add(lblLogo, gbc);
 
         // Título
-        JLabel lblTitulo = UITheme.createTitleLabel("Sistema de Vendas de Equipamentos Informáticos - Login");
+        JLabel lblTitulo = UITheme.createTitleLabel("SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS - LOGIN");
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 10, 5, 10);
@@ -103,6 +103,7 @@ public class LoginView extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0; gbc.gridy = 3;
         JLabel lblUsuario = UITheme.createBodyLabel("ID do Utilizador:");
+        lblUsuario.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblUsuario, gbc);
 
         gbc.anchor = GridBagConstraints.WEST;
@@ -116,7 +117,8 @@ public class LoginView extends JFrame {
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridx = 0; gbc.gridy = 4;
-        JLabel lblSenha = UITheme.createBodyLabel("Senha:");
+        JLabel lblSenha = UITheme.createBodyLabel("Senha");
+        lblSenha.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblSenha, gbc);
 
         gbc.anchor = GridBagConstraints.WEST;
@@ -130,7 +132,8 @@ public class LoginView extends JFrame {
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridx = 0; gbc.gridy = 5;
-        JLabel lblTipo = UITheme.createBodyLabel("Tipo de Utilizador:");
+        JLabel lblTipo = UITheme.createBodyLabel("Tipo de Utilizador ");
+        lblTipo.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblTipo, gbc);
 
         gbc.anchor = GridBagConstraints.WEST;
