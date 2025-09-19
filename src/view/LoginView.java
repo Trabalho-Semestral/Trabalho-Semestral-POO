@@ -36,7 +36,7 @@ public class LoginView extends JFrame {
         setTitle("Sistema de Venda de Equipamentos Informáticos - Login");
         setIconImage(new ImageIcon("C:\\Users\\TECNOCONTROL\\Desktop\\TECHNAE.png").getImage());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 500);
+        setSize(870, 500);
         setLocationRelativeTo(null);
         setResizable(true);
 
@@ -88,7 +88,7 @@ public class LoginView extends JFrame {
         mainPanel.add(lblTitulo, gbc);
 
         // Subtítulo
-        JLabel lblSubtitulo = UITheme.createBodyLabel("🛠️ Equipamentos Informáticos");
+        JLabel lblSubtitulo = UITheme.createBodyLabel("Equipamentos Informáticos");
         lblSubtitulo.setHorizontalAlignment(SwingConstants.CENTER);
         lblSubtitulo.setForeground(UITheme.TEXT_SECONDARY);
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
@@ -102,7 +102,7 @@ public class LoginView extends JFrame {
         gbc.weightx = 0;
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0; gbc.gridy = 3;
-        JLabel lblUsuario = UITheme.createBodyLabel("ID do Utilizador:");
+        JLabel lblUsuario = UITheme.createBodyLabel("ID do Utilizador");
         lblUsuario.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblUsuario, gbc);
 
