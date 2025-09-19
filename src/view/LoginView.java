@@ -33,12 +33,12 @@ public class LoginView extends JFrame {
     }
 
     private void initComponents() {
-<<<<<<< Updated upstream
+
         setTitle("Sistema de Venda de Equipamentos Informáticos - Login");
         setIconImage(new ImageIcon("C:\\Users\\TECNOCONTROL\\Desktop\\TECHNAE.png").getImage());
-=======
+
         setTitle("💻 Sistema de Venda de Equipamentos Informáticos - Login");
->>>>>>> Stashed changes
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(870, 500);
         setLocationRelativeTo(null);
@@ -76,12 +76,9 @@ public class LoginView extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Logo
-<<<<<<< Updated upstream
-        //JLabel lblLogo = new JLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png"");
         JLabel lblLogo = new JLabel(new ImageIcon("C:/Users/TECNOCONTROL/Desktop/TECHNAE.png"));
-=======
-        JLabel lblLogo = new JLabel("🖥️");
->>>>>>> Stashed changes
+
+        lblLogo = new JLabel("🖥️");
         lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
@@ -89,11 +86,11 @@ public class LoginView extends JFrame {
         mainPanel.add(lblLogo, gbc);
 
         // Título
-<<<<<<< Updated upstream
+
         JLabel lblTitulo = UITheme.createTitleLabel("SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS - LOGIN");
-=======
-        JLabel lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
->>>>>>> Stashed changes
+
+        lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
+
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 10, 5, 10);
@@ -114,7 +111,7 @@ public class LoginView extends JFrame {
         gbc.weightx = 0;
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.gridx = 0; gbc.gridy = 3;
-        JLabel lblUsuario = UITheme.createBodyLabel("ID do Utilizador");
+        JLabel lblUsuario = UITheme.createBodyLabel("Usuario");
         lblUsuario.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblUsuario, gbc);
 
@@ -144,7 +141,7 @@ public class LoginView extends JFrame {
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridx = 0; gbc.gridy = 5;
-        JLabel lblTipo = UITheme.createBodyLabel("Tipo de Utilizador ");
+        JLabel lblTipo = UITheme.createBodyLabel("Tipo ");
         lblTipo.setFont(new Font("Calibri", Font.BOLD, 20));
         mainPanel.add(lblTipo, gbc);
 
@@ -241,8 +238,7 @@ public class LoginView extends JFrame {
             // 3. Adicione e mostre o painel de menu correto dentro da MainView.
             switch (tipoUsuario) {
                 case "Administrador":
-                    // A MainView provavelmente já lida com a exibição inicial para o Administrador,
-                    // então apenas garantir que ela seja visível é suficiente.
+
                     break;
                 case "Gestor":
                     MenuGestorView gestorView = new MenuGestorView(controller, (Gestor) controller.getUsuarioLogado());
