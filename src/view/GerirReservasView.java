@@ -35,8 +35,11 @@ public class GerirReservasView extends JPanel {
         setBackground(UITheme.BACKGROUND_COLOR);
         
         btnAtualizar = UITheme.createPrimaryButton("🔄 Atualizar");
+        btnAtualizar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnCancelarReserva = UITheme.createDangerButton("❌ Cancelar Reserva");
+        btnCancelarReserva.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         
         lblTotalReservas = UITheme.createBodyLabel("Total de Reservas: 0");
         lblValorTotal = UITheme.createBodyLabel("Valor Total: 0.00 MT");
@@ -65,6 +68,7 @@ public class GerirReservasView extends JPanel {
         
         JLabel lblTitulo = UITheme.createHeadingLabel("📋 Gestão de Reservas");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
         topPanel.add(lblTitulo, BorderLayout.CENTER);
         
