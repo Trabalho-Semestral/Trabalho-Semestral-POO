@@ -110,7 +110,7 @@ public class GerirClientesView extends JPanel {
         // Estilo explícito para o Header da tabela para garantir visibilidade
         JTableHeader header = tabelaClientes.getTableHeader();
         header.setBackground(new Color(19, 56, 94));
-        header.setForeground(Color.WHITE);
+        header.setForeground(Color.BLACK);
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.setReorderingAllowed(false);
         header.setResizingAllowed(true);
