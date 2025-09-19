@@ -76,9 +76,11 @@ public class LoginView extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Logo
+        //JLabel lblLogo = new JLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png"");
         JLabel lblLogo = new JLabel(new ImageIcon("C:/Users/TECNOCONTROL/Desktop/TECHNAE.png"));
 
         lblLogo = new JLabel("🖥️");
+
         lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
@@ -238,7 +240,8 @@ public class LoginView extends JFrame {
             // 3. Adicione e mostre o painel de menu correto dentro da MainView.
             switch (tipoUsuario) {
                 case "Administrador":
-
+                    // A MainView provavelmente já lida com a exibição inicial para o Administrador,
+                    // então apenas garantir que ela seja visível é suficiente.
                     break;
                 case "Gestor":
                     MenuGestorView gestorView = new MenuGestorView(controller, (Gestor) controller.getUsuarioLogado());
