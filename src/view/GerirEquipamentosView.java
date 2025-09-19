@@ -109,6 +109,7 @@ public class GerirEquipamentosView extends JPanel {
         btnEditar = UITheme.createPrimaryButton("Editar");
         btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
 
         // Tabela
         String[] colunas = {"ID", "Tipo", "Marca", "Preço", "Qtd.", "Estado"};
@@ -141,6 +142,7 @@ public class GerirEquipamentosView extends JPanel {
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Gestão de Equipamentos");
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblTitulo.setForeground(Color.WHITE);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
