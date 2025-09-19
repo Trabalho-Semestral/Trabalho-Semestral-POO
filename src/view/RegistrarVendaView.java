@@ -118,7 +118,7 @@ public class RegistrarVendaView extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaEquipamentosDisponiveis = new JTable(modeloTabelaEquipamentos);
-        UITheme.applyTableStyle(tabelaEquipamentosDisponiveis);
+       // UITheme.applyTableStyle(tabelaEquipamentosDisponiveis);
 
         lblFotoEquipamento = new JLabel("Selecione um produto", SwingConstants.CENTER);
         lblFotoEquipamento.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
@@ -141,7 +141,7 @@ public class RegistrarVendaView extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaItensVenda = new JTable(modeloTabelaItens);
-        UITheme.applyTableStyle(tabelaItensVenda);
+       // UITheme.applyTableStyle(tabelaItensVenda);
 
         lblTotalVenda = UITheme.createTitleLabel("TOTAL: 0,00 MT");
         lblTotalVenda.setForeground(UITheme.SUCCESS_COLOR);

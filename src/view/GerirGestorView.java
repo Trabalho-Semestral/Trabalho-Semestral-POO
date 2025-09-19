@@ -101,7 +101,7 @@ public class GerirGestorView extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaGestores = new JTable(modeloTabela);
-        UITheme.applyTableStyle(tabelaGestores);
+      //  UITheme.applyTableStyle(tabelaGestores);
         tabelaGestores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
