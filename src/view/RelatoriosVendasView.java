@@ -86,9 +86,13 @@ public class RelatoriosVendasView extends JPanel {
         
         // Botões com tema personalizado
         btnGerarRelatorio = UITheme.createPrimaryButton("📊 Gerar Relatório");
+        btnGerarRelatorio.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnExportarPDF = UITheme.createSecondaryButton("📄 Exportar PDF");
+        btnExportarPDF.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnLimparFiltros = UITheme.createSecondaryButton("🗑️ Limpar Filtros");
+        btnLimparFiltros.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         
         // Labels de estatísticas
         lblTotalVendas = UITheme.createHeadingLabel("0");
@@ -596,6 +600,7 @@ public class RelatoriosVendasView extends JPanel {
         panel.add(lblTitulo, BorderLayout.NORTH);
         
         JLabel lblGrafico = new JLabel("📊");
+        lblGrafico.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblGrafico.setFont(new Font("Arial", Font.PLAIN, 48));
         lblGrafico.setHorizontalAlignment(SwingConstants.CENTER);
         lblGrafico.setForeground(UITheme.SECONDARY_LIGHT);
