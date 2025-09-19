@@ -93,6 +93,7 @@ public class GerirVendedoresView extends JPanel {
         btnEditar = UITheme.createPrimaryButton("Editar");
         btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
 
         // Tabela
         String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Salário"};
@@ -129,6 +130,7 @@ public class GerirVendedoresView extends JPanel {
 
         JLabel lblTitulo = UITheme.createHeadingLabel("👥 Gestão de Vendedores");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
         topPanel.add(lblTitulo, BorderLayout.CENTER);
 
