@@ -85,8 +85,13 @@ public class GerirVendedoresView extends JPanel {
         lblFoto.setBackground(UITheme.CARD_BACKGROUND);
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
 
+        // Botões de Ação – sempre visíveis e ativos
+        btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
 
-        // Botões de Ação
+        btnRemoverFoto = UITheme.createPrimaryButton("Remover Foto");
+        btnRemoverFoto.setEnabled(true);
+        btnRemoverFoto.setVisible(true);
+// Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
         btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
         btnCadastrar = UITheme.createSuccessButton("Cadastrar");
@@ -102,7 +107,6 @@ public class GerirVendedoresView extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaVendedores = new JTable(modeloTabela);
-        UITheme.applyTableStyle(tabelaVendedores);
         tabelaVendedores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     }
 
@@ -201,6 +205,7 @@ public class GerirVendedoresView extends JPanel {
 
         add(mainPanel, BorderLayout.CENTER);
     }
+
 
     private void setupEvents() {
         btnAdicionarFoto.addActionListener(e -> adicionarFoto());

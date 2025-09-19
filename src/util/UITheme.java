@@ -73,47 +73,41 @@ public class UITheme {
     public static final int SIDEBAR_WIDTH = 250;
     public static final int TOPBAR_HEIGHT = 60;
 
-    /**
-     * Cria um botão primário com estilo padronizado.
-     */
+    // ---- MÉTODOS DE CRIAÇÃO DE COMPONENTES (MANTIDOS) ---- //
     public static JButton createPrimaryButton(String text) {
         JButton button = new JButton(text);
-        // Fundo claro (SkyBlue) -> Texto escuro (TEXT_PRIMARY)
         styleButton(button, BUTTON_PRIMARY, BUTTON_PRIMARY_HOVER, TEXT_PRIMARY);
         return button;
     }
 
-    /**
-     * Cria um botão secundário com estilo padronizado.
-     */
     public static JButton createSecondaryButton(String text) {
         JButton button = new JButton(text);
-        // Fundo escuro (cinza azulado) -> Texto branco -> Hover mais escuro
-        styleButton(button, BUTTON_SECONDARY, BUTTON_SECONDARY_HOVER, TEXT_WHITE);
+        styleButton(button, BUTTON_SECONDARY, BUTTON_SECONDARY_HOVER, TEXT_PRIMARY);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
         return button;
     }
 
-    /**
-     * Cria um botão de sucesso com estilo padronizado.
-     */
     public static JButton createSuccessButton(String text) {
         JButton button = new JButton(text);
-        styleButton(button, BUTTON_SUCCESS, SUCCESS_COLOR.darker(), TEXT_WHITE);
+        styleButton(button, BUTTON_SUCCESS, SUCCESS_COLOR.darker(), TEXT_PRIMARY);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
         return button;
     }
 
-    /**
-     * Cria um botão de perigo com estilo padronizado.
-     */
     public static JButton createDangerButton(String text) {
         JButton button = new JButton(text);
-        styleButton(button, BUTTON_DANGER, ACCENT_COLOR.darker(), TEXT_WHITE);
+        styleButton(button, BUTTON_DANGER, ACCENT_COLOR.darker(), TEXT_PRIMARY);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
         return button;
     }
 
-    /**
-     * Aplica estilo a um botão com um efeito de "brilho" (glow) bem visível.
-     */
+
     private static void styleButton(JButton button, Color bgColor, Color hoverColor, Color textColor) {
         button.setBackground(bgColor);
         button.setForeground(textColor);
@@ -123,7 +117,6 @@ public class UITheme {
         button.setPreferredSize(BUTTON_SIZE);
         button.setOpaque(true);
 
-        // Borda 3D para dar profundidade
         Border raisedBevel = BorderFactory.createRaisedBevelBorder();
         Border loweredBevel = BorderFactory.createLoweredBevelBorder();
         Border padding = BorderFactory.createEmptyBorder(8, 16, 8, 16);
@@ -149,9 +142,6 @@ public class UITheme {
         });
     }
 
-    /**
-     * Cria um campo de texto com estilo padronizado.
-     */
     public static JTextField createStyledTextField() {
         JTextField textField = new JTextField();
         textField.setFont(FONT_BODY);
@@ -160,9 +150,6 @@ public class UITheme {
         return textField;
     }
 
-    /**
-     * Cria um campo de senha com estilo padronizado.
-     */
     public static JPasswordField createStyledPasswordField() {
         JPasswordField passwordField = new JPasswordField();
         passwordField.setFont(FONT_BODY);
@@ -171,9 +158,6 @@ public class UITheme {
         return passwordField;
     }
 
-    /**
-     * Cria um ComboBox com estilo padronizado.
-     */
     public static <T> JComboBox<T> createStyledComboBox(T[] items) {
         JComboBox<T> comboBox = new JComboBox<>(items);
         comboBox.setFont(FONT_BODY);
@@ -181,9 +165,6 @@ public class UITheme {
         return comboBox;
     }
 
-    /**
-     * Cria um label de título com estilo padronizado.
-     */
     public static JLabel createTitleLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(FONT_TITLE);
@@ -191,9 +172,6 @@ public class UITheme {
         return label;
     }
 
-    /**
-     * Cria um label de subtítulo com estilo padronizado.
-     */
     public static JLabel createSubtitleLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(FONT_SUBTITLE);
@@ -201,9 +179,6 @@ public class UITheme {
         return label;
     }
 
-    /**
-     * Cria um label de cabeçalho com estilo padronizado.
-     */
     public static JLabel createHeadingLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(FONT_HEADING);
@@ -211,9 +186,6 @@ public class UITheme {
         return label;
     }
 
-    /**
-     * Cria um label de corpo com estilo padronizado.
-     */
     public static JLabel createBodyLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(FONT_BODY);
@@ -221,16 +193,12 @@ public class UITheme {
         return label;
     }
 
-    /**
-     * Cria um painel com fundo de cartão.
-     */
     public static JPanel createCardPanel() {
         JPanel panel = new JPanel();
         panel.setBackground(CARD_BACKGROUND);
         panel.setBorder(BORDER_CARD);
         return panel;
     }
-// Adicione estes métodos à sua classe UITheme.java
 
     public static void setFieldAsDisplay(JTextField field, String title) {
         field.setEditable(false);
@@ -243,15 +211,13 @@ public class UITheme {
         field.setBackground(Color.WHITE);
         field.setBorder(BorderFactory.createTitledBorder(title));
     }
-    /**
-     * Aplica um estilo padronizado a um JRadioButton.
-     * @param radioButton O botão de rádio a ser estilizado.
-     */
+
     public static void styleRadioButton(JRadioButton radioButton) {
         radioButton.setFont(FONT_BODY);
         radioButton.setForeground(TEXT_PRIMARY);
         radioButton.setOpaque(false);
     }
+
     public static JPanel createTopbar(String title, JButton backButton) {
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setBackground(TOPBAR_BACKGROUND);
@@ -271,22 +237,6 @@ public class UITheme {
         }
         return topBar;
     }
-    /**
-     * Aplica um estilo padronizado a uma JTable.
-     * @param table A tabela a ser estilizada
-     */
-    public static void applyTableStyle(JTable table) {
-        table.setFont(FONT_BODY);
-        table.setRowHeight(30);
-        table.setGridColor(new Color(224, 224, 224));
-        table.setSelectionBackground(PRIMARY_LIGHT);
-        table.setSelectionForeground(TEXT_BLACK);
-        table.getTableHeader().setFont(FONT_SUBHEADING);
-        table.getTableHeader().setBackground(SECONDARY_COLOR);
-        table.getTableHeader().setForeground(TEXT_WHITE);
-        table.getTableHeader().setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    }
-    // Adicione este metodo dentro da sua classe UITheme
 
     public static JLabel createFormLabel(String text) {
         JLabel label = new JLabel(text);
@@ -300,12 +250,11 @@ public class UITheme {
      */
     public static void applyGlobalTheme() {
         try {
-            // Configurar UIManager para cores personalizadas
+            // 1. Primeiro aplica o LookAndFeel do sistema
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+            // 2. Agora sobrescreve com o tema customizado
             UIManager.put("Panel.background", BACKGROUND_COLOR);
-            // As duas linhas abaixo foram removidas para evitar conflitos.
-            // O estilo dos botões será gerido pelos métodos create...Button.
-            // UIManager.put("Button.background", BUTTON_PRIMARY);
-            // UIManager.put("Button.foreground", TEXT_WHITE);
             UIManager.put("Button.font", FONT_BUTTON);
             UIManager.put("TextField.font", FONT_BODY);
             UIManager.put("Label.font", FONT_BODY);
@@ -313,11 +262,13 @@ public class UITheme {
             UIManager.put("Table.font", FONT_BODY);
             UIManager.put("TableHeader.font", FONT_SUBHEADING);
 
-            // Aplicar Look and Feel do sistema
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // 3. Força atualização da UI em todas as janelas abertas
+            for (Window window : Window.getWindows()) {
+                SwingUtilities.updateComponentTreeUI(window);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

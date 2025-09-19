@@ -73,11 +73,15 @@ public class GerirClientesView extends JPanel {
         txtPesquisar.setBorder(criarTitulo("Pesquisar"));
 
         // --- Botões ---
-        btnCadastrar = new JButton("➕ Cadastrar");
-        btnEditar = new JButton("✏️ Editar");
-        btnRemover = new JButton("🗑️ Remover");
-        btnLimpar = new JButton("🧹 Limpar");
-        btnVoltar = UITheme.createSecondaryButton("🔙 Voltar");
+
+
+        btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
+        btnEditar = UITheme.createSuccessButton("✏️ Editar");
+        btnRemover = UITheme.createDangerButton("🗑️ Remover");
+        btnLimpar = UITheme.createPrimaryButton("🧹 Limpar");
+        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+
 
         JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover, btnLimpar};
         for (JButton btn : actionButtons) {
@@ -229,10 +233,10 @@ public class GerirClientesView extends JPanel {
      */
     private JPanel createFooterPanel() {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.setBackground(new Color(19, 56, 94)); // Cor de fundo do TopBar
+        bottomPanel.setBackground(new Color(19, 56, 94));
         JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
-        lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 10)); // Fonte pequena
-        lblCopyright.setForeground(Color.GRAY); // Cor de texto suave
+        lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        lblCopyright.setForeground(Color.GRAY);
         bottomPanel.add(lblCopyright);
         bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
         return bottomPanel;

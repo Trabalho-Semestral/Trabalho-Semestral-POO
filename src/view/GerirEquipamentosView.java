@@ -102,14 +102,16 @@ public class GerirEquipamentosView extends JPanel {
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
         lblFoto.setFont(UITheme.FONT_SUBHEADING);
 
+
         // Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
+        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");  // antes era secondary
+        btnCadastrar = UITheme.createSuccessButton("Cadastrar");        // antes era success
         btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");
+        btnRemover = UITheme.createDangerButton("Remover");            // antes era danger
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+
 
         // Tabela
         String[] colunas = {"ID", "Tipo", "Marca", "Preço", "Qtd.", "Estado"};
@@ -117,7 +119,7 @@ public class GerirEquipamentosView extends JPanel {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaEquipamentos = new JTable(modeloTabela);
-        UITheme.applyTableStyle(tabelaEquipamentos);
+       // UITheme.applyTableStyle(tabelaEquipamentos);
     }
 
     private void styleTextField(JComponent component, String title) {
