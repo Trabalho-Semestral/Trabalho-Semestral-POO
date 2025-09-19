@@ -86,8 +86,11 @@ public class RelatoriosVendasView extends JPanel {
         
         // Botões com tema personalizado
         btnGerarRelatorio = UITheme.createPrimaryButton("📊 Gerar Relatório");
+        btnGerarRelatorio.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnExportarPDF = UITheme.createSecondaryButton("📄 Exportar PDF");
+        btnExportarPDF.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnLimparFiltros = UITheme.createSecondaryButton("🗑️ Limpar Filtros");
+        btnLimparFiltros.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         
