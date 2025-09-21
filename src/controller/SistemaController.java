@@ -214,7 +214,7 @@ public class SistemaController {
             case "Gestor":
                 return ((Gestor) usuarioLogado).podeGerirOperacoes();
             case "Vendedor":
-                return false; // Vendedores têm acesso limitado
+                return false;
             default:
                 return false;
         }
@@ -231,7 +231,7 @@ public class SistemaController {
             case "Administrador":
                 return true;
             case "Gestor":
-                return ((Gestor) usuarioLogado).podeConfigurarSistema(); // false
+                return ((Gestor) usuarioLogado).podeConfigurarSistema();
             case "Vendedor":
                 return false;
             default:
@@ -251,13 +251,13 @@ public class SistemaController {
             case "Gestor":
                 return true;
             case "Vendedor":
-                return true; // Vendedores podem ver relatórios limitados
+                return true;
             default:
                 return false;
         }
     }
 
-    // ========== MÉTODOS EXISTENTES (sem alteração) ==========
+    // ========== MÉTODOS EXISTENTES ==========
 
     /**
      * Adiciona um equipamento à lista.
