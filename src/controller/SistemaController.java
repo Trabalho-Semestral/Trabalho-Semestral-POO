@@ -18,7 +18,7 @@ public class SistemaController {
 
     // Listas para simular base de dados
     private List<Administrador> administradores;
-    private List<Gestor> gestores; // ✅ Nova lista para gestores
+    private List<Gestor> gestores;
     private List<Vendedor> vendedores;
     private List<Cliente> clientes;
     private List<Equipamento> equipamentos;
@@ -41,7 +41,7 @@ public class SistemaController {
      */
     private void inicializarDados() {
         administradores = new ArrayList<>();
-        gestores = new ArrayList<>(); // ✅ Inicializar lista de gestores
+        gestores = new ArrayList<>();
         vendedores = new ArrayList<>();
         clientes = new ArrayList<>();
         equipamentos = new ArrayList<>();
@@ -88,14 +88,14 @@ public class SistemaController {
     private void criarEquipamentosDemonstracao() {
         // Computador
         Computador comp1 = new Computador("Dell", 45000.0, 5,
-                Equipamento.EstadoEquipamento.NOVO, "/images/dell_laptop.jpg",
+                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\93b4613e-2f3b-4079-b903-7cc3241694ef.jpg",
                 "Intel i7", "16GB", "512GB SSD", "NVIDIA GTX 1650");
         comp1.setId(GeradorID.gerarID());
         equipamentos.add(comp1);
 
         // Periférico
         Periferico per1 = new Periferico("Logitech", 1500.0, 10,
-                Equipamento.EstadoEquipamento.NOVO, "/images/logitech_mouse.jpg", "Mouse");
+                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\c6eefaec-7deb-46a2-a6ab-40d995176d2e.jpg", "Mouse");
         per1.setId(GeradorID.gerarID());
         equipamentos.add(per1);
     }
@@ -104,44 +104,41 @@ public class SistemaController {
      * Autentica um usuário no sistema.
      * @param id ID do usuário
      * @param senha Senha do usuário
-     * @param tipoUsuario Tipo de usuário (Administrador, Gestor, Vendedor)
      * @return true se autenticado com sucesso, false caso contrário
      */
-    public boolean autenticarUsuario(String id, String senha, String tipoUsuario) {
-        switch (tipoUsuario) {
-            case "Administrador":
-                for (Administrador admin : administradores) {
-                    if (admin.getId().equals(id) && BCryptHasher.checkPassword(senha, admin.getSenha())) {
-                        usuarioLogado = admin;
-                        tipoUsuarioLogado = admin.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
-                        return true;
-                    }
-                }
-                break;
 
-            case "Gestor":
-                for (Gestor gestor : gestores) {
-                    if (gestor.getId().equals(id) && BCryptHasher.checkPassword(senha, gestor.getSenha())) {
-                        usuarioLogado = gestor;
-                        tipoUsuarioLogado = gestor.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
-                        return true;
-                    }
-                }
-                break;
-
-            case "Vendedor":
-                for (Vendedor vendedor : vendedores) {
-                    if (vendedor.getId().equals(id) && BCryptHasher.checkPassword(senha, vendedor.getSenha())) {
-                        usuarioLogado = vendedor;
-                        tipoUsuarioLogado = vendedor.getTipoUsuario().getDescricao(); // ✅ Usar getTipoUsuario()
-                        return true;
-                    }
-                }
-                break;
+    public String autenticarUsuario(String id, String senha) {
+        // Administrador
+        for (Administrador admin : administradores) {
+            if (admin.getId().equals(id) && BCryptHasher.checkPassword(senha, admin.getSenha())) {
+                usuarioLogado = admin;
+                tipoUsuarioLogado = admin.getTipoUsuario().getDescricao();
+                return "Administrador";
+            }
         }
 
-        return false;
+        // Gestor
+        for (Gestor gestor : gestores) {
+            if (gestor.getId().equals(id) && BCryptHasher.checkPassword(senha, gestor.getSenha())) {
+                usuarioLogado = gestor;
+                tipoUsuarioLogado = gestor.getTipoUsuario().getDescricao();
+                return "Gestor";
+            }
+        }
+
+        // Vendedor
+        for (Vendedor vendedor : vendedores) {
+            if (vendedor.getId().equals(id) && BCryptHasher.checkPassword(senha, vendedor.getSenha())) {
+                usuarioLogado = vendedor;
+                tipoUsuarioLogado = vendedor.getTipoUsuario().getDescricao();
+                return "Vendedor";
+            }
+        }
+
+        // Nenhum encontrado
+        return null;
     }
+
 
     /**
      * Faz logout do usuário atual.
@@ -217,7 +214,7 @@ public class SistemaController {
             case "Gestor":
                 return ((Gestor) usuarioLogado).podeGerirOperacoes();
             case "Vendedor":
-                return false; // Vendedores têm acesso limitado
+                return false;
             default:
                 return false;
         }
@@ -234,7 +231,7 @@ public class SistemaController {
             case "Administrador":
                 return true;
             case "Gestor":
-                return ((Gestor) usuarioLogado).podeConfigurarSistema(); // false
+                return ((Gestor) usuarioLogado).podeConfigurarSistema();
             case "Vendedor":
                 return false;
             default:
@@ -254,13 +251,13 @@ public class SistemaController {
             case "Gestor":
                 return true;
             case "Vendedor":
-                return true; // Vendedores podem ver relatórios limitados
+                return true;
             default:
                 return false;
         }
     }
 
-    // ========== MÉTODOS EXISTENTES (sem alteração) ==========
+    // ========== MÉTODOS EXISTENTES ==========
 
     /**
      * Adiciona um equipamento à lista.

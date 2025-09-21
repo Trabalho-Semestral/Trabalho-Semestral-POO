@@ -20,10 +20,11 @@ public class LoginView extends JFrame {
 
     // Componentes da interface
     private JTextField txtUsuarioId;
-    private JPasswordField txtSenha;
-    private JComboBox<String> cmbTipoUsuario;
     private JButton btnLogin;
     private JLabel lblMensagem;
+    private JPasswordField txtSenha = new JPasswordField(15);
+    private JCheckBox chkMostrarSenha = new JCheckBox("👁");
+
 
     public LoginView(SistemaController controller) {
         this.controller = controller;
@@ -34,10 +35,8 @@ public class LoginView extends JFrame {
 
     private void initComponents() {
 
-        setTitle("Sistema de Venda de Equipamentos Informáticos - Login");
-        setIconImage(new ImageIcon("C:\\Users\\TECNOCONTROL\\Desktop\\TECHNAE.png").getImage());
-
-        setTitle("💻 Sistema de Venda de Equipamentos Informáticos - Login");
+        setTitle("💻 Sistema de Venda de Equipamentos Informáticos");
+        setIconImage(new ImageIcon("C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\TECHNAE.jpg").getImage());
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(870, 500);
@@ -46,7 +45,6 @@ public class LoginView extends JFrame {
 
         getContentPane().setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Campos com tema e tamanho ajustado
         txtUsuarioId = UITheme.createStyledTextField();
         txtUsuarioId.setPreferredSize(new Dimension(250, 35));
         txtUsuarioId.setMinimumSize(new Dimension(200, 30));
@@ -54,10 +52,6 @@ public class LoginView extends JFrame {
         txtSenha = UITheme.createStyledPasswordField();
         txtSenha.setPreferredSize(new Dimension(250, 35));
         txtSenha.setMinimumSize(new Dimension(200, 30));
-
-        cmbTipoUsuario = UITheme.createStyledComboBox(new String[]{"Administrador", "Gestor", "Vendedor"});
-        cmbTipoUsuario.setPreferredSize(new Dimension(250, 35));
-        cmbTipoUsuario.setMinimumSize(new Dimension(200, 30));
 
         btnLogin = UITheme.createPrimaryButton("Entrar");
 
@@ -68,109 +62,102 @@ public class LoginView extends JFrame {
     }
 
     private void setupLayout() {
+        // Layout principal
         setLayout(new BorderLayout());
 
-        // Painel principal
-        JPanel mainPanel = UITheme.createCardPanel();
-        mainPanel.setLayout(new GridBagLayout());
+        // Painel do logotipo
+        JPanel logoPanel = new JPanel(new BorderLayout());
+        logoPanel.setBackground(UITheme.BACKGROUND_COLOR);
+
+        ImageIcon logoIcon = new ImageIcon("C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\TECHNAE.jpg");
+        int logoWidth = getWidth() / 2;
+        int logoHeight = getHeight();
+        Image logoImage = logoIcon.getImage().getScaledInstance(logoWidth, logoHeight, Image.SCALE_SMOOTH);
+        logoIcon = new ImageIcon(logoImage);
+
+        JLabel lblLogo = new JLabel(logoIcon);
+        lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
+        lblLogo.setVerticalAlignment(SwingConstants.CENTER);
+        logoPanel.add(lblLogo, BorderLayout.CENTER);
+
+        // Painel do formulário
+        JPanel formPanel = UITheme.createCardPanel();
+        formPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // Logo
-        //JLabel lblLogo = new JLabel(""C:\Users\TECNOCONTROL\Desktop\TECHNAE.png"");
-        JLabel lblLogo = new JLabel(new ImageIcon("C:/Users/TECNOCONTROL/Desktop/TECHNAE.png"));
-
-        lblLogo = new JLabel("🖥️");
-
-        lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
-        lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 10, 10, 10);
-        mainPanel.add(lblLogo, gbc);
-
         // Título
-
-        JLabel lblTitulo = UITheme.createTitleLabel("SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS - LOGIN");
-
-        lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
-
+        JLabel lblTitulo = UITheme.createTitleLabel("💻 Sistema de Vendas");
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 24));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
-        gbc.insets = new Insets(0, 10, 5, 10);
-        mainPanel.add(lblTitulo, gbc);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        gbc.insets = new Insets(0, 10, 10, 10);
+        formPanel.add(lblTitulo, gbc);
 
         // Subtítulo
         JLabel lblSubtitulo = UITheme.createBodyLabel("Equipamentos Informáticos");
         lblSubtitulo.setHorizontalAlignment(SwingConstants.CENTER);
         lblSubtitulo.setForeground(UITheme.TEXT_SECONDARY);
-        gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
-        gbc.insets = new Insets(0, 10, 30, 10);
-        mainPanel.add(lblSubtitulo, gbc);
+        gbc.gridy = 1;
+        formPanel.add(lblSubtitulo, gbc);
 
-        // ID do Utilizador
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 0;
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.gridx = 0; gbc.gridy = 3;
-        JLabel lblUsuario = UITheme.createBodyLabel("Usuario");
+        // Usuário
+        gbc.gridwidth = 1; gbc.anchor = GridBagConstraints.EAST; gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0; gbc.gridy = 2;
+        JLabel lblUsuario = UITheme.createBodyLabel("Usuário");
         lblUsuario.setFont(new Font("Calibri", Font.BOLD, 20));
-        mainPanel.add(lblUsuario, gbc);
+        formPanel.add(lblUsuario, gbc);
 
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.gridx = 1; gbc.gridy = 3;
-        mainPanel.add(txtUsuarioId, gbc);
+        gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        gbc.gridx = 1;
+        formPanel.add(txtUsuarioId, gbc);
 
-        // Senha
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 0;
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.anchor = GridBagConstraints.EAST; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
+        gbc.gridx = 0; gbc.gridy = 3;
         JLabel lblSenha = UITheme.createBodyLabel("Senha");
         lblSenha.setFont(new Font("Calibri", Font.BOLD, 20));
-        mainPanel.add(lblSenha, gbc);
+        formPanel.add(lblSenha, gbc);
+        JPanel senhaPanel = new JPanel(new BorderLayout());
+        senhaPanel.setOpaque(false);
+        senhaPanel.setPreferredSize(new Dimension(250, 35));
+        senhaPanel.setMinimumSize(new Dimension(250, 35));
 
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.gridx = 1; gbc.gridy = 4;
-        mainPanel.add(txtSenha, gbc);
+        txtSenha.setPreferredSize(new Dimension(250, 35));
+        txtSenha.setMinimumSize(new Dimension(250, 35));
+        senhaPanel.add(txtSenha, BorderLayout.CENTER);
 
-        // Tipo de Utilizador
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 0;
-        gbc.gridx = 0; gbc.gridy = 5;
-        JLabel lblTipo = UITheme.createBodyLabel("Tipo ");
-        lblTipo.setFont(new Font("Calibri", Font.BOLD, 20));
-        mainPanel.add(lblTipo, gbc);
+        JLabel lblVisualizar = new JLabel("👁");
+        lblVisualizar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lblVisualizar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        lblVisualizar.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        senhaPanel.add(lblVisualizar, BorderLayout.EAST);
 
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.gridx = 1; gbc.gridy = 5;
-        mainPanel.add(cmbTipoUsuario, gbc);
+        // Ação do olho
+        lblVisualizar.addMouseListener(new java.awt.event.MouseAdapter() {
+            private boolean visivel = false;
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                visivel = !visivel;
+                if (visivel) {
+                    txtSenha.setEchoChar((char) 0);
+                } else {
+                    txtSenha.setEchoChar('•');
+                }
+            }
+        });
 
-        // Botão Login
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(30, 10, 10, 10);
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
-        mainPanel.add(btnLogin, gbc);
+        gbc.anchor = GridBagConstraints.WEST; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
+        gbc.gridx = 1;
+        formPanel.add(senhaPanel, gbc);
 
-        // Mensagem
+        // Botão
+        gbc.anchor = GridBagConstraints.CENTER; gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2; gbc.insets = new Insets(30, 10, 10, 10);
+        formPanel.add(btnLogin, gbc);
         gbc.insets = new Insets(10, 10, 20, 10);
-        gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 2;
-        mainPanel.add(lblMensagem, gbc);
-
-        // Centralizar
-        JPanel containerPanel = new JPanel(new GridBagLayout());
-        containerPanel.setBackground(UITheme.BACKGROUND_COLOR);
-        containerPanel.add(mainPanel);
-
-        add(containerPanel, BorderLayout.CENTER);
+        gbc.gridy = 6;
+        formPanel.add(lblMensagem, gbc);
+        add(logoPanel, BorderLayout.WEST);
+        add(formPanel, BorderLayout.CENTER);
 
         // Rodapé
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -199,11 +186,9 @@ public class LoginView extends JFrame {
             }
         });
     }
-
     private void realizarLogin() {
         String usuarioId = txtUsuarioId.getText().trim();
         String senha = new String(txtSenha.getPassword());
-        String tipoUsuario = (String) cmbTipoUsuario.getSelectedItem();
 
         if (usuarioId.isEmpty()) {
             lblMensagem.setText("Por favor, digite o ID do utilizador.");
@@ -213,12 +198,10 @@ public class LoginView extends JFrame {
             lblMensagem.setText("Por favor, digite a senha.");
             return;
         }
-        if (tipoUsuario == null) {
-            lblMensagem.setText("Por favor, selecione o tipo de utilizador.");
-            return;
-        }
 
-        if (controller.autenticarUsuario(usuarioId, senha, tipoUsuario)) {
+        String tipoUsuario = controller.autenticarUsuario(usuarioId, senha);
+
+        if (tipoUsuario != null) {
             lblMensagem.setText("Login realizado com sucesso!");
             lblMensagem.setForeground(UITheme.SUCCESS_COLOR);
             SwingUtilities.invokeLater(() -> abrirTelaPrincipal(tipoUsuario));
@@ -226,22 +209,16 @@ public class LoginView extends JFrame {
             lblMensagem.setText("Credenciais inválidas. Tente novamente.");
             lblMensagem.setForeground(UITheme.ACCENT_COLOR);
         }
-
     }
+
+
 
     private void abrirTelaPrincipal(String tipoUsuario) {
         try {
-            // 1. Crie uma única instância da MainView para todos os utilizadores.
             MainView mainView = new MainView(controller, tipoUsuario);
-
-            // 2. Defina o CardLayoutManager no controlador. Este passo é essencial!
             controller.setCardLayoutManager(mainView.getCardLayoutManager());
-
-            // 3. Adicione e mostre o painel de menu correto dentro da MainView.
             switch (tipoUsuario) {
                 case "Administrador":
-                    // A MainView provavelmente já lida com a exibição inicial para o Administrador,
-                    // então apenas garantir que ela seja visível é suficiente.
                     break;
                 case "Gestor":
                     MenuGestorView gestorView = new MenuGestorView(controller, (Gestor) controller.getUsuarioLogado());
@@ -254,8 +231,6 @@ public class LoginView extends JFrame {
                     mainView.getCardLayoutManager().showPanel("MenuVendedor");
                     break;
             }
-
-            // 4. Torne a MainView visível e feche a janela de login.
             mainView.setVisible(true);
             this.dispose();
 
