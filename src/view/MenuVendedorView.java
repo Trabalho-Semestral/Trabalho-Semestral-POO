@@ -30,7 +30,7 @@ public class MenuVendedorView extends JPanel {
         setBackground(UITheme.BACKGROUND_COLOR);
 
         // Botão toggle sidebar
-        btnToggleSidebar = new JButton("☰");
+        btnToggleSidebar = new JButton("'☰'");
         btnToggleSidebar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         btnToggleSidebar.setFocusPainted(false);
         btnToggleSidebar.setBorderPainted(false);
@@ -48,6 +48,7 @@ public class MenuVendedorView extends JPanel {
 
         JLabel lblMenuTitulo = UITheme.createSubtitleLabel("👤 PAINEL VENDEDOR");
         lblMenuTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblMenuTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
         lblMenuTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblMenuTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         sidebarPanel.add(lblMenuTitulo);
@@ -79,6 +80,7 @@ public class MenuVendedorView extends JPanel {
 
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Sistema de Venda de Equipamentos Informáticos");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
+         lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBarPanel.add(lblTitulo, BorderLayout.CENTER);
 
@@ -86,6 +88,7 @@ public class MenuVendedorView extends JPanel {
         userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         JLabel lblUserInfo = UITheme.createBodyLabel("👤 " + vendedorLogado.getNome() + " (Vendedor)");
         lblUserInfo.setForeground(UITheme.TEXT_WHITE);
+        lblUserInfo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
         userInfoPanel.add(lblUserInfo);
         topBarPanel.add(userInfoPanel, BorderLayout.EAST);
 
@@ -104,6 +107,7 @@ public class MenuVendedorView extends JPanel {
 
         JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel do Vendedor");
         lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
+        lblWelcome.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
