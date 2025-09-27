@@ -150,6 +150,7 @@ public class GerirClientesView extends JPanel {
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("👤 Gestão de Clientes");
         lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
