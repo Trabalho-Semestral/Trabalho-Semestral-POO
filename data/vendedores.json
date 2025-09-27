@@ -1,0 +1,28 @@
+[
+  {
+    "codigoFuncionario": "VENO9TE",
+    "fotoPath": null,
+    "salario": 25000.0,
+    "dataContratacao": "Sep 25, 2025, 5:45:15 PM",
+    "senha": "/mpdw5P2LeNC9kQ6OVQH1UCnupFP8ZqNKIcX4l5IER9olBY86b/JYc+ywEey+0a7",
+    "tipoUsuario": "VENDEDOR",
+    "id": "VEN1",
+    "nome": "João Vendedor",
+    "nrBI": "987654321098B",
+    "nuit": "987654321",
+    "telefone": "+258987654321"
+  },
+  {
+    "codigoFuncionario": "VENI56Q",
+    "fotoPath": null,
+    "salario": 25000.0,
+    "dataContratacao": "Sep 25, 2025, 6:01:47 PM",
+    "senha": "ZS9kLYf5An6LTF1ew8gh50jBU4N/AL74wu2j0sY3KrE0YxM7LbeJedsiq6CLVUFS",
+    "tipoUsuario": "VENDEDOR",
+    "id": "VEN1",
+    "nome": "João Vendedor",
+    "nrBI": "987654321098B",
+    "nuit": "987654321",
+    "telefone": "+258987654321"
+  }
+]

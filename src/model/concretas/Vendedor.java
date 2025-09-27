@@ -74,7 +74,7 @@ public class Vendedor extends Funcionario {
                 ", nuit='" + nuit + '\'' +
                 ", telefone='" + telefone + '\'' +
                 ", salario=" + salario +
-                ", tipoUsuario=" + tipoUsuario + // ✅ Incluir tipo de usuário
+                ", tipoUsuario=" + tipoUsuario +
                 ", dataContratacao=" + dataContratacao +
                 ", codigoFuncionario='" + codigoFuncionario + '\'' +
                 '}';

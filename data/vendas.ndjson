@@ -1,0 +1,18 @@
+{
+  "idVenda": "VNDPKKT",
+  "dataMillis": 1758821766523,
+  "vendedorId": "VEN1",
+  "clienteId": "CLI1",
+  "itens": [
+    {
+      "equipamentoId": "T2JW",
+      "quantidade": 1,
+      "precoUnitario": 45000.0
+    }
+  ],
+  "desconto": 0,
+  "imposto": 0,
+  "total": 45000.0
+}
+{"idVenda":"VNDYE5Q","dataMillis":1758822192961,"vendedorId":"VEN1","clienteId":"CLI1","itens":[{"equipamentoId":"T2JW","quantidade":1,"precoUnitario":45000.0}],"desconto":0,"imposto":0,"total":45000.0}
+{"idVenda":"VND37V9","dataMillis":1758825269074,"vendedorId":"VEN1","clienteId":"VEHL","itens":[{"equipamentoId":"O8VZ","quantidade":2,"precoUnitario":1500.0}],"desconto":100,"imposto":10,"total":2910.0}

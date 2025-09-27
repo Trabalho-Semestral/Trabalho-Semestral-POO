@@ -1,0 +1,15 @@
+[
+  {
+    "departamento": "OPERACIONAL",
+    "fotoPath": null,
+    "salario": 35000.0,
+    "dataContratacao": "Sep 25, 2025, 6:01:47 PM",
+    "senha": "HdDnpVTKc0vaDyNLaRuEcIbi2xNr9qbl9M8rUChmTmxqHsZDesv5rUA7NK0ihWhq",
+    "tipoUsuario": "GESTOR",
+    "id": "GEST1",
+    "nome": "Carlos Gestor",
+    "nrBI": "555666777888D",
+    "nuit": "555666777",
+    "telefone": "+258555666777"
+  }
+]
