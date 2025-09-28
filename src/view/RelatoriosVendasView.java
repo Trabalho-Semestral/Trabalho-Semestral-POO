@@ -156,6 +156,7 @@ public class RelatoriosVendasView extends JPanel {
 
         JLabel lblTitulo = UITheme.createHeadingLabel("📊 Relatórios de Vendas");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblTitulo.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.BOLD, 18));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
         topPanel.add(lblTitulo, BorderLayout.CENTER);
 
