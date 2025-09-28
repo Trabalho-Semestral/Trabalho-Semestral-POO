@@ -110,7 +110,8 @@ public class GerirEquipamentosView extends JPanel {
         btnEditar = UITheme.createPrimaryButton("Editar");
         btnRemover = UITheme.createDangerButton("Remover");            // antes era danger
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
+        btnVoltar.setFont(emojiFont);
 
 
         // Tabela
