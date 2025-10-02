@@ -3,23 +3,15 @@
     "type": "Computador",
     "processador": "Intel i7",
     "memoriaRAM": "16GB",
-    "armazenamento": "512GB SSD",
-    "placaGrafica": "NVIDIA GTX 1650",
-    "id": "T2JW",
-    "marca": "Dell",
-    "preco": 45000.0,
-    "quantidadeEstoque": 0,
+    "armazenamento": "500GB SSD",
+    "placaGrafica": "Intel HP",
+    "id": "TU60",
+    "marca": "DELL",
+    "preco": 25000.0,
+    "quantidadeEstoque": 9,
+    "reservado": 0,
+    "disponivel": 0,
     "estado": "NOVO",
-    "fotoPath": "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\93b4613e-2f3b-4079-b903-7cc3241694ef.jpg"
-  },
-  {
-    "type": "Periferico",
-    "tipo": "Mouse",
-    "id": "O8VZ",
-    "marca": "Logitech",
-    "preco": 1500.0,
-    "quantidadeEstoque": 0,
-    "estado": "NOVO",
-    "fotoPath": "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\c6eefaec-7deb-46a2-a6ab-40d995176d2e.jpg"
+    "fotoPath": "resources\\fotos\\equipamentos\\e62dd847-f073-4cb3-b6e8-c29bdccd01a0.jpg"
   }
 ]

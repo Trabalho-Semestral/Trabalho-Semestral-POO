@@ -1,22 +1,19 @@
 package controller;
 
 import model.abstractas.Equipamento;
+import persistence.*;
+import service.ReservaService;
 import util.BCryptHasher;
 import util.GeradorID;
 import view.CardLayoutManager;
 import model.concretas.*;
-
-import persistence.EquipamentoRepository;
-import persistence.ClienteRepository;
-import persistence.VendedorRepository;
-import persistence.VendaFileRepository;
+import persistence.ReservaFileRepository;
 import service.RelatorioVendasService;
-
 import persistence.dto.VendaDTO;
-import persistence.GestorRepository;
-import persistence.AdministradorRepository;
-import java.util.ArrayList;
+
+import javax.swing.*;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Controlador principal do sistema.
@@ -24,8 +21,7 @@ import java.util.List;
  */
 public class SistemaController {
 
-     List<Reserva> reservas;
-    private final EquipamentoRepository equipamentoRepo = new EquipamentoRepository("data\\equipamentos.json");
+    private final EquipamentoFileRepository equipamentoRepo = new EquipamentoFileRepository("data\\equipamentos.json");
     private final ClienteRepository clienteRepo = new ClienteRepository("data\\clientes.json");
     private final VendedorRepository vendedorRepo = new VendedorRepository("data\\vendedores.json");
     private final VendaFileRepository vendaRepo = new VendaFileRepository("data");
@@ -34,8 +30,16 @@ public class SistemaController {
     private final RelatorioVendasService relatorioService = new RelatorioVendasService(vendaRepo); private Object usuarioLogado;
     private String tipoUsuarioLogado;
     private CardLayoutManager cardLayoutManager;
+    private final ReservaFileRepository reservaRepo;
+    private final ReservaService reservaService;
+
+
+
 
     public SistemaController() {
+        reservaRepo = new ReservaFileRepository("data");
+        try { reservaRepo.init(); } catch (Exception e) { e.printStackTrace(); }
+        reservaService = new ReservaService(reservaRepo, equipamentoRepo);
         inicializarDados();
     }
 
@@ -72,7 +76,7 @@ public class SistemaController {
         );
         admin.setId("ADMIN");
         administradorRepo.add(admin);
-
+/*
         // Gestor demo
         Gestor gestor = new Gestor(
                 "Carlos Gestor", "555666777888D",
@@ -98,12 +102,13 @@ public class SistemaController {
                 "Rua das Flores, 123", "maria@email.com"
         );
         cliente.setId("CLI1");
-        clienteRepo.add(cliente);
+        clienteRepo.add(cliente);*/
     }
 
     /**
      * Cria equipamentos de demonstração.
      */
+/*
 
     private void criarEquipamentosDemonstracaoPersistindo() throws Exception {
         Computador comp1 = new Computador("Dell", 45000.0, 5,
@@ -118,6 +123,7 @@ public class SistemaController {
         equipamentoRepo.add(comp1);
         equipamentoRepo.add(per1);
     }
+*/
 
     /**
      * Autentica um usuário no sistema.
@@ -202,7 +208,7 @@ public class SistemaController {
         try { gestorRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    // ✅ ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
+    //  ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
 
     /**
      * Verifica se o usuário logado tem permissão para gerir operações.
@@ -261,8 +267,6 @@ public class SistemaController {
     }
 
     // ========== MÉTODOS EXISTENTES ==========
-
-
     public boolean adicionarEquipamento(Equipamento equipamento) {
         if (equipamento != null && equipamento.validarDados()) {
             equipamento.setId(GeradorID.gerarID());
@@ -330,7 +334,6 @@ public class SistemaController {
     public boolean registrarVenda(Venda venda) {
         if (venda == null || !venda.validarDados()) return false;
         try {
-            // 1) Garante um id (se o construtor não tiver gerado)
             if (venda.getIdVenda() == null || venda.getIdVenda().isBlank()) {
                 venda.setIdVenda("VND" + GeradorID.gerarID());
             }
@@ -344,33 +347,6 @@ public class SistemaController {
         }
     }
 
-    public boolean adicionarReserva(Reserva reserva) {
-        if (reserva != null && reserva.getEquipamento().getQuantidadeEstoque() >= reserva.getQuantidade()) {
-            reservas.add(reserva);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removerReserva(Reserva reserva) {
-        return reservas.remove(reserva);
-    }
-
-    public boolean atualizarReserva(Reserva reservaAntiga, Reserva reservaNova) {
-        int index = reservas.indexOf(reservaAntiga);
-        if (index >= 0) {
-            reservas.set(index, reservaNova);
-            return true;
-        }
-        return false;
-    }
-
-    public List<Reserva> getReservasPorCliente(Cliente cliente) {
-        return reservas.stream()
-                .filter(r -> r.getCliente().getId().equals(cliente.getId()) &&
-                        r.getStatus() == Reserva.StatusReserva.ATIVA)
-                .collect(java.util.stream.Collectors.toList());
-    }
     public java.util.Map<String, java.math.BigDecimal> totalPorDia(java.util.Date inicio, java.util.Date fim) throws java.io.IOException {
         return relatorioService.totalPorDia(inicio, fim);
     }
@@ -388,9 +364,6 @@ public class SistemaController {
         return tipoUsuarioLogado;
     }
 
-    public List<Reserva> getReservas() {
-        return reservas;
-    }
 
     public CardLayoutManager getCardLayoutManager() {
         return cardLayoutManager;
@@ -409,4 +382,146 @@ public class SistemaController {
     public void setCardLayoutManager(CardLayoutManager cardLayoutManager) {
         this.cardLayoutManager = cardLayoutManager;
     }
+    // ================== MÉTODOS DE RESERVAS ==================
+
+
+    public Reserva criarReserva(Reserva r) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            return reservaService.criar(r);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao criar reserva: " + e.getMessage(), e);
+        }
+    }
+
+    public void cancelarReserva(String idReserva) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            reservaService.cancelar(idReserva);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao cancelar reserva: " + e.getMessage(), e);
+        }
+    }
+
+
+    public Reserva atualizarReserva(Reserva r) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        return reservaService.atualizar(r);
+    }
+
+
+    public void salvarReserva(Reserva reserva) {
+        if (reserva == null) return;
+
+        System.out.println("=== SALVAR RESERVA ===");
+        System.out.println("ID Reserva: " + reserva.getIdReserva());
+        System.out.println("Cliente: " + (reserva.getCliente() != null ? reserva.getCliente().getNome() : "NULL"));
+        System.out.println("Itens: " + (reserva.getItens() != null ? reserva.getItens().size() : 0));
+
+        try {
+            if (reserva.getIdReserva() == null || reserva.getIdReserva().isBlank()) {
+                System.out.println("CRIANDO nova reserva...");
+                criarReserva(reserva);
+            } else {
+                // VERIFICAR se a reserva existe antes de atualizar
+                Reserva existente = buscarReservaPorId(reserva.getIdReserva());
+                if (existente != null) {
+                    System.out.println("ATUALIZANDO reserva existente: " + reserva.getIdReserva());
+                    atualizarReserva(reserva);
+                } else {
+                    System.out.println("Reserva não encontrada, CRIANDO nova: " + reserva.getIdReserva());
+                    criarReserva(reserva);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar reserva: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Falha ao salvar reserva: " + e.getMessage(), e);
+        }
+    }
+    public Vendedor getVendedorLogado() {
+        if (usuarioLogado instanceof Vendedor) {
+            return (Vendedor) usuarioLogado;
+        }
+        return null;
+    }
+    public boolean removerReserva(String idReserva) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            reservaRepo.remover(idReserva);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public void corrigirDadosEquipamentos() {
+        try {
+            List<Equipamento> equipamentos = equipamentoRepo.findAll();
+            for (Equipamento eq : equipamentos) {
+                if (eq.getDisponivel() < 0 || eq.getDisponivel() > eq.getQuantidadeEstoque()) {
+                    eq.setReservado(Math.max(0, eq.getQuantidadeEstoque() - eq.getDisponivel()));
+                    equipamentoRepo.upsert(eq);
+                }
+            }
+            JOptionPane.showMessageDialog(null, "Dados dos equipamentos corrigidos!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Erro ao corrigir dados: " + e.getMessage());
+        }
+    }
+    public List<Reserva> getReservas() {
+        List<Reserva> reservas = reservaRepo.listarTodas();
+
+        for (Reserva r : reservas) {
+            System.out.println("Reserva: ID=" + r.getIdReserva() +
+                    ", Cliente=" + (r.getCliente() != null ? r.getCliente().getNome() : "NULL") +
+                    ", Status=" + r.getStatus());
+        }
+
+        return reservas;
+    }
+
+    public boolean registrarReserva(Reserva r) {
+        if (!podeGerirReservas()) return false;
+        try {
+            reservaService.criar(r);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Reserva buscarReservaPorId(String idReserva) {
+        return getReservas().stream()
+                .filter(r -> r.getIdReserva().equals(idReserva))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean podeGerirReservas() {
+        if (usuarioLogado == null || tipoUsuarioLogado == null) return false;
+        return tipoUsuarioLogado.equals("Administrador") ||
+                tipoUsuarioLogado.equals("Gestor") ||
+                tipoUsuarioLogado.equals("Vendedor");
+    }
+    public void verificarEquipamento(String id) {
+        Optional<Equipamento> equipamento = findEquipamentoById(id);
+        if (equipamento.isPresent()) {
+            System.out.println("Equipamento encontrado: " + equipamento.get());
+        } else {
+            System.out.println("Equipamento " + id + " não encontrado. Equipamentos disponíveis:");
+            getEquipamentos().forEach(e -> System.out.println(" - " + e.getId() + ": " + e.getMarca()));
+        }
+    }
+
+
+    public void debugReservas() {
+        ((ReservaFileRepository) reservaRepo).debugArquivoReservas();
+    }
+
+
 }

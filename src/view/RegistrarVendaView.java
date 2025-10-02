@@ -2,12 +2,8 @@ package view;
 
 import controller.SistemaController;
 import model.abstractas.Equipamento;
-import model.concretas.Cliente;
-import model.concretas.Computador;
-import model.concretas.Periferico;
-import model.concretas.ItemVenda;
-import model.concretas.Venda;
-import model.concretas.Vendedor;
+import model.concretas.*;
+import util.GeradorID;
 import util.UITheme;
 import util.Validador;
 
@@ -17,8 +13,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
 
 public class RegistrarVendaView extends JPanel {
@@ -46,6 +42,8 @@ public class RegistrarVendaView extends JPanel {
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
     private JLabel lblTotalVenda;
+    private boolean modoReserva;
+
 
     // --- BOTÕES DE AÇÃO ---
     private JButton btnRemoverItem, btnFinalizarVenda, btnLimparVenda, btnVoltar;
@@ -57,10 +55,36 @@ public class RegistrarVendaView extends JPanel {
     public RegistrarVendaView(SistemaController controller, Vendedor vendedorLogado) {
         this.controller = controller;
         this.vendedorLogado = vendedorLogado;
+        this.modoReserva = false;
         initComponents();
         setupLayout();
         setupEvents();
         carregarDadosIniciais();
+    }
+    public static RegistrarVendaView criarParaReserva(SistemaController controller) {
+        Object usuarioLogado = controller.getUsuarioLogado();
+        if (!(usuarioLogado instanceof Vendedor)) {
+            throw new IllegalStateException("Apenas vendedores podem criar reservas");
+        }
+        Vendedor vendedor = (Vendedor) usuarioLogado;
+        RegistrarVendaView view = new RegistrarVendaView(controller, vendedor);
+        view.modoReserva = true;
+        view.btnFinalizarVenda.setText("Salvar Reserva");
+        return view;
+    }
+
+    public static RegistrarVendaView criarParaVenda(SistemaController controller) {
+
+        Object usuarioLogado = controller.getUsuarioLogado();
+        if (!(usuarioLogado instanceof Vendedor)) {
+            throw new IllegalStateException("Apenas vendedores podem registrar vendas");
+        }
+
+        Vendedor vendedor = (Vendedor) usuarioLogado;
+        RegistrarVendaView view = new RegistrarVendaView(controller, vendedor);
+        view.modoReserva = false;
+        view.btnFinalizarVenda.setText("✅ Finalizar Venda");
+        return view;
     }
 
     private void initComponents() {
@@ -138,7 +162,7 @@ public class RegistrarVendaView extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaItensVenda = new JTable(modeloTabelaItens);
-       // UITheme.applyTableStyle(tabelaItensVenda);
+        // UITheme.applyTableStyle(tabelaItensVenda);
 
         lblTotalVenda = UITheme.createTitleLabel("TOTAL: 0,00 MT");
         lblTotalVenda.setForeground(UITheme.SUCCESS_COLOR);
@@ -262,26 +286,37 @@ public class RegistrarVendaView extends JPanel {
         btnAdicionarItem.addActionListener(e -> adicionarItemAoCarrinho());
         btnRemoverItem.addActionListener(e -> removerItemDoCarrinho());
         btnLimparVenda.addActionListener(e -> limparVenda());
-        btnFinalizarVenda.addActionListener(e -> finalizarVenda());
+        btnFinalizarVenda.addActionListener(e -> {
+            if (modoReserva) {
+                finalizarReserva();
+            } else {
+                finalizarVenda();
+            }
+        });
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-    }
 
+    }
     private void carregarDadosIniciais() {
+        cmbCliente.removeAllItems();
         controller.getClientes().forEach(cmbCliente::addItem);
+
         modeloTabelaEquipamentos.setRowCount(0);
         for(Equipamento eq : controller.getEquipamentos()) {
-            if (eq.getQuantidadeEstoque() > 0) {
-                modeloTabelaEquipamentos.addRow(new Object[]{
-                        eq.getMarca(),
-                        eq instanceof Computador ? "Computador" : "Periférico",
-                        String.format("%.2f MT", eq.getPreco()),
-                        eq.getQuantidadeEstoque()
-                });
+            if (eq != null && eq.getId() != null) {
+                int disponivelReal = eq.getQuantidadeEstoque() - eq.getReservado();
+                if (disponivelReal > 0) {
+                    modeloTabelaEquipamentos.addRow(new Object[]{
+                            eq.getMarca(),
+                            eq instanceof Computador ? "Computador" : "Periférico",
+                            String.format("%.2f MT", eq.getPreco()),
+                            disponivelReal  // Mostrar disponibilidade real
+                    });
+                }
             }
         }
+
         toggleClienteFields(false);
     }
-
     private void toggleClienteFields(boolean isBalcao) {
         if (isBalcao) {
             cardLayoutCliente.show(painelCamposCliente, "BALCAO");
@@ -440,8 +475,6 @@ public class RegistrarVendaView extends JPanel {
                 return;
             }
         }
-
-        // Aplica desconto/imposto
         try {
             if (txtDesconto != null && !txtDesconto.getText().isBlank()) {
                 BigDecimal desc = new BigDecimal(txtDesconto.getText().trim().replace(',', '.'));
@@ -516,9 +549,184 @@ public class RegistrarVendaView extends JPanel {
                 total = total.add(imp);
             }
         } catch (NumberFormatException ex) {
-            // Se inválido, ignoramos aqui; a validação mais forte acontece ao finalizar.
+
+
         }
         return total.max(BigDecimal.ZERO);
+    }
+
+    private BigDecimal getTotalVenda() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (ItemVenda item : itensVenda) {
+            total = total.add(item.getSubtotal());
+        }
+        return aplicarDescontoEImpostoSeExistirem(total);
+    }
+
+    private void finalizarReserva() {
+        System.out.println("=== FINALIZAR RESERVA INICIADO ===");
+
+        if (itensVenda.isEmpty()) {
+            System.out.println("❌ Carrinho vazio");
+            JOptionPane.showMessageDialog(this, "O carrinho está vazio.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        System.out.println("Itens no carrinho: " + itensVenda.size());
+
+        Cliente cliente = getClienteDaVenda();
+        if (cliente == null) {
+            System.out.println("❌ Cliente não selecionado");
+            return;
+        }
+
+        System.out.println("Cliente selecionado: " + cliente.getNome());
+
+        try {
+            // Criar objeto Reserva
+            Reserva reserva = new Reserva();
+            System.out.println("Nova reserva criada (ID inicial: " + reserva.getIdReserva() + ")");
+
+            reserva.setCliente(cliente);
+            reserva.setVendedor(vendedorLogado);
+            reserva.setDataReserva(new Date());
+            System.out.println("Dados básicos definidos");
+
+            // Calcular data de expiração (7 dias)
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_MONTH, 7);
+            reserva.setExpiraEm(cal.getTime());
+            System.out.println("Data de expiração definida: " + reserva.getExpiraEm());
+
+            // Converter itens
+            List<ItemReserva> itensReserva = new ArrayList<>();
+            System.out.println("Convertendo " + itensVenda.size() + " itens...");
+
+            for (ItemVenda itemVenda : itensVenda) {
+                String equipamentoId = itemVenda.getEquipamento().getId();
+                System.out.println("Processando equipamento: " + equipamentoId + ", Qtd: " + itemVenda.getQuantidade());
+
+                Optional<Equipamento> equipamentoOpt = controller.findEquipamentoById(equipamentoId);
+
+                if (equipamentoOpt.isEmpty()) {
+                    System.err.println("❌ Equipamento não encontrado: " + equipamentoId);
+                    JOptionPane.showMessageDialog(this,
+                            "Equipamento não encontrado: " + equipamentoId,
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                Equipamento equipamentoAtual = equipamentoOpt.get();
+                System.out.println("Equipamento encontrado: " + equipamentoAtual.getMarca() +
+                        " (Estoque: " + equipamentoAtual.getQuantidadeEstoque() +
+                        ", Reservado: " + equipamentoAtual.getReservado() + ")");
+
+                ItemReserva itemReserva = new ItemReserva(equipamentoAtual, itemVenda.getQuantidade());
+                itensReserva.add(itemReserva);
+                System.out.println("✅ Item convertido: " + equipamentoAtual.getMarca());
+            }
+
+            reserva.setItens(itensReserva);
+            reserva.setStatus(Reserva.StatusReserva.ATIVA);
+            System.out.println("Itens definidos: " + itensReserva.size() + ", Status: ATIVA");
+
+            BigDecimal totalFinal = getTotalVenda();
+            System.out.println("Total calculado: " + totalFinal);
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Salvar reserva para " + cliente.getNome() + "?\n" +
+                            "Total: " + String.format("%.2f MT", totalFinal) +
+                            "\nExpira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
+                            "\nItens: " + itensReserva.size(),
+                    "Confirmar Reserva", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+
+                boolean sucesso = controller.registrarReserva(reserva);
+
+                if (sucesso) {
+                    JOptionPane.showMessageDialog(this,
+                            "Reserva registrada com sucesso!\nID: " + reserva.getIdReserva(),
+                            "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparVenda();
+                    carregarDadosIniciais();
+                    voltarParaGerirReservasEAtualizar();
+
+                } else {
+                    System.err.println("❌ Falha ao salvar reserva no controller");
+                    JOptionPane.showMessageDialog(this,
+                            "Falha ao registrar a reserva.",
+                            "Erro", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ ERRO CRÍTICO ao finalizar reserva: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao registrar reserva: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+
+        System.out.println("=== FINALIZAR RESERVA CONCLUÍDO ===");
+    }
+
+    private void voltarParaGerirReservasEAtualizar() {
+        System.out.println("=== VOLTANDO PARA GERIR RESERVAS ===");
+
+        try {
+            CardLayoutManager clm = controller.getCardLayoutManager();
+
+            // Buscar a instância atual de GerirReservasView
+            GerirReservasView viewReservas = null;
+            for (java.awt.Component comp : clm.getMainPanel().getComponents()) {
+                if (comp instanceof GerirReservasView) {
+                    viewReservas = (GerirReservasView) comp;
+                    break;
+                }
+            }
+
+            if (viewReservas != null) {
+                viewReservas.carregarReservas();
+
+                // Mostrar o painel
+                clm.showPanel("GerirReservas");
+            } else {
+                voltarMenuPrincipal();
+            }
+
+        } catch (Exception e) {
+            voltarMenuPrincipal();
+        }
+        GerirReservasView.atualizarTabelaReservas();
+    }
+    public void carregarReserva(Reserva reserva) {
+        if (reserva == null) return;
+
+        limparVenda();
+
+        if (reserva.getCliente() != null) {
+            for (int i = 0; i < cmbCliente.getItemCount(); i++) {
+                Cliente c = cmbCliente.getItemAt(i);
+                if (c.getId().equals(reserva.getCliente().getId())) {
+                    cmbCliente.setSelectedIndex(i);
+                    rbClienteCorporativo.setSelected(true);
+                    toggleClienteFields(false);
+                    break;
+                }
+            }
+        }
+        if (reserva.getItens() != null) {
+            for (var itemReserva : reserva.getItens()) {
+                ItemVenda itemVenda = new ItemVenda(itemReserva.getEquipamento(), itemReserva.getQuantidade());
+                itensVenda.add(itemVenda);
+            }
+            atualizarCarrinhoETotal();
+        }
+        if (!modoReserva) {
+            btnFinalizarVenda.setText("✅ Vender");
+        }
     }
 
     private void voltarMenuPrincipal() {

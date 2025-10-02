@@ -1,29 +1,11 @@
 [
   {
-    "endereco": "Rua das Flores, 123",
-    "email": "maria@email.com",
-    "id": "CLI1",
-    "nome": "Maria Cliente",
-    "nrBI": "111222333444C",
-    "nuit": "111222333",
-    "telefone": "+258111222333"
-  },
-  {
-    "endereco": "polana Canico",
-    "email": "nelson@gmail.com",
-    "id": "885I",
-    "nome": "Nelson Wilson",
-    "nrBI": "123456789076A",
-    "nuit": "123456787",
+    "endereco": "Polana Canico",
+    "email": "tom@gmail.com",
+    "id": "O3D1",
+    "nome": "Tom Wilson",
+    "nrBI": "232134576592A",
+    "nuit": "234567898",
     "telefone": "+258866473065"
-  },
-  {
-    "endereco": "Rua das Flores, 123",
-    "email": "maria@email.com",
-    "id": "CLI1",
-    "nome": "Maria Cliente",
-    "nrBI": "111222333444C",
-    "nuit": "111222333",
-    "telefone": "+258111222333"
   }
 ]

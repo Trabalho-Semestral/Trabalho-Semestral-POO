@@ -1,3 +1,4 @@
+/*
 package view;
 
 import controller.SistemaController;
@@ -426,3 +427,4 @@ public class MenuClienteView extends JPanel {
     }
 }
 
+*/

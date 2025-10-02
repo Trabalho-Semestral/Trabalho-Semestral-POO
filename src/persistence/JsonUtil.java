@@ -17,8 +17,7 @@ import java.nio.file.StandardOpenOption;
 
 
 public class JsonUtil {
-    // Suporte a polimorfismo de Equipamento
-    private static final RuntimeTypeAdapterFactory<Equipamento> EQUIPAMENTO_RTAF =
+    static final RuntimeTypeAdapterFactory<Equipamento> EQUIPAMENTO_RTAF =
             RuntimeTypeAdapterFactory
                     .of(Equipamento.class, "type")
                     .registerSubtype(Computador.class, "Computador")
