@@ -53,7 +53,7 @@ public class MenuGestorView extends JPanel {
         lblMenuTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         sidebarPanel.add(lblMenuTitulo);
 
-        // Botões do menu com emojis
+        // Botões do menu com emojis - ADICIONADO "Gestão de Funcionários"
         sidebarPanel.add(criarBotaoMenu("👥 Gerir Vendedores", "GerirVendedores"));
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("👤 Gerir Clientes", "GerirClientes"));
@@ -65,6 +65,8 @@ public class MenuGestorView extends JPanel {
         sidebarPanel.add(criarBotaoMenu("🛒 Registrar Venda", "RegistrarVenda"));
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("📊 Relatórios de Vendas", "RelatoriosVendas"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("👨‍👩‍👧‍👦 Gestão de Funcionários", "GestaoFuncionarios")); // NOVO BOTÃO
 
         sidebarPanel.add(Box.createVerticalGlue());
 
@@ -105,7 +107,7 @@ public class MenuGestorView extends JPanel {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Cards de boas-vindas com emojis
+        // Cards de boas-vindas com emojis - ATUALIZADO com nova funcionalidade
         JPanel welcomePanel = UITheme.createCardPanel();
         welcomePanel.setLayout(new BorderLayout());
 
@@ -117,7 +119,7 @@ public class MenuGestorView extends JPanel {
 
         JLabel lblDescription = UITheme.createBodyLabel(
                 "<html><center>Olá, " + gestorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
-                        "Como Gestor, você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 📦 reservas e visualizar 📊 relatórios.</center></html>"
+                        "Como Gestor, você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 📦 reservas, 👨‍👩‍👧‍👦 funcionários e visualizar 📊 relatórios.</center></html>"
         );
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
@@ -208,8 +210,9 @@ public class MenuGestorView extends JPanel {
                         case "GerirClientes" -> abrirGerirClientes();
                         case "GerirEquipamentos" -> abrirGerirEquipamentos();
                         case "GerirReservas" -> abrirGerirReservas();
-                      //  case "RegistrarVenda" -> abrirRegistrarVenda();
+                        case "RegistrarVenda" -> abrirRegistrarVenda();
                         case "RelatoriosVendas" -> abrirRelatoriosVendas();
+                        case "GestaoFuncionarios" -> abrirGestaoFuncionarios(); // NOVO CASE
                         case "Logout" -> {
                             int confirm = JOptionPane.showConfirmDialog(MenuGestorView.this,
                                     "Deseja realmente sair do sistema?",
@@ -277,15 +280,16 @@ public class MenuGestorView extends JPanel {
         }
     }
 
-//    private void abrirRegistrarVenda() {
-//        try {
-//            RegistrarVendaView view = new RegistrarVendaView(controller, VendedorLogado);
-//            controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
-//            controller.getCardLayoutManager().showPanel("RegistrarVenda");
-//        } catch (Exception e) {
-//            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
-//        }
-//    }
+    private void abrirRegistrarVenda() {
+        try {
+            // Gestor pode registrar vendas como um vendedor genérico
+            RegistrarVendaView view = new RegistrarVendaView(controller, null);
+            controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
+            controller.getCardLayoutManager().showPanel("RegistrarVenda");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
+        }
+    }
 
     private void abrirRelatoriosVendas() {
         try {
@@ -294,6 +298,17 @@ public class MenuGestorView extends JPanel {
             controller.getCardLayoutManager().showPanel("RelatoriosVendas");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de relatórios de vendas: " + e.getMessage());
+        }
+    }
+
+    private void abrirGestaoFuncionarios() {
+        try {
+            GestaoFuncionariosView view = new GestaoFuncionariosView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GestaoFuncionarios");
+            controller.getCardLayoutManager().showPanel("GestaoFuncionarios");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao abrir a tela de gestão de funcionários: " + e.getMessage());
         }
     }
 }

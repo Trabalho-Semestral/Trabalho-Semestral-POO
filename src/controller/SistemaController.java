@@ -12,8 +12,8 @@ import service.RelatorioVendasService;
 import persistence.dto.VendaDTO;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * Controlador principal do sistema.
@@ -76,54 +76,9 @@ public class SistemaController {
         );
         admin.setId("ADMIN");
         administradorRepo.add(admin);
-/*
-        // Gestor demo
-        Gestor gestor = new Gestor(
-                "Carlos Gestor", "555666777888D",
-                "555666777", "+258555666777", 35000.0,
-                BCryptHasher.hashPassword("gest123")
-        );
-        gestor.setId("GEST1");
-        gestorRepo.add(gestor);
 
-        // Vendedor demo
-        Vendedor vendedor = new Vendedor(
-                "João Vendedor", "987654321098B",
-                "987654321", "+258987654321", 25000.0,
-                BCryptHasher.hashPassword("vend123")
-        );
-        vendedor.setId("VEN1");
-        vendedorRepo.add(vendedor);
-
-        // Cliente demo
-        Cliente cliente = new Cliente(
-                "Maria Cliente", "111222333444C",
-                "111222333", "+258111222333",
-                "Rua das Flores, 123", "maria@email.com"
-        );
-        cliente.setId("CLI1");
-        clienteRepo.add(cliente);*/
     }
 
-    /**
-     * Cria equipamentos de demonstração.
-     */
-/*
-
-    private void criarEquipamentosDemonstracaoPersistindo() throws Exception {
-        Computador comp1 = new Computador("Dell", 45000.0, 5,
-                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\93b4613e-2f3b-4079-b903-7cc3241694ef.jpg",
-                "Intel i7", "16GB", "512GB SSD", "NVIDIA GTX 1650");
-        comp1.setId(GeradorID.gerarID());
-
-        Periferico per1 = new Periferico("Logitech", 1500.0, 10,
-                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\c6eefaec-7deb-46a2-a6ab-40d995176d2e.jpg", "Mouse");
-        per1.setId(GeradorID.gerarID());
-
-        equipamentoRepo.add(comp1);
-        equipamentoRepo.add(per1);
-    }
-*/
 
     /**
      * Autentica um usuário no sistema.
@@ -517,11 +472,75 @@ public class SistemaController {
             getEquipamentos().forEach(e -> System.out.println(" - " + e.getId() + ": " + e.getMarca()));
         }
     }
-
-
-    public void debugReservas() {
-        ((ReservaFileRepository) reservaRepo).debugArquivoReservas();
+    public Map<String, Integer> getTotalVendasPorVendedor() {
+        Map<String, Integer> vendasPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    vendasPorVendedor.put(vendedorId,
+                            vendasPorVendedor.getOrDefault(vendedorId, 0) + 1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return vendasPorVendedor;
     }
 
+    public Map<String, BigDecimal> getFaturamentoPorVendedor() {
+        Map<String, BigDecimal> faturamentoPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                BigDecimal totalVenda = venda.total != null ? venda.total : BigDecimal.ZERO;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    faturamentoPorVendedor.put(vendedorId,
+                            faturamentoPorVendedor.getOrDefault(vendedorId, BigDecimal.ZERO).add(totalVenda));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return faturamentoPorVendedor;
+    }
+
+    public Map<String, List<VendaDTO>> getVendasPorVendedor() {
+        Map<String, List<VendaDTO>> vendasPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    vendasPorVendedor.computeIfAbsent(vendedorId, k -> new ArrayList<>()).add(venda);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return vendasPorVendedor;
+    }
+
+    public String getNomeVendedorPorId(String vendedorId) {
+        if (vendedorId == null) return "N/A";
+
+        Optional<Vendedor> vendedor = findVendedorById(vendedorId);
+        if (vendedor.isPresent()) {
+            return vendedor.get().getNome();
+        }
+        Optional<Gestor> gestor = gestorRepo.findById(vendedorId);
+        if (gestor.isPresent()) {
+            return gestor.get().getNome() + " (Gestor)";
+        }
+
+        Optional<Administrador> admin = administradorRepo.findById(vendedorId);
+        if (admin.isPresent()) {
+            return admin.get().getNome() + " (Admin)";
+        }
+
+        return vendedorId;
+    }
 
 }
