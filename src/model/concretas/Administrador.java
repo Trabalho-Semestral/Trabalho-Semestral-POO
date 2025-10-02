@@ -14,7 +14,7 @@ public class Administrador extends Funcionario {
      */
     public Administrador() {
         super();
-        setTipoUsuario(TipoUsuario.ADMINISTRADOR); // ✅ Definir tipo de usuário
+        setTipoUsuario(TipoUsuario.ADMINISTRADOR);
         this.nivelAcesso = "TOTAL";
     }
 
@@ -29,7 +29,7 @@ public class Administrador extends Funcionario {
      */
     public Administrador(String nome, String nrBI, String nuit, String telefone,
                          double salario, String senha) {
-        super(nome, nrBI, nuit, telefone, TipoUsuario.ADMINISTRADOR, salario, senha); // ✅ Usar novo construtor
+        super(nome, nrBI, nuit, telefone, TipoUsuario.ADMINISTRADOR, salario, senha);
         this.nivelAcesso = "TOTAL";
     }
 

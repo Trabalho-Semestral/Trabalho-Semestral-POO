@@ -17,7 +17,7 @@ public class UITheme {
 
     public static final Color SECONDARY_COLOR = new Color(52, 73, 94);        // Cinza azulado
     public static final Color SECONDARY_DARK = new Color(44, 62, 80);         // Cinza azulado escuro
-    public static final Color SECONDARY_LIGHT = new Color(149, 165, 166);     // Cinza azulado claro
+    public static final Color SECONDARY_LIGHT = new Color(0,0,0);             // Preto
 
     public static final Color ACCENT_COLOR = new Color(231, 76, 60);          // Vermelho de destaque
     public static final Color SUCCESS_COLOR = new Color(39, 174, 96);         // Verde de sucesso
@@ -33,7 +33,7 @@ public class UITheme {
     // Cores de texto
     public static final Color TEXT_PRIMARY = new Color(44, 62, 80);           // Texto principal
     public static final Color TEXT_SECONDARY = new Color(127, 140, 141);      // Texto secundário
-    public static final Color TEXT_WHITE = Color.WHITE;
+    public static final Color TEXT_WHITE = Color.CYAN;
     public static final Color TEXT_BLACK = Color.BLACK;
     public static final Color TEXT_MUTED = new Color(149, 165, 166);          // Texto esmaecido
 

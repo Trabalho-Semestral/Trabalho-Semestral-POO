@@ -20,6 +20,8 @@ public abstract class Equipamento implements Cloneable {
     protected String marca;
     protected double preco;
     protected int quantidadeEstoque;
+    protected int reservado;
+    protected int disponivel;
     protected EstadoEquipamento estado;
     protected String fotoPath;
 
@@ -131,6 +133,14 @@ public abstract class Equipamento implements Cloneable {
     public void setFotoPath(String fotoPath) {
         this.fotoPath = fotoPath;
     }
+
+
+    public int getReservado() { return reservado; }
+    public void setReservado(int reservado) { this.reservado = reservado; }
+    public int getDisponivel() {
+        return Math.max(0, this.quantidadeEstoque - this.reservado);
+    }
+    public void setDisponivel(int disponivel){ }
 
     @Override
     public String toString() {

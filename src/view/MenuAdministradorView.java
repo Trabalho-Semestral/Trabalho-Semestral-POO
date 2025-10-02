@@ -64,6 +64,8 @@ public class MenuAdministradorView extends JPanel {
         sidebarPanel.add(criarBotaoMenu("🛒 Registrar Venda", "RegistrarVenda"));
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("📊 Relatórios de Vendas", "RelatoriosVendas"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
+        sidebarPanel.add(criarBotaoMenu("👨‍👩‍👧‍👦 Gestão de Funcionários", "GestaoFuncionarios")); // NOVO BOTÃO
 
         sidebarPanel.add(Box.createVerticalGlue());
 
@@ -104,7 +106,7 @@ public class MenuAdministradorView extends JPanel {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Cards de boas-vindas com emojis
+        // Cards de boas-vindas
         JPanel welcomePanel = UITheme.createCardPanel();
         welcomePanel.setLayout(new BorderLayout());
 
@@ -116,7 +118,7 @@ public class MenuAdministradorView extends JPanel {
 
         JLabel lblDescription = UITheme.createBodyLabel(
                 "<html><center>Utilize o menu lateral para navegar pelas funcionalidades do sistema.<br>" +
-                        "Aqui você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos e visualizar 📊 relatórios.</center></html>"
+                        "Aqui você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 👨‍👩‍👧‍👦 funcionários e visualizar 📊 relatórios.</center></html>"
         );
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
@@ -210,6 +212,7 @@ public class MenuAdministradorView extends JPanel {
                         case "GerirReservas" -> abrirGerirReservas();
                         case "RegistrarVenda" -> abrirRegistrarVenda();
                         case "RelatoriosVendas" -> abrirRelatoriosVendas();
+                        case "GestaoFuncionarios" -> abrirGestaoFuncionarios();
                         case "Logout" -> {
                             controller.logout();
                             Window window = SwingUtilities.getWindowAncestor(MenuAdministradorView.this);
@@ -279,6 +282,7 @@ public class MenuAdministradorView extends JPanel {
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
         }
     }
+
     private void abrirGerirGestores() {
         try {
             GerirGestorView view = new GerirGestorView(controller);
@@ -296,6 +300,17 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().showPanel("RelatoriosVendas");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de relatórios de vendas: " + e.getMessage());
+        }
+    }
+
+    private void abrirGestaoFuncionarios() {
+        try {
+            GestaoFuncionariosView view = new GestaoFuncionariosView(controller);
+            controller.getCardLayoutManager().addPanel(view, "GestaoFuncionarios");
+            controller.getCardLayoutManager().showPanel("GestaoFuncionarios");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao abrir a tela de gestão de funcionários: " + e.getMessage());
         }
     }
 }

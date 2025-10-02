@@ -1,14 +1,19 @@
 package controller;
 
 import model.abstractas.Equipamento;
+import persistence.*;
+import service.ReservaService;
 import util.BCryptHasher;
 import util.GeradorID;
 import view.CardLayoutManager;
 import model.concretas.*;
+import persistence.ReservaFileRepository;
+import service.RelatorioVendasService;
+import persistence.dto.VendaDTO;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
+import javax.swing.*;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * Controlador principal do sistema.
@@ -16,23 +21,25 @@ import java.util.Date;
  */
 public class SistemaController {
 
-    // Listas para simular base de dados
-    private List<Administrador> administradores;
-    private List<Gestor> gestores;
-    private List<Vendedor> vendedores;
-    private List<Cliente> clientes;
-    private List<Equipamento> equipamentos;
-    private List<Venda> vendas;
-    private List<Reserva> reservas;
-
-    // Usuário atualmente logado
-    private Object usuarioLogado;
+    private final EquipamentoFileRepository equipamentoRepo = new EquipamentoFileRepository("data\\equipamentos.json");
+    private final ClienteRepository clienteRepo = new ClienteRepository("data\\clientes.json");
+    private final VendedorRepository vendedorRepo = new VendedorRepository("data\\vendedores.json");
+    private final VendaFileRepository vendaRepo = new VendaFileRepository("data");
+    private final GestorRepository gestorRepo = new GestorRepository("data\\gestores.json");
+    private final AdministradorRepository administradorRepo = new AdministradorRepository("data\\administradores.json");
+    private final RelatorioVendasService relatorioService = new RelatorioVendasService(vendaRepo); private Object usuarioLogado;
     private String tipoUsuarioLogado;
-
-    // Gerenciador de navegação
     private CardLayoutManager cardLayoutManager;
+    private final ReservaFileRepository reservaRepo;
+    private final ReservaService reservaService;
+
+
+
 
     public SistemaController() {
+        reservaRepo = new ReservaFileRepository("data");
+        try { reservaRepo.init(); } catch (Exception e) { e.printStackTrace(); }
+        reservaService = new ReservaService(reservaRepo, equipamentoRepo);
         inicializarDados();
     }
 
@@ -40,65 +47,38 @@ public class SistemaController {
      * Inicializa os dados de demonstração.
      */
     private void inicializarDados() {
-        administradores = new ArrayList<>();
-        gestores = new ArrayList<>();
-        vendedores = new ArrayList<>();
-        clientes = new ArrayList<>();
-        equipamentos = new ArrayList<>();
-        vendas = new ArrayList<>();
-        reservas = new ArrayList<>();
+        try {
+            equipamentoRepo.init();
+            clienteRepo.init();
+            vendedorRepo.init();
+            vendaRepo.init();
+            gestorRepo.init();
+            administradorRepo.init();
+            if (administradorRepo.findAll().isEmpty() || gestorRepo.findAll().isEmpty() || vendedorRepo.findAll().isEmpty() || clienteRepo.findAll().isEmpty()) {
+                criarUsuariosDemonstracaoPersistindo();
+            }
 
-        criarUsuariosDemonstracao();
-        criarEquipamentosDemonstracao();
+        } catch (Exception e) {
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(null, "Falha ao inicializar armazenamento: " + e.getMessage());
+        }
     }
 
     /**
      * Cria usuários de demonstração.
      */
-    private void criarUsuariosDemonstracao() {
-        // Administrador
-        Administrador admin = new Administrador("Administrador Sistema", "123456789012A",
-                "123456789", "+258123456789", 50000.0, BCryptHasher.hashPassword("admin123"));
+    private void criarUsuariosDemonstracaoPersistindo() throws Exception {
+        // Admin demo
+        Administrador admin = new Administrador(
+                "Administrador Sistema", "123456789012A",
+                "123456789", "+258123456789", 50000.0,
+                BCryptHasher.hashPassword("admin123")
+        );
         admin.setId("ADMIN");
-        administradores.add(admin);
+        administradorRepo.add(admin);
 
-        // Gestor
-        Gestor gestor = new Gestor("Carlos Gestor", "555666777888D",
-                "555666777", "+258555666777", 35000.0, BCryptHasher.hashPassword("gest123"));
-        gestor.setId("GEST1");
-        gestores.add(gestor);
-
-        // Vendedor
-        Vendedor vendedor = new Vendedor("João Vendedor", "987654321098B",
-                "987654321", "+258987654321", 25000.0, BCryptHasher.hashPassword("vend123"));
-        vendedor.setId("VEN1");
-        vendedores.add(vendedor);
-
-        // Cliente
-        Cliente cliente = new Cliente("Maria Cliente", "111222333444C",
-                "111222333", "+258111222333",
-                "Rua das Flores, 123", "maria@email.com");
-        cliente.setId("CLI1");
-        clientes.add(cliente);
     }
 
-    /**
-     * Cria equipamentos de demonstração.
-     */
-    private void criarEquipamentosDemonstracao() {
-        // Computador
-        Computador comp1 = new Computador("Dell", 45000.0, 5,
-                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\93b4613e-2f3b-4079-b903-7cc3241694ef.jpg",
-                "Intel i7", "16GB", "512GB SSD", "NVIDIA GTX 1650");
-        comp1.setId(GeradorID.gerarID());
-        equipamentos.add(comp1);
-
-        // Periférico
-        Periferico per1 = new Periferico("Logitech", 1500.0, 10,
-                Equipamento.EstadoEquipamento.NOVO, "C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\fotos\\equipamentos\\c6eefaec-7deb-46a2-a6ab-40d995176d2e.jpg", "Mouse");
-        per1.setId(GeradorID.gerarID());
-        equipamentos.add(per1);
-    }
 
     /**
      * Autentica um usuário no sistema.
@@ -106,40 +86,33 @@ public class SistemaController {
      * @param senha Senha do usuário
      * @return true se autenticado com sucesso, false caso contrário
      */
-
     public String autenticarUsuario(String id, String senha) {
-        // Administrador
-        for (Administrador admin : administradores) {
-            if (admin.getId().equals(id) && BCryptHasher.checkPassword(senha, admin.getSenha())) {
-                usuarioLogado = admin;
-                tipoUsuarioLogado = admin.getTipoUsuario().getDescricao();
+        try {
+            var admin = administradorRepo.findById(id);
+            if (admin.isPresent() && util.BCryptHasher.checkPassword(senha, admin.get().getSenha())) {
+                usuarioLogado = admin.get();
+                tipoUsuarioLogado = admin.get().getTipoUsuario().getDescricao();
                 return "Administrador";
             }
-        }
-
-        // Gestor
-        for (Gestor gestor : gestores) {
-            if (gestor.getId().equals(id) && BCryptHasher.checkPassword(senha, gestor.getSenha())) {
-                usuarioLogado = gestor;
-                tipoUsuarioLogado = gestor.getTipoUsuario().getDescricao();
+            var gestor = gestorRepo.findById(id);
+            if (gestor.isPresent() && util.BCryptHasher.checkPassword(senha, gestor.get().getSenha())) {
+                usuarioLogado = gestor.get();
+                tipoUsuarioLogado = gestor.get().getTipoUsuario().getDescricao();
                 return "Gestor";
             }
-        }
-
-        // Vendedor
-        for (Vendedor vendedor : vendedores) {
-            if (vendedor.getId().equals(id) && BCryptHasher.checkPassword(senha, vendedor.getSenha())) {
-                usuarioLogado = vendedor;
-                tipoUsuarioLogado = vendedor.getTipoUsuario().getDescricao();
+            var vend = vendedorRepo.findById(id);
+            if (vend.isPresent() && util.BCryptHasher.checkPassword(senha, vend.get().getSenha())) {
+                usuarioLogado = vend.get();
+                tipoUsuarioLogado = vend.get().getTipoUsuario().getDescricao();
                 return "Vendedor";
             }
-        }
-
-        // Nenhum encontrado
+        } catch (Exception ignored) {}
         return null;
     }
 
-
+    public java.util.Optional<Equipamento> findEquipamentoById(String id) { return equipamentoRepo.findById(id); }
+    public java.util.Optional<Cliente> findClienteById(String id) { return clienteRepo.findById(id); }
+    public java.util.Optional<Vendedor> findVendedorById(String id) { return vendedorRepo.findById(id); }
     /**
      * Faz logout do usuário atual.
      */
@@ -147,59 +120,50 @@ public class SistemaController {
         usuarioLogado = null;
         tipoUsuarioLogado = null;
     }
+  //ADMINISTRADOR
 
-    // ✅ ========== MÉTODOS PARA GESTÃO DE GESTORES ==========
+    public boolean adicionarAdministrador(Administrador admin) {
+        if (admin != null && admin.validarDados()) {
+            admin.setId(util.GeradorID.gerarID());
+            admin.setSenha(util.BCryptHasher.hashPassword(admin.getSenha()));
+            try { administradorRepo.add(admin); return true; } catch (Exception e) { e.printStackTrace(); return false; }
+        }
+        return false;
+    }
 
-    /**
-     * Adiciona um gestor à lista.
-     * @param gestor Gestor a ser adicionado
-     * @return true se adicionado com sucesso, false caso contrário
-     */
+    public boolean removerAdministrador(Administrador admin) {
+        if (admin == null || admin.getId() == null) return false;
+        try { administradorRepo.removeById(admin.getId()); return true; } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    public boolean atualizarAdministrador(Administrador antigo, Administrador novo) {
+        if (antigo == null || novo == null || !novo.validarDados()) return false;
+        novo.setId(antigo.getId());
+        try { administradorRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+    //  ========== MÉTODOS PARA GESTÃO DE GESTORES ==========
+
     public boolean adicionarGestor(Gestor gestor) {
         if (gestor != null && gestor.validarDados()) {
-            gestor.setId(GeradorID.gerarID());
-            gestor.setSenha(BCryptHasher.hashPassword(gestor.getSenha()));
-            gestores.add(gestor);
-            return true;
+            gestor.setId(util.GeradorID.gerarID());
+            gestor.setSenha(util.BCryptHasher.hashPassword(gestor.getSenha()));
+            try { gestorRepo.add(gestor); return true; } catch (Exception e) { e.printStackTrace(); return false; }
         }
         return false;
     }
 
-    /**
-     * Remove um gestor da lista.
-     * @param gestor Gestor a ser removido
-     * @return true se removido com sucesso, false caso contrário
-     */
     public boolean removerGestor(Gestor gestor) {
-        return gestores.remove(gestor);
+        if (gestor == null || gestor.getId() == null) return false;
+        try { gestorRepo.removeById(gestor.getId()); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Atualiza um gestor na lista.
-     * @param gestorAntigo Gestor a ser atualizado
-     * @param gestorNovo Novos dados do gestor
-     * @return true se atualizado com sucesso, false caso contrário
-     */
-    public boolean atualizarGestor(Gestor gestorAntigo, Gestor gestorNovo) {
-        int index = gestores.indexOf(gestorAntigo);
-        if (index >= 0 && gestorNovo.validarDados()) {
-            gestorNovo.setId(gestorAntigo.getId()); // Manter o ID original
-            // A senha já deve vir hasheada do formulário ou ser tratada separadamente
-            gestores.set(index, gestorNovo);
-            return true;
-        }
-        return false;
+    public boolean atualizarGestor(Gestor antigo, Gestor novo) {
+        if (antigo == null || novo == null || !novo.validarDados()) return false;
+        novo.setId(antigo.getId());
+        try { gestorRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Getter para a lista de gestores.
-     * @return Lista de gestores
-     */
-    public List<Gestor> getGestores() {
-        return gestores;
-    }
-
-    // ✅ ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
+    //  ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
 
     /**
      * Verifica se o usuário logado tem permissão para gerir operações.
@@ -258,125 +222,64 @@ public class SistemaController {
     }
 
     // ========== MÉTODOS EXISTENTES ==========
-
-    /**
-     * Adiciona um equipamento à lista.
-     * @param equipamento Equipamento a ser adicionado
-     * @return true se adicionado com sucesso, false caso contrário
-     */
     public boolean adicionarEquipamento(Equipamento equipamento) {
         if (equipamento != null && equipamento.validarDados()) {
             equipamento.setId(GeradorID.gerarID());
-            equipamentos.add(equipamento);
-            return true;
+            try { equipamentoRepo.add(equipamento); return true; } catch (Exception e) { e.printStackTrace(); return false; }
         }
         return false;
     }
 
-    /**
-     * Remove um equipamento da lista.
-     * @param equipamento Equipamento a ser removido
-     * @return true se removido com sucesso, false caso contrário
-     */
     public boolean removerEquipamento(Equipamento equipamento) {
-        return equipamentos.remove(equipamento);
+        if (equipamento == null || equipamento.getId() == null) return false;
+        try { equipamentoRepo.removeById(equipamento.getId()); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Atualiza um equipamento na lista.
-     * @param equipamentoAntigo Equipamento a ser atualizado
-     * @param equipamentoNovo Novos dados do equipamento
-     * @return true se atualizado com sucesso, false caso contrário
-     */
-    public boolean atualizarEquipamento(Equipamento equipamentoAntigo, Equipamento equipamentoNovo) {
-        int index = equipamentos.indexOf(equipamentoAntigo);
-        if (index >= 0 && equipamentoNovo.validarDados()) {
-            equipamentoNovo.setId(equipamentoAntigo.getId()); // Manter o ID original
-            equipamentos.set(index, equipamentoNovo);
-            return true;
-        }
-        return false;
+    public boolean atualizarEquipamento(Equipamento antigo, Equipamento novo) {
+        if (antigo == null || novo == null || !novo.validarDados()) return false;
+        novo.setId(antigo.getId());
+        try { equipamentoRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Adiciona um vendedor à lista.
-     * @param vendedor Vendedor a ser adicionado
-     * @return true se adicionado com sucesso, false caso contrário
-     */
     public boolean adicionarVendedor(Vendedor vendedor) {
         if (vendedor != null && vendedor.validarDados()) {
             vendedor.setId(GeradorID.gerarID());
             vendedor.setSenha(BCryptHasher.hashPassword(vendedor.getSenha()));
-            vendedores.add(vendedor);
-            return true;
+            try { vendedorRepo.add(vendedor); return true; } catch (Exception e) { e.printStackTrace(); return false; }
         }
         return false;
     }
 
-    /**
-     * Remove um vendedor da lista.
-     * @param vendedor Vendedor a ser removido
-     * @return true se removido com sucesso, false caso contrário
-     */
     public boolean removerVendedor(Vendedor vendedor) {
-        return vendedores.remove(vendedor);
+        if (vendedor == null || vendedor.getId() == null) return false;
+        try { vendedorRepo.removeById(vendedor.getId()); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Atualiza um vendedor na lista.
-     * @param vendedorAntigo Vendedor a ser atualizado
-     * @param vendedorNovo Novos dados do vendedor
-     * @return true se atualizado com sucesso, false caso contrário
-     */
-    public boolean atualizarVendedor(Vendedor vendedorAntigo, Vendedor vendedorNovo) {
-        int index = vendedores.indexOf(vendedorAntigo);
-        if (index >= 0 && vendedorNovo.validarDados()) {
-            vendedorNovo.setId(vendedorAntigo.getId()); // Manter o ID original
-            // A senha já deve vir hasheada do formulário ou ser tratada separadamente
-            vendedores.set(index, vendedorNovo);
-            return true;
-        }
-        return false;
+    public boolean atualizarVendedor(Vendedor antigo, Vendedor novo) {
+        if (antigo == null || novo == null || !novo.validarDados()) return false;
+        novo.setId(antigo.getId());
+        try { vendedorRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Adiciona um cliente à lista.
-     * @param cliente Cliente a ser adicionado
-     * @return true se adicionado com sucesso, false caso contrário
-     */
     public boolean adicionarCliente(Cliente cliente) {
         if (cliente != null && cliente.validarDados()) {
             cliente.setId(GeradorID.gerarID());
-            clientes.add(cliente);
-            return true;
+            try { clienteRepo.add(cliente); return true; } catch (Exception e) { e.printStackTrace(); return false; }
         }
         return false;
     }
 
-    /**
-     * Remove um cliente da lista.
-     * @param cliente Cliente a ser removido
-     * @return true se removido com sucesso, false caso contrário
-     */
     public boolean removerCliente(Cliente cliente) {
-        return clientes.remove(cliente);
+        if (cliente == null || cliente.getId() == null) return false;
+        try { clienteRepo.removeById(cliente.getId()); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    /**
-     * Atualiza um cliente na lista.
-     * @param clienteAntigo Cliente a ser atualizado
-     * @param clienteNovo Novos dados do cliente
-     * @return true se atualizado com sucesso, false caso contrário
-     */
-    public boolean atualizarCliente(Cliente clienteAntigo, Cliente clienteNovo) {
-        int index = clientes.indexOf(clienteAntigo);
-        if (index >= 0 && clienteNovo.validarDados()) {
-            clienteNovo.setId(clienteAntigo.getId()); // Manter o ID original
-            clientes.set(index, clienteNovo);
-            return true;
-        }
-        return false;
+    public boolean atualizarCliente(Cliente antigo, Cliente novo) {
+        if (antigo == null || novo == null || !novo.validarDados()) return false;
+        novo.setId(antigo.getId());
+        try { clienteRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
+
 
     /**
      * Registra uma nova venda no sistema.
@@ -384,40 +287,27 @@ public class SistemaController {
      * @return true se a venda foi registrada com sucesso, false caso contrário
      */
     public boolean registrarVenda(Venda venda) {
-        if (venda != null && venda.validarDados()) {
-            venda.setIdVenda(GeradorID.gerarID());
-            vendas.add(venda);
+        if (venda == null || !venda.validarDados()) return false;
+        try {
+            if (venda.getIdVenda() == null || venda.getIdVenda().isBlank()) {
+                venda.setIdVenda("VND" + GeradorID.gerarID());
+            }
+            vendaRepo.salvar(venda);
+            equipamentoRepo.replaceAll(equipamentoRepo.findAll());
+
             return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
-    public boolean adicionarReserva(Reserva reserva) {
-        if (reserva != null && reserva.getEquipamento().getQuantidadeEstoque() >= reserva.getQuantidade()) {
-            reservas.add(reserva);
-            return true;
-        }
-        return false;
+    public java.util.Map<String, java.math.BigDecimal> totalPorDia(java.util.Date inicio, java.util.Date fim) throws java.io.IOException {
+        return relatorioService.totalPorDia(inicio, fim);
     }
 
-    public boolean removerReserva(Reserva reserva) {
-        return reservas.remove(reserva);
-    }
-
-    public boolean atualizarReserva(Reserva reservaAntiga, Reserva reservaNova) {
-        int index = reservas.indexOf(reservaAntiga);
-        if (index >= 0) {
-            reservas.set(index, reservaNova);
-            return true;
-        }
-        return false;
-    }
-
-    public List<Reserva> getReservasPorCliente(Cliente cliente) {
-        return reservas.stream()
-                .filter(r -> r.getCliente().getId().equals(cliente.getId()) &&
-                        r.getStatus() == Reserva.StatusReserva.ATIVA)
-                .collect(java.util.stream.Collectors.toList());
+    public java.nio.file.Path exportarVendasCSV(java.util.Date inicio, java.util.Date fim, String nomeArquivo) throws java.io.IOException {
+        return relatorioService.exportarCSVPeriodo(inicio, fim, nomeArquivo);
     }
 
     // ========== GETTERS ==========
@@ -429,35 +319,228 @@ public class SistemaController {
         return tipoUsuarioLogado;
     }
 
-    public List<Administrador> getAdministradores() {
-        return administradores;
-    }
-
-    public List<Vendedor> getVendedores() {
-        return vendedores;
-    }
-
-    public List<Cliente> getClientes() {
-        return clientes;
-    }
-
-    public List<Equipamento> getEquipamentos() {
-        return equipamentos;
-    }
-
-    public List<Venda> getVendas() {
-        return vendas;
-    }
-
-    public List<Reserva> getReservas() {
-        return reservas;
-    }
 
     public CardLayoutManager getCardLayoutManager() {
         return cardLayoutManager;
     }
+    public java.util.List<VendaDTO> getVendasDTO() throws java.io.IOException {
+        return vendaRepo.listarTodas();
+    }
+    public List<Equipamento> getEquipamentos() { return equipamentoRepo.findAll(); }
+    public java.util.List<model.concretas.Gestor> getGestores() { return gestorRepo.findAll(); }
+    public java.util.List<model.concretas.Administrador> getAdministradores() { return administradorRepo.findAll(); }
+    public List<Cliente> getClientes() { return clienteRepo.findAll(); }
+
+    public List<Vendedor> getVendedores() { return vendedorRepo.findAll(); }
+
 
     public void setCardLayoutManager(CardLayoutManager cardLayoutManager) {
         this.cardLayoutManager = cardLayoutManager;
     }
+    // ================== MÉTODOS DE RESERVAS ==================
+
+
+    public Reserva criarReserva(Reserva r) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            return reservaService.criar(r);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao criar reserva: " + e.getMessage(), e);
+        }
+    }
+
+    public void cancelarReserva(String idReserva) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            reservaService.cancelar(idReserva);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao cancelar reserva: " + e.getMessage(), e);
+        }
+    }
+
+
+    public Reserva atualizarReserva(Reserva r) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        return reservaService.atualizar(r);
+    }
+
+
+    public void salvarReserva(Reserva reserva) {
+        if (reserva == null) return;
+
+        System.out.println("=== SALVAR RESERVA ===");
+        System.out.println("ID Reserva: " + reserva.getIdReserva());
+        System.out.println("Cliente: " + (reserva.getCliente() != null ? reserva.getCliente().getNome() : "NULL"));
+        System.out.println("Itens: " + (reserva.getItens() != null ? reserva.getItens().size() : 0));
+
+        try {
+            if (reserva.getIdReserva() == null || reserva.getIdReserva().isBlank()) {
+                System.out.println("CRIANDO nova reserva...");
+                criarReserva(reserva);
+            } else {
+                // VERIFICAR se a reserva existe antes de atualizar
+                Reserva existente = buscarReservaPorId(reserva.getIdReserva());
+                if (existente != null) {
+                    System.out.println("ATUALIZANDO reserva existente: " + reserva.getIdReserva());
+                    atualizarReserva(reserva);
+                } else {
+                    System.out.println("Reserva não encontrada, CRIANDO nova: " + reserva.getIdReserva());
+                    criarReserva(reserva);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar reserva: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Falha ao salvar reserva: " + e.getMessage(), e);
+        }
+    }
+    public Vendedor getVendedorLogado() {
+        if (usuarioLogado instanceof Vendedor) {
+            return (Vendedor) usuarioLogado;
+        }
+        return null;
+    }
+    public boolean removerReserva(String idReserva) {
+        if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
+        try {
+            reservaRepo.remover(idReserva);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public void corrigirDadosEquipamentos() {
+        try {
+            List<Equipamento> equipamentos = equipamentoRepo.findAll();
+            for (Equipamento eq : equipamentos) {
+                if (eq.getDisponivel() < 0 || eq.getDisponivel() > eq.getQuantidadeEstoque()) {
+                    eq.setReservado(Math.max(0, eq.getQuantidadeEstoque() - eq.getDisponivel()));
+                    equipamentoRepo.upsert(eq);
+                }
+            }
+            JOptionPane.showMessageDialog(null, "Dados dos equipamentos corrigidos!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Erro ao corrigir dados: " + e.getMessage());
+        }
+    }
+    public List<Reserva> getReservas() {
+        List<Reserva> reservas = reservaRepo.listarTodas();
+
+        for (Reserva r : reservas) {
+            System.out.println("Reserva: ID=" + r.getIdReserva() +
+                    ", Cliente=" + (r.getCliente() != null ? r.getCliente().getNome() : "NULL") +
+                    ", Status=" + r.getStatus());
+        }
+
+        return reservas;
+    }
+
+    public boolean registrarReserva(Reserva r) {
+        if (!podeGerirReservas()) return false;
+        try {
+            reservaService.criar(r);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Reserva buscarReservaPorId(String idReserva) {
+        return getReservas().stream()
+                .filter(r -> r.getIdReserva().equals(idReserva))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean podeGerirReservas() {
+        if (usuarioLogado == null || tipoUsuarioLogado == null) return false;
+        return tipoUsuarioLogado.equals("Administrador") ||
+                tipoUsuarioLogado.equals("Gestor") ||
+                tipoUsuarioLogado.equals("Vendedor");
+    }
+    public void verificarEquipamento(String id) {
+        Optional<Equipamento> equipamento = findEquipamentoById(id);
+        if (equipamento.isPresent()) {
+            System.out.println("Equipamento encontrado: " + equipamento.get());
+        } else {
+            System.out.println("Equipamento " + id + " não encontrado. Equipamentos disponíveis:");
+            getEquipamentos().forEach(e -> System.out.println(" - " + e.getId() + ": " + e.getMarca()));
+        }
+    }
+    public Map<String, Integer> getTotalVendasPorVendedor() {
+        Map<String, Integer> vendasPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    vendasPorVendedor.put(vendedorId,
+                            vendasPorVendedor.getOrDefault(vendedorId, 0) + 1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return vendasPorVendedor;
+    }
+
+    public Map<String, BigDecimal> getFaturamentoPorVendedor() {
+        Map<String, BigDecimal> faturamentoPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                BigDecimal totalVenda = venda.total != null ? venda.total : BigDecimal.ZERO;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    faturamentoPorVendedor.put(vendedorId,
+                            faturamentoPorVendedor.getOrDefault(vendedorId, BigDecimal.ZERO).add(totalVenda));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return faturamentoPorVendedor;
+    }
+
+    public Map<String, List<VendaDTO>> getVendasPorVendedor() {
+        Map<String, List<VendaDTO>> vendasPorVendedor = new HashMap<>();
+        try {
+            List<VendaDTO> vendas = vendaRepo.listarTodas();
+            for (VendaDTO venda : vendas) {
+                String vendedorId = venda.vendedorId;
+                if (vendedorId != null && !vendedorId.trim().isEmpty()) {
+                    vendasPorVendedor.computeIfAbsent(vendedorId, k -> new ArrayList<>()).add(venda);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return vendasPorVendedor;
+    }
+
+    public String getNomeVendedorPorId(String vendedorId) {
+        if (vendedorId == null) return "N/A";
+
+        Optional<Vendedor> vendedor = findVendedorById(vendedorId);
+        if (vendedor.isPresent()) {
+            return vendedor.get().getNome();
+        }
+        Optional<Gestor> gestor = gestorRepo.findById(vendedorId);
+        if (gestor.isPresent()) {
+            return gestor.get().getNome() + " (Gestor)";
+        }
+
+        Optional<Administrador> admin = administradorRepo.findById(vendedorId);
+        if (admin.isPresent()) {
+            return admin.get().getNome() + " (Admin)";
+        }
+
+        return vendedorId;
+    }
+
 }

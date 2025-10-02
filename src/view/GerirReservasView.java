@@ -12,184 +12,214 @@ import java.util.List;
 
 public class GerirReservasView extends JPanel {
 
-    private final SistemaController controller;
-    private final JTable tabelaReservas;
-    private final DefaultTableModel modeloTabela;
-    private final JButton btnAtualizar, btnCancelarReserva, btnVoltar;
-    private final JLabel lblTotalReservas, lblValorTotal;
+    private SistemaController controller;
+
+    private JTable tabelaReservas;
+    private DefaultTableModel modeloTabela;
+    private JLabel lblTotalReservas, lblValorTotal;
+    private JButton btnAtualizar, btnCancelarReserva, btnConverterVenda, btnNovaReserva, btnEditarReserva, btnVoltar;
+
+    private static GerirReservasView instance;
 
     public GerirReservasView(SistemaController controller) {
         this.controller = controller;
-        setLayout(new BorderLayout());
-        setBackground(UITheme.BACKGROUND_COLOR);
-
-        // Botões
-        btnAtualizar = UITheme.createPrimaryButton("🔄 Atualizar");
-        btnCancelarReserva = UITheme.createDangerButton("❌ Cancelar Reserva");
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        for (JButton b : new JButton[]{btnAtualizar, btnCancelarReserva, btnVoltar})
-            b.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-
-        // Labels
-        lblTotalReservas = UITheme.createBodyLabel("Total de Reservas: 0");
-        lblValorTotal = UITheme.createBodyLabel("Valor Total: 0.00 MT");
-
-        // Tabela
-        String[] colunas = {"ID Reserva", "Cliente", "Equipamento", "Marca", "Quantidade",
-                "Valor Unit.", "Valor Total", "Data", "Status"};
-        modeloTabela = new DefaultTableModel(colunas, 0) {
-            public boolean isCellEditable(int r, int c) { return false; }
-        };
-        tabelaReservas = new JTable(modeloTabela);
-        tabelaReservas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabelaReservas.setFont(UITheme.FONT_BODY);
-        tabelaReservas.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
-        tabelaReservas.setRowHeight(30);
-        tabelaReservas.setSelectionBackground(UITheme.PRIMARY_LIGHT);
-        tabelaReservas.setSelectionForeground(UITheme.TEXT_PRIMARY);
-
-        // Layout
-        add(criarTopPanel(), BorderLayout.NORTH);
-        add(criarCenterPanel(), BorderLayout.CENTER);
-
-        // Eventos
-        btnAtualizar.addActionListener(e -> carregarReservas());
-        btnCancelarReserva.addActionListener(e -> cancelarReserva());
-        btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
+        instance = this;
+        initComponents();
+        setupLayout();
+        setupEvents();
         carregarReservas();
     }
 
-    private JPanel criarTopPanel() {
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(UITheme.TOPBAR_BACKGROUND);
-        top.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        top.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-
-        JLabel lblTitulo = UITheme.createHeadingLabel("📋 Gestão de Reservas");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-
-        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        voltarPanel.add(btnVoltar);
-
-        top.add(lblTitulo, BorderLayout.CENTER);
-        top.add(voltarPanel, BorderLayout.WEST);
-        return top;
-    }
-
-    private JPanel criarCenterPanel() {
-        JPanel center = new JPanel(new BorderLayout());
-        center.setBackground(UITheme.BACKGROUND_COLOR);
-        center.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        center.add(criarPainelEstatisticas(), BorderLayout.NORTH);
-        center.add(criarPainelTabela(), BorderLayout.CENTER);
-        center.add(criarPainelBotoes(), BorderLayout.SOUTH);
-        return center;
-    }
-
-    private JPanel criarPainelEstatisticas() {
-        JPanel panel = UITheme.createCardPanel(new GridLayout(1, 2, 20, 0));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setPreferredSize(new Dimension(0, 80));
-
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT)), right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        for (JPanel p : new JPanel[]{left, right}) p.setBackground(UITheme.CARD_BACKGROUND);
-        left.add(lblTotalReservas); right.add(lblValorTotal);
-
-        panel.add(left); panel.add(right);
-        return panel;
-    }
-
-    private JPanel criarPainelTabela() {
-        JPanel panel = UITheme.createCardPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel lblTitulo = UITheme.createSubtitleLabel("Reservas Ativas");
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblTitulo, BorderLayout.NORTH);
-
-        JScrollPane scroll = new JScrollPane(tabelaReservas);
-        scroll.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT, 1));
-        scroll.getViewport().setBackground(UITheme.CARD_BACKGROUND);
-        panel.add(scroll, BorderLayout.CENTER);
-
-        JLabel lblInfo = UITheme.createBodyLabel("💡 Selecione uma reserva na tabela para cancelar");
-        lblInfo.setForeground(UITheme.TEXT_SECONDARY);
-        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        infoPanel.setBackground(UITheme.CARD_BACKGROUND);
-        infoPanel.add(lblInfo);
-
-        panel.add(infoPanel, BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private JPanel criarPainelBotoes() {
-        JPanel panel = UITheme.createCardPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        btnAtualizar.setPreferredSize(new Dimension(140, 40));
-        btnCancelarReserva.setPreferredSize(new Dimension(160, 40));
-        panel.add(btnAtualizar); panel.add(btnCancelarReserva);
-        return panel;
-    }
-
-    private void carregarReservas() {
-        modeloTabela.setRowCount(0);
-        List<Reserva> reservas = controller.getReservas();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-
-        double valorTotal = 0;
-        long total = reservas.stream().filter(r -> r.getStatus() == Reserva.StatusReserva.ATIVA).peek(r -> {
-            modeloTabela.addRow(new Object[]{
-                    r.getIdReserva(), r.getCliente().getNome(), r.getEquipamento().getId(),
-                    r.getEquipamento().getMarca(), r.getQuantidade(),
-                    String.format("%.2f MT", r.getEquipamento().getPreco()),
-                    String.format("%.2f MT", r.getValorTotal()),
-                    sdf.format(r.getDataReserva()), r.getStatus()
-            });
-        }).mapToDouble(Reserva::getValorTotal).sum();
-
-        lblTotalReservas.setText("Total de Reservas: " + (int) reservas.stream().filter(r -> r.getStatus() == Reserva.StatusReserva.ATIVA).count());
-        lblValorTotal.setText(String.format("Valor Total: %.2f MT", valorTotal));
-    }
-
-    private void cancelarReserva() {
-        int row = tabelaReservas.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Selecione uma reserva para cancelar.");
-            return;
+    public static void atualizarTabelaReservas() {
+        if (instance != null) {
+            instance.carregarReservas();
         }
+    }
 
-        if (JOptionPane.showConfirmDialog(this, "Deseja realmente cancelar esta reserva?",
-                "Confirmar Cancelamento", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+    public static GerirReservasView getInstance() {
+        return instance;
+    }
+
+    private void initComponents() {
+        setBackground(UITheme.BACKGROUND_COLOR);
+
+        btnAtualizar = UITheme.createPrimaryButton("🔄 Atualizar");
+        btnCancelarReserva = UITheme.createDangerButton("❌ Cancelar");
+        btnConverterVenda = UITheme.createSuccessButton("💰 Converter em Venda");
+        btnNovaReserva = UITheme.createPrimaryButton("➕ Nova Reserva");
+        btnEditarReserva = UITheme.createPrimaryButton("✏️ Editar Reserva");
+        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+
+        lblTotalReservas = UITheme.createTitleLabel("Total de Reservas: 0");
+        lblValorTotal = UITheme.createTitleLabel("Valor Total: 0,00 MT");
+
+        String[] colunas = {"ID", "Cliente", "Data Criação", "Expira em", "Status", "Itens", "Valor"};
+        modeloTabela = new DefaultTableModel(colunas, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tabelaReservas = new JTable(modeloTabela);
+        tabelaReservas.setRowHeight(28);
+        tabelaReservas.setFont(UITheme.FONT_BODY);
+        tabelaReservas.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
+        tabelaReservas.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    }
+
+    private void setupLayout() {
+        setLayout(new BorderLayout());
+
+        JPanel topPanel = UITheme.createTopbar("📋 Gestão de Reservas", btnVoltar);
+        add(topPanel, BorderLayout.NORTH);
+
+        JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        mainSplit.setResizeWeight(0.75);
+        mainSplit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JPanel painelTabela = UITheme.createCardPanel();
+        painelTabela.setLayout(new BorderLayout(10, 10));
+        painelTabela.setBorder(BorderFactory.createTitledBorder("📑 Reservas Registradas"));
+        painelTabela.add(new JScrollPane(tabelaReservas), BorderLayout.CENTER);
+
+        JPanel estatisticasPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        estatisticasPanel.setOpaque(false);
+        estatisticasPanel.add(lblTotalReservas);
+        estatisticasPanel.add(lblValorTotal);
+        painelTabela.add(estatisticasPanel, BorderLayout.SOUTH);
+
+        JPanel painelAcoes = UITheme.createCardPanel();
+        painelAcoes.setLayout(new GridLayout(0, 1, 10, 10));
+        painelAcoes.setBorder(BorderFactory.createTitledBorder("⚙️ Ações"));
+        painelAcoes.add(btnNovaReserva);
+        painelAcoes.add(btnEditarReserva);
+        painelAcoes.add(btnCancelarReserva);
+        painelAcoes.add(btnConverterVenda);
+        painelAcoes.add(btnAtualizar);
+
+        mainSplit.setLeftComponent(painelTabela);
+        mainSplit.setRightComponent(painelAcoes);
+
+        add(mainSplit, BorderLayout.CENTER);
+    }
+
+    private void setupEvents() {
+        btnVoltar.addActionListener(e -> voltarMenuPrincipal());
+        btnAtualizar.addActionListener(e -> carregarReservas());
+        btnNovaReserva.addActionListener(e -> abrirRegistrarReserva());
+        btnEditarReserva.addActionListener(e -> editarReservaSelecionada());
+        btnCancelarReserva.addActionListener(e -> cancelarReservaSelecionada());
+        btnConverterVenda.addActionListener(e -> converterReservaEmVenda());
+    }
+
+    public void carregarReservas() {
+        modeloTabela.setRowCount(0);
+        try {
+            List<Reserva> reservas = controller.getReservas();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+            double total = 0;
+            for (Reserva r : reservas) {
+                if (r != null && r.getCliente() != null) {
+                    modeloTabela.addRow(new Object[]{
+                            r.getIdReserva(),
+                            r.getCliente().getNome(),
+                            r.getDataReserva() != null ? sdf.format(r.getDataReserva()) : "N/A",
+                            r.getExpiraEm() != null ? sdf.format(r.getExpiraEm()) : "N/A",
+                            r.getStatus(),
+                            r.getItens() != null ? r.getItens().size() : 0,
+                            String.format("%.2f MT", r.getValorTotal())
+                    });
+                    total += r.getValorTotal();
+                }
+            }
+
+            lblTotalReservas.setText("Total de Reservas: " + reservas.size());
+            lblValorTotal.setText("Valor Total: " + String.format("%.2f MT", total));
+
+            // Forçar atualização da UI
+            modeloTabela.fireTableDataChanged();
+            revalidate();
+            repaint();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar reservas: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private Reserva getReservaSelecionada() {
+        int row = tabelaReservas.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione uma reserva primeiro!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        String reservaId = (String) modeloTabela.getValueAt(row, 0);
+        return controller.buscarReservaPorId(reservaId);
+    }
+
+    private void abrirRegistrarReserva() {
+        try {
+            RegistrarVendaView registrar = RegistrarVendaView.criarParaReserva(controller);
+            CardLayoutManager clm = controller.getCardLayoutManager();
+            clm.addPanel(registrar, "RegistrarReserva");
+            clm.showPanel("RegistrarReserva");
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro de Permissão", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void editarReservaSelecionada() {
+        Reserva reserva = getReservaSelecionada();
+        if (reserva != null) {
             try {
-                String id = (String) modeloTabela.getValueAt(row, 0);
-                Reserva reserva = controller.getReservas().stream()
-                        .filter(r -> r.getIdReserva().equals(id)).findFirst().orElse(null);
+                RegistrarVendaView registrar = RegistrarVendaView.criarParaReserva(controller);
+                registrar.carregarReserva(reserva);
+                CardLayoutManager clm = controller.getCardLayoutManager();
+                clm.addPanel(registrar, "EditarReserva");
+                clm.showPanel("EditarReserva");
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro de Permissão", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
-                if (reserva != null) {
-                    reserva.setStatus(Reserva.StatusReserva.CANCELADA);
-                    JOptionPane.showMessageDialog(this, "Reserva cancelada com sucesso!");
-                    carregarReservas();
-                } else JOptionPane.showMessageDialog(this, "Erro ao encontrar a reserva.");
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
+    private void converterReservaEmVenda() {
+        Reserva reserva = getReservaSelecionada();
+        if (reserva != null) {
+            try {
+                RegistrarVendaView registrar = RegistrarVendaView.criarParaVenda(controller);
+                registrar.carregarReserva(reserva);
+                CardLayoutManager clm = controller.getCardLayoutManager();
+                clm.addPanel(registrar, "ConverterVenda");
+                clm.showPanel("ConverterVenda");
+            } catch (IllegalStateException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro de Permissão", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void cancelarReservaSelecionada() {
+        Reserva reserva = getReservaSelecionada();
+        if (reserva != null) {
+            int opt = JOptionPane.showConfirmDialog(this,
+                    "Tens certeza que deseja cancelar a reserva?",
+                    "Confirmação",
+                    JOptionPane.YES_NO_OPTION);
+            if (opt == JOptionPane.YES_OPTION) {
+                controller.cancelarReserva(reserva.getIdReserva());
+                carregarReservas();
             }
         }
     }
 
     private void voltarMenuPrincipal() {
-        String tipo = controller.getTipoUsuarioLogado();
-        if (tipo == null) controller.getCardLayoutManager().showPanel("Login");
-        else controller.getCardLayoutManager().showPanel(
-                switch (tipo) {
-                    case "Gestor" -> "MenuGestor";
-                    case "Vendedor" -> "MenuVendedor";
-                    default -> "MenuAdministrador";
-                });
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        if (tipoUsuario == null) {
+            controller.getCardLayoutManager().showPanel("Login");
+            return;
+        }
+        switch (tipoUsuario) {
+            case "Gestor" -> controller.getCardLayoutManager().showPanel("MenuGestor");
+            case "Vendedor" -> controller.getCardLayoutManager().showPanel("MenuVendedor");
+            case "Administrador" -> controller.getCardLayoutManager().showPanel("MenuAdministrador");
+        }
     }
 }
-
-
