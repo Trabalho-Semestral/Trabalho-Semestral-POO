@@ -34,7 +34,7 @@ public class GestaoFuncionariosView extends JPanel {
     private JTextField txtPesquisa;
     private JTabbedPane tabbedPane;
 
-    // Painéis de gráficos
+
     private JPanel panelGraficoVendas, panelRankingVendedores, panelLista, panelGraficos, panelHistorico;
 
     public GestaoFuncionariosView(SistemaController controller) {
@@ -95,9 +95,9 @@ public class GestaoFuncionariosView extends JPanel {
 
         // Inicializar botões
         btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
-        btnExportarPDF = UITheme.createPrimaryButton("📄 Exportar PDF");
+        btnExportarPDF = UITheme.createPrimaryButton("📄 Exportar");
         btnAtualizar = UITheme.createSuccessButton("🔄 Atualizar");
-        btnSuspender = UITheme.createSecondaryButton("⏸ Suspender/Reativar");
+        btnSuspender = UITheme.createSecondaryButton("⏸ Sus/Reat");
         btnDetalhes = UITheme.createSecondaryButton("👤 Detalhes");
 
         // Inicializar abas
@@ -276,7 +276,6 @@ public class GestaoFuncionariosView extends JPanel {
             String filtroTipo = (String) comboFiltroTipo.getSelectedItem();
             String pesquisa = txtPesquisa.getText();
 
-            // 💡 CORREÇÃO: Verificar se os valores são nulos
             if (filtroTipo == null) {
                 filtroTipo = "Todos";
             }
@@ -288,14 +287,13 @@ public class GestaoFuncionariosView extends JPanel {
 
             List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-            // Filtro por tipo
             if (!"Todos".equals(filtroTipo)) {
                 String regexTipo = "";
                 switch (filtroTipo) {
                     case "Administradores": regexTipo = "Administrador"; break;
                     case "Gestores": regexTipo = "Gestor"; break;
                     case "Vendedores": regexTipo = "Vendedor"; break;
-                    default: regexTipo = filtroTipo; // fallback
+                    default: regexTipo = filtroTipo;
                 }
                 filters.add(RowFilter.regexFilter("(?i)" + regexTipo, 3));
             }
@@ -322,7 +320,6 @@ public class GestaoFuncionariosView extends JPanel {
         } catch (Exception e) {
             System.err.println("Erro em aplicarFiltros: " + e.getMessage());
             e.printStackTrace();
-            // Em caso de erro, não aplicar filtro
             sorter.setRowFilter(null);
         }
     }
@@ -332,11 +329,9 @@ public class GestaoFuncionariosView extends JPanel {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
         try {
-            // Obter dados reais de vendas do controller
             Map<String, Integer> totalVendas = controller.getTotalVendasPorVendedor();
             Map<String, BigDecimal> faturamentoTotal = controller.getFaturamentoPorVendedor();
 
-            // Carregar administradores (apenas para admin) - COM VALIDAÇÃO DE NULL MELHORADA
             if (controller.podeConfigurarSistema()) {
                 for (Administrador admin : controller.getAdministradores()) {
                     if (admin != null && admin.getId() != null) {
@@ -357,7 +352,6 @@ public class GestaoFuncionariosView extends JPanel {
                 }
             }
 
-            // Carregar gestores (apenas para admin) - COM VALIDAÇÃO DE NULL MELHORADA
             if (controller.podeConfigurarSistema()) {
                 for (Gestor gestor : controller.getGestores()) {
                     if (gestor != null && gestor.getId() != null) {
@@ -378,7 +372,6 @@ public class GestaoFuncionariosView extends JPanel {
                 }
             }
 
-            // Carregar vendedores com dados REAIS de vendas - COM VALIDAÇÃO DE NULL MELHORADA
             for (Vendedor vendedor : controller.getVendedores()) {
                 if (vendedor != null && vendedor.getId() != null) {
                     String vendedorId = vendedor.getId();
@@ -408,11 +401,6 @@ public class GestaoFuncionariosView extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    private String safeString(String value) {
-        return value != null ? value : "N/A";
-    }
-
     private boolean isUsuarioOnline(String usuarioId) {
         if (usuarioId == null || "N/A".equals(usuarioId)) return false;
 
@@ -434,7 +422,6 @@ public class GestaoFuncionariosView extends JPanel {
     }
 
     private void configurarPermissoes() {
-        // 💡 CORREÇÃO: Remover listeners temporariamente para evitar eventos durante configuração
         if (comboFiltroTipo.getActionListeners().length > 0) {
             comboFiltroTipo.removeActionListener(comboFiltroTipo.getActionListeners()[0]);
         }
@@ -444,7 +431,6 @@ public class GestaoFuncionariosView extends JPanel {
             boolean isAdmin = "Administrador".equals(tipoUsuario);
             boolean isGestor = "Gestor".equals(tipoUsuario);
 
-            // Configurar filtros disponíveis
             comboFiltroTipo.removeAllItems();
             comboFiltroTipo.addItem("Todos");
 
@@ -466,7 +452,6 @@ public class GestaoFuncionariosView extends JPanel {
                 filtrarApenasUsuarioLogado();
             }
         } finally {
-            // 💡 CORREÇÃO: Re-adicionar o listener após a configuração
             comboFiltroTipo.addActionListener(e -> aplicarFiltros());
         }
     }
@@ -484,17 +469,14 @@ public class GestaoFuncionariosView extends JPanel {
 
     private void criarGraficos() {
         panelGraficos.removeAll();
-        // Dados REAIS do controller
+
         Map<String, BigDecimal> faturamentoPorVendedor = controller.getFaturamentoPorVendedor();
         Map<String, List<VendaDTO>> vendasPorVendedor = controller.getVendasPorVendedor();
-
-        // Gráfico 1: Faturamento por Vendedor (REAL)
         DefaultCategoryDataset datasetVendas = new DefaultCategoryDataset();
-        // Ordenar vendedores por faturamento (maior primeiro)
         List<Map.Entry<String, BigDecimal>> vendedoresOrdenados = faturamentoPorVendedor.entrySet()
                 .stream()
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
-                .limit(8) // Top 8 vendedores
+                .limit(8)
                 .toList();
 
         for (Map.Entry<String, BigDecimal> entry : vendedoresOrdenados) {
@@ -503,10 +485,7 @@ public class GestaoFuncionariosView extends JPanel {
 
             String nomeVendedor = controller.getNomeVendedorPorId(vendedorId);
             String nomeCurto;
-
-            // 💡 CORREÇÃO: Verifica se o nomeVendedor é nulo ou vazio antes de chamar .split()
             if (nomeVendedor != null && !nomeVendedor.trim().isEmpty()) {
-                // Usar apenas primeiro nome para o gráfico
                 String[] partesNome = nomeVendedor.split(" ");
                 nomeCurto = partesNome.length > 0 ? partesNome[0] : nomeVendedor;
             } else {
@@ -520,10 +499,8 @@ public class GestaoFuncionariosView extends JPanel {
                 "💰 Faturamento por Vendedor", "Vendedor", "Faturamento (MT)", datasetVendas
         );
 
-        // Gráfico 2: Número de Vendas por Vendedor
         DefaultCategoryDataset datasetQuantidade = new DefaultCategoryDataset();
         Map<String, Integer> totalVendas = controller.getTotalVendasPorVendedor();
-        // Ordenar por quantidade de vendas
         List<Map.Entry<String, Integer>> vendasOrdenadas = totalVendas.entrySet()
                 .stream()
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
@@ -550,7 +527,6 @@ public class GestaoFuncionariosView extends JPanel {
                 "📈 Número de Vendas por Vendedor", "Vendedor", "Quantidade de Vendas", datasetQuantidade
         );
 
-        // Aplicar estilo aos gráficos
         ChartPanel chartPanel1 = new ChartPanel(chartVendas);
         ChartPanel chartPanel2 = new ChartPanel(chartQuantidade);
 
@@ -703,7 +679,6 @@ public class GestaoFuncionariosView extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.setBackground(UITheme.CARD_BACKGROUND);
 
-        // Foto do funcionário (simulada)
         JLabel lblFoto = new JLabel("👤", SwingConstants.CENTER);
         lblFoto.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 80));
         lblFoto.setPreferredSize(new Dimension(150, 150));
@@ -771,7 +746,6 @@ public class GestaoFuncionariosView extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             modeloTabela.setValueAt(novoSatus, modelRow, 7);
-            // TODO: Implementar no controller a suspensão real
             JOptionPane.showMessageDialog(this,
                     "✅ " + tipo + " " + nome + " " + acao + "do com sucesso!",
                     "Operação Concluída",
@@ -801,7 +775,7 @@ public class GestaoFuncionariosView extends JPanel {
 
         JOptionPane.showMessageDialog(this,
                 mensagem,
-                "📄 Exportação PDF - Simulação",
+                "📄 Exportação PDF",
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
