@@ -109,10 +109,10 @@ public abstract class BaseListRepository<T> {
 
             // Tentativa 1: Remover caracteres problemáticos
             String cleanedJson = json
-                    .replaceAll("[\\x00-\\x1F\\x7F]", "") // Remove caracteres de controle
-                    .replaceAll(",{2,}", ",") // Remove vírgulas duplicadas
-                    .replaceAll(",}", "}") // Remove vírgulas antes de }
-                    .replaceAll(",]", "]"); // Remove vírgulas antes de ]
+                    .replaceAll("[\\x00-\\x1F\\x7F]", "")
+                    .replaceAll(",{2,}", ",")
+                    .replaceAll(",}", "}")
+                    .replaceAll(",]", "]");
 
             // Tentativa 2: Garantir que é um array válido
             if (!cleanedJson.startsWith("[")) {
