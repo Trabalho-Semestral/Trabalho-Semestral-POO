@@ -13,9 +13,5 @@ public class ReservaDTO {
     public long expiraEmMillis;
     public List<ItemReservaDTO> itens;
 
-    public static class ItemReservaDTO {
-        public String equipamentoId;
-        public String equipamentoMarca;
-        public int quantidade;
-    }
+    public ReservaDTO() {}
 }
