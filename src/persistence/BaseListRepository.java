@@ -43,19 +43,14 @@ public abstract class BaseListRepository<T> {
                 return;
             }
 
-            // Remover BOM se existir
             if (json.startsWith("\uFEFF")) {
                 json = json.substring(1);
             }
-
-            // Validar formato básico do JSON
             if (!isValidJsonArray(json)) {
                 System.err.println("Formato JSON inválido em " + file + ". Inicializando com dados vazios.");
                 initializeEmptyRepository();
                 return;
             }
-
-            // Tentar carregar com GSON leniente
             List<T> list = loadJsonSafely(json);
 
             cache.clear();
@@ -67,8 +62,6 @@ public abstract class BaseListRepository<T> {
                     }
                 }
             }
-
-            // Se chegou aqui sem exceção, salvar para garantir consistência
             save();
 
         } catch (Exception e) {
