@@ -1,13 +1,13 @@
-package view; 
+package view;
 
-/// Importacoes
 import controller.SistemaController;
 import model.concretas.Cliente;
 import util.UITheme;
 import util.Validador;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -15,15 +15,16 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 
-
+/**
+ * Tela para gestão de clientes com layout final, títulos e botões estilizados.
+ */
 public class GerirClientesView extends JPanel {
 
     private final SistemaController controller;
 
-    ///   Componentes da Interface
+    // --- Componentes da Interface ---
     private JTextField txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail;
     private JTextField txtPesquisar;
 
@@ -71,12 +72,9 @@ public class GerirClientesView extends JPanel {
         txtPesquisar = UITheme.createStyledTextField();
         txtPesquisar.setBorder(criarTitulo("Pesquisar"));
 
-        JTextField[] campos = {txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail/*, txtPesquisar*/};
-        for (JTextField tf : campos) {
-            adicionarEfeitoHover(tf); 
-        }
-       
-        ///  Botões
+        // --- Botões ---
+
+
         btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
         btnEditar = UITheme.createSuccessButton("✏️ Editar");
         btnRemover = UITheme.createDangerButton("🗑️ Remover");
@@ -84,12 +82,13 @@ public class GerirClientesView extends JPanel {
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
 
+
         JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover, btnLimpar};
         for (JButton btn : actionButtons) {
             styleActionButton(btn);
         }
 
-        // Tabela com visibilidade do header corrigida
+        // --- Tabela com visibilidade do header corrigida ---
         modeloTabela = new DefaultTableModel(
                 new String[]{"ID", "Nome", "BI", "NUIT", "Telefone", "Endereço", "Email"}, 0) {
             @Override
@@ -138,6 +137,7 @@ public class GerirClientesView extends JPanel {
         button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
     }
 
+
     private void setupLayout() {
         setLayout(new BorderLayout(10, 10));
         setBackground(UITheme.BACKGROUND_COLOR);
@@ -163,7 +163,7 @@ public class GerirClientesView extends JPanel {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 criarPainelFormularioE_Acoes(),
                 criarPainelTabela());
-        splitPane.setResizeWeight(0.4); // Aumentar um pouco o espaço para o formulário
+        splitPane.setResizeWeight(0.4);
         splitPane.setOpaque(false);
         splitPane.setBorder(null);
         add(splitPane, BorderLayout.CENTER);
@@ -409,48 +409,5 @@ public class GerirClientesView extends JPanel {
     private void atualizarEstadoBotoes(boolean habilitar) {
         btnEditar.setEnabled(habilitar);
         btnRemover.setEnabled(habilitar);
-    }
-
-   /// Metodo com efeito hover
-    private void adicionarEfeitoHover(JTextField campo) {
-        // guarda a borda original para restaurar depois
-        final Border bordaOriginal = campo.getBorder();
-
-        // criacao da borda de hover        
-        Border bordaHover = new CompoundBorder(
-                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
-                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
-        );
-
-        // Mouse listener para efeito ao passar o cursor
-        campo.addMouseListener(new MouseAdapter(){
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                campo.setBorder(bordaHover);
-                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                // Só restaura a borda original se o campo não tiver foco.
-                // Assim, se o usuário clicar e estiver digitando (foco), a borda permanece.
-                if (!campo.hasFocus()) {
-                    campo.setBorder(bordaOriginal);
-                }
-            }
-        });
-
-        // Focus listener para manter a borda quando o campo recebe foco via Tab/clique e restaurar ao perder
-        campo.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                campo.setBorder(bordaHover);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                campo.setBorder(bordaOriginal);
-            }
-        });
     }
 }
