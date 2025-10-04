@@ -120,7 +120,7 @@ public class SistemaController {
         usuarioLogado = null;
         tipoUsuarioLogado = null;
     }
-  //ADMINISTRADOR
+
 
     public boolean adicionarAdministrador(Administrador admin) {
         if (admin != null && admin.validarDados()) {
@@ -163,7 +163,6 @@ public class SistemaController {
         try { gestorRepo.upsert(novo); return true; } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
-    //  ========== MÉTODOS DE VERIFICAÇÃO DE PERMISSÕES ==========
 
     /**
      * Verifica se o usuário logado tem permissão para gerir operações.
@@ -337,8 +336,8 @@ public class SistemaController {
     public void setCardLayoutManager(CardLayoutManager cardLayoutManager) {
         this.cardLayoutManager = cardLayoutManager;
     }
-    // ================== MÉTODOS DE RESERVAS ==================
 
+    // ================== MÉTODOS DE RESERVAS ==================
 
     public Reserva criarReserva(Reserva r) {
         if (!podeGerirReservas()) throw new SecurityException("Sem permissão");
@@ -370,28 +369,17 @@ public class SistemaController {
     public void salvarReserva(Reserva reserva) {
         if (reserva == null) return;
 
-        System.out.println("=== SALVAR RESERVA ===");
-        System.out.println("ID Reserva: " + reserva.getIdReserva());
-        System.out.println("Cliente: " + (reserva.getCliente() != null ? reserva.getCliente().getNome() : "NULL"));
-        System.out.println("Itens: " + (reserva.getItens() != null ? reserva.getItens().size() : 0));
-
         try {
             if (reserva.getIdReserva() == null || reserva.getIdReserva().isBlank()) {
-                System.out.println("CRIANDO nova reserva...");
                 criarReserva(reserva);
             } else {
-                // VERIFICAR se a reserva existe antes de atualizar
                 Reserva existente = buscarReservaPorId(reserva.getIdReserva());
                 if (existente != null) {
-                    System.out.println("ATUALIZANDO reserva existente: " + reserva.getIdReserva());
                     atualizarReserva(reserva);
-                } else {
-                    System.out.println("Reserva não encontrada, CRIANDO nova: " + reserva.getIdReserva());
-                    criarReserva(reserva);
+                } else {criarReserva(reserva);
                 }
             }
         } catch (Exception e) {
-            System.err.println("Erro ao salvar reserva: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Falha ao salvar reserva: " + e.getMessage(), e);
         }
@@ -428,15 +416,21 @@ public class SistemaController {
         }
     }
     public List<Reserva> getReservas() {
-        List<Reserva> reservas = reservaRepo.listarTodas();
+        try {
+            List<Reserva> reservas = reservaRepo.listarTodas();
 
-        for (Reserva r : reservas) {
-            System.out.println("Reserva: ID=" + r.getIdReserva() +
-                    ", Cliente=" + (r.getCliente() != null ? r.getCliente().getNome() : "NULL") +
-                    ", Status=" + r.getStatus());
+            for (Reserva r : reservas) {
+                System.out.println("Reserva: ID=" + r.getIdReserva() +
+                        ", Cliente=" + (r.getCliente() != null ? r.getCliente().getNome() : "NULL") +
+                        ", Status=" + r.getStatus() +
+                        ", Itens=" + (r.getItens() != null ? r.getItens().size() : 0));
+            }
+
+            return reservas;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
         }
-
-        return reservas;
     }
 
     public boolean registrarReserva(Reserva r) {
@@ -541,6 +535,94 @@ public class SistemaController {
         }
 
         return vendedorId;
+    }
+
+
+    public boolean converterReservaParaVenda(String idReserva) {
+        try {
+            // Buscar reserva
+            Reserva reserva = buscarReservaPorId(idReserva);
+            if (reserva == null || reserva.getStatus() != Reserva.StatusReserva.ATIVA) {
+                JOptionPane.showMessageDialog(null,
+                        "Reserva não encontrada ou não está ativa.",
+                        "Erro na Conversão",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            // 1. Cancelar reserva (libera estoque reservado)
+            reservaService.cancelar(idReserva);
+
+            // 2. Criar venda
+            Venda venda = new Venda();
+            venda.setIdVenda("VND" + GeradorID.gerarID());
+            venda.setData(new Date());
+            venda.setVendedor(reserva.getVendedor());
+            venda.setCliente(reserva.getCliente());
+            venda.setItens(new ArrayList<>());
+
+            // 3. Converter itens da reserva para itens de venda
+            for (ItemReserva itemReserva : reserva.getItens()) {
+                String equipamentoId = itemReserva.getEquipamento().getId();
+
+                Optional<Equipamento> equipamentoOpt = findEquipamentoById(equipamentoId);
+                if (equipamentoOpt.isPresent()) {
+                    Equipamento equipamentoAtual = equipamentoOpt.get();
+                    ItemVenda itemVenda = new ItemVenda(equipamentoAtual, itemReserva.getQuantidade());
+                    venda.getItens().add(itemVenda);
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "Equipamento não encontrado: " + equipamentoId,
+                            "Erro na Conversão",
+                            JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+
+            // 4. Registrar venda
+            boolean sucesso = registrarVenda(venda);
+
+            if (sucesso) {
+                // Atualizar status da reserva para CONVERTIDA
+                reserva.setStatus(Reserva.StatusReserva.CONVERTIDA);
+                try {
+                    reservaRepo.atualizar(reserva);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null,
+                            "A venda foi criada, mas não foi possível atualizar o status da reserva.",
+                            "Aviso",
+                            JOptionPane.WARNING_MESSAGE);
+                }
+
+                // Calcular o total da venda
+                BigDecimal totalVenda = BigDecimal.ZERO;
+                for (ItemVenda item : venda.getItens()) {
+                    totalVenda = totalVenda.add(item.getSubtotal());
+                }
+
+                JOptionPane.showMessageDialog(null,
+                        "Reserva convertida em venda com sucesso!\n" +
+                                "Número da Venda: " + venda.getIdVenda() + "\n" +
+                                "Cliente: " + venda.getCliente().getNome() + "\n" +
+                                "Total: " + String.format("%.2f MT", totalVenda),
+                        "Conversão Bem-sucedida",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Erro ao registrar a venda.\nA reserva foi cancelada mas a venda não pôde ser criada.",
+                        "Erro na Conversão",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+            return sucesso;
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Erro durante a conversão: " + e.getMessage(),
+                    "Erro na Conversão",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
     }
 
 }
