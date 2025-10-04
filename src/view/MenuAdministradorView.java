@@ -20,6 +20,7 @@ public class MenuAdministradorView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        setupKeyBindings(this);
     }
 
     private void initComponents() {
@@ -117,9 +118,15 @@ public class MenuAdministradorView extends JPanel {
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>Utilize o menu lateral para navegar pelas funcionalidades do sistema.<br>" +
-                        "Aqui você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 👨‍👩‍👧‍👦 funcionários e visualizar 📊 relatórios.</center></html>"
+                "<html><center>" +
+                        "Utilize o menu lateral para navegar pelas funcionalidades do sistema.<br>" +
+                        "Atalhos rápidos disponíveis:<br><br>" +
+                        "👥 Vendedores <b>(Ctrl+V)</b> | 👤 Clientes <b>(Ctrl+C)</b> | 👨‍💼 Gestores <b>(Ctrl+G)</b><br>" +
+                        "💻 Equipamentos <b>(Ctrl+E)</b> | 📋 Reservas <b>(Ctrl+R)</b> | 🛒 Vendas <b>(Ctrl+N)</b><br>" +
+                        "📊 Relatórios <b>(Ctrl+L)</b> | 👨‍👩‍👧‍👦 Funcionários <b>(Ctrl+F)</b> | 🚪 Logout <b>(Ctrl+Q)</b>" +
+                        "</center></html>"
         );
+
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
         welcomePanel.add(lblDescription, BorderLayout.CENTER);
@@ -199,32 +206,40 @@ public class MenuAdministradorView extends JPanel {
     }
 
     private void setupEvents() {
-        btnToggleSidebar.addActionListener(e -> toggleSidebar());
+            btnToggleSidebar.addActionListener(e -> toggleSidebar());
 
-        for (Component comp : sidebarPanel.getComponents()) {
-            if (comp instanceof JButton btn) {
-                btn.addActionListener(e -> {
-                    switch (btn.getActionCommand()) {
-                        case "GerirVendedores" -> abrirGerirVendedores();
-                        case "GerirClientes" -> abrirGerirClientes();
-                        case "GerirGestores" -> abrirGerirGestores();
-                        case "GerirEquipamentos" -> abrirGerirEquipamentos();
-                        case "GerirReservas" -> abrirGerirReservas();
-                        case "RegistrarVenda" -> abrirRegistrarVenda();
-                        case "RelatoriosVendas" -> abrirRelatoriosVendas();
-                        case "GestaoFuncionarios" -> abrirGestaoFuncionarios();
-                        case "Logout" -> {
-                            controller.logout();
-                            Window window = SwingUtilities.getWindowAncestor(MenuAdministradorView.this);
-                            if (window instanceof JFrame frame) {
-                                frame.dispose();
-                                new LoginView(controller).setVisible(true);
+            for (Component comp : sidebarPanel.getComponents()) {
+                if (comp instanceof JButton btn) {
+                    btn.addActionListener(e -> {
+                        switch (btn.getActionCommand()) {
+                            case "GerirVendedores" -> abrirGerirVendedores();
+                            case "GerirGestores" -> abrirGerirGestores();
+                            case "GerirClientes" -> abrirGerirClientes();
+                            case "GerirEquipamentos" -> abrirGerirEquipamentos();
+                            case "GerirReservas" -> abrirGerirReservas();
+                            case "RegistrarVenda" -> abrirRegistrarVenda();
+                            case "RelatoriosVendas" -> abrirRelatoriosVendas();
+                            case "GestaoFuncionarios" -> abrirGestaoFuncionarios();
+                            case "Logout" -> {
+                                int confirm = JOptionPane.showConfirmDialog(MenuAdministradorView.this,
+                                        "Deseja realmente sair do sistema?",
+                                        "Confirmar Logout",
+                                        JOptionPane.YES_NO_OPTION);
+                                if (confirm == JOptionPane.YES_OPTION) {
+                                    controller.logout();
+
+                                    Window window = SwingUtilities.getWindowAncestor(MenuAdministradorView.this);
+                                    if (window instanceof JFrame) {
+                                        window.dispose();
+                                    }
+                                    new LoginView(controller).setVisible(true);
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
-        }
+
     }
 
     private void toggleSidebar() {
@@ -313,4 +328,31 @@ public class MenuAdministradorView extends JPanel {
                     "Erro ao abrir a tela de gestão de funcionários: " + e.getMessage());
         }
     }
+    private void setupKeyBindings(JComponent root) {
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        im.put(KeyStroke.getKeyStroke("control V"), "GerirVendedores");
+        im.put(KeyStroke.getKeyStroke("control G"), "GerirGestores");
+        im.put(KeyStroke.getKeyStroke("control C"), "GerirClientes");
+        im.put(KeyStroke.getKeyStroke("control E"), "GerirEquipamentos");
+        im.put(KeyStroke.getKeyStroke("control R"), "GerirReservas");
+        im.put(KeyStroke.getKeyStroke("control N"), "RegistrarVenda");
+        im.put(KeyStroke.getKeyStroke("control L"), "RelatoriosVendas");
+        im.put(KeyStroke.getKeyStroke("control F"), "GestaoFuncionarios");
+        im.put(KeyStroke.getKeyStroke("control Q"), "Logout");
+
+        // Liga cada atalho ao botão correspondente
+        for (Component comp : sidebarPanel.getComponents()) {
+            if (comp instanceof JButton btn) {
+                am.put(btn.getActionCommand(), new AbstractAction() {
+                    @Override
+                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                        btn.doClick();
+                    }
+                });
+            }
+        }
+    }
+    
 }
