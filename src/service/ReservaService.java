@@ -94,6 +94,7 @@ public class ReservaService {
             }
         }
 
+
         // Definir status e salvar reserva
         System.out.println("=== SALVANDO RESERVA ===");
         r.setStatus(Reserva.StatusReserva.ATIVA);

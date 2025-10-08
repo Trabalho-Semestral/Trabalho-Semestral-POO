@@ -1,0 +1,9 @@
+package persistence.dto;
+
+public class ItemReservaDTO {
+    public String equipamentoId;
+    public String equipamentoMarca;
+    public int quantidade;
+    
+    public ItemReservaDTO() {}
+}

@@ -12,4 +12,8 @@ public class VendaDTO {
     public BigDecimal desconto;
     public BigDecimal imposto;
     public BigDecimal total;
+    public String clienteNome;
+    public String vendedorNome;
+
+    public VendaDTO() {}
 }

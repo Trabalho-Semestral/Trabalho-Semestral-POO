@@ -8,8 +8,8 @@
     "id": "TU60",
     "marca": "DELL",
     "preco": 25000.0,
-    "quantidadeEstoque": 9,
-    "reservado": 0,
+    "quantidadeEstoque": 5,
+    "reservado": 1,
     "disponivel": 0,
     "estado": "NOVO",
     "fotoPath": "resources\\fotos\\equipamentos\\e62dd847-f073-4cb3-b6e8-c29bdccd01a0.jpg"

@@ -149,7 +149,24 @@ public class RelatoriosVendasView extends JPanel {
      */
     private void setupLayout() {
         // Painel superior com título
-        JPanel topPanel = new JPanel(new BorderLayout());
+
+        setLayout(new BorderLayout());
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        JLabel lblTitulo = UITheme.createHeadingLabel("📊 Relatórios de Vendas");
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new java.awt.Font("Sengoe UI Emoji", java.awt.Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
+        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        voltarPanel.setOpaque(false);
+        voltarPanel.add(btnVoltar);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
+
+        /*JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
@@ -166,7 +183,7 @@ public class RelatoriosVendasView extends JPanel {
         topPanel.add(voltarPanel, BorderLayout.WEST);
 
         add(topPanel, BorderLayout.NORTH);
-
+*/
         // Painel principal com abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(UITheme.FONT_SUBHEADING);
@@ -777,7 +794,7 @@ public class RelatoriosVendasView extends JPanel {
         }
     }
     /**
-     * Atualiza a tabela de vendas.
+     * Atualiza a tabela de vendas com cálculo de fallback
      */
     private void atualizarTabelaVendas() {
         modeloTabelaVendas.setRowCount(0);
@@ -787,7 +804,21 @@ public class RelatoriosVendasView extends JPanel {
             String vendedorNome = resolveVendedorNome(dto.vendedorId);
             String clienteNome = resolveClienteNome(dto.clienteId);
             int qtdItens = somaQuantidadeItens(dto.itens);
+
+            // SOLUÇÃO DEFINITIVA: Se total for zero, recalcular baseado nos itens
             BigDecimal total = dto.total != null ? dto.total : BigDecimal.ZERO;
+
+            if (total.compareTo(BigDecimal.ZERO) == 0 && dto.itens != null && !dto.itens.isEmpty()) {
+                // Recalcular total baseado nos itens
+                total = BigDecimal.ZERO;
+                for (ItemVendaDTO item : dto.itens) {
+                    if (item.precoUnitario != null) {
+                        total = total.add(item.precoUnitario.multiply(BigDecimal.valueOf(item.quantidade)));
+                    }
+                }
+                System.out.println("🔄 Total recalculado para venda " + dto.idVenda + ": " + total);
+            }
+
             modeloTabelaVendas.addRow(new Object[]{
                     dto.idVenda,
                     dateFormat.format(data),
@@ -801,7 +832,6 @@ public class RelatoriosVendasView extends JPanel {
         tabelaVendas.revalidate();
         tabelaVendas.repaint();
     }
-
     /**
      * Calcula as estatísticas das vendas.
      */

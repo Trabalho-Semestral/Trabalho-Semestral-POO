@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 
 /**
  * Tela de login do sistema.
@@ -168,36 +169,87 @@ public class LoginView extends JFrame {
         footerPanel.add(lblCopyright);
         add(footerPanel, BorderLayout.SOUTH);
     }
-
     private void setupEvents() {
-        btnLogin.addActionListener(e -> realizarLogin());
+        // Limpar mensagens e cores ao digitar
+        KeyAdapter validarCampos = new KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                validarCampo(txtUsuarioId);
+                validarCampo(txtSenha);
+                lblMensagem.setText(" ");
+            }
+        };
+        txtUsuarioId.addKeyListener(validarCampos);
+        txtSenha.addKeyListener(validarCampos);
 
+        // Enter no usuário → foca senha
+        txtUsuarioId.addActionListener(e -> txtSenha.requestFocus());
+
+        // Enter na senha → realiza login
         txtSenha.addActionListener(e -> realizarLogin());
 
-        txtUsuarioId.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                lblMensagem.setText(" ");
-            }
+        // Botão de login
+        btnLogin.addActionListener(e -> realizarLogin());
+
+        // Atalhos
+        KeyStroke ctrlEnter = KeyStroke.getKeyStroke("control ENTER");
+        KeyStroke ctrlL = KeyStroke.getKeyStroke("control L");
+
+        // Ctrl+Enter → login
+        txtUsuarioId.getInputMap(JComponent.WHEN_FOCUSED).put(ctrlEnter, "login");
+        txtSenha.getInputMap(JComponent.WHEN_FOCUSED).put(ctrlEnter, "login");
+        txtUsuarioId.getActionMap().put("login", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { realizarLogin(); }
+        });
+        txtSenha.getActionMap().put("login", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { realizarLogin(); }
         });
 
-        txtSenha.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                lblMensagem.setText(" ");
-            }
+        // Ctrl+L → limpar campos
+        txtUsuarioId.getInputMap(JComponent.WHEN_FOCUSED).put(ctrlL, "limpar");
+        txtSenha.getInputMap(JComponent.WHEN_FOCUSED).put(ctrlL, "limpar");
+        txtUsuarioId.getActionMap().put("limpar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { limparCampos(); }
+        });
+        txtSenha.getActionMap().put("limpar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { limparCampos(); }
         });
     }
+
+    // Validação visual do campo
+    private void validarCampo(JTextField campo) {
+        if (campo.getText().trim().isEmpty()) {
+            campo.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+        } else {
+            campo.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
+        }
+    }
+
+    // Metodo realizar login atualizado para validação visual
     private void realizarLogin() {
+        boolean valido = true;
+
+        if (txtUsuarioId.getText().trim().isEmpty()) {
+            txtUsuarioId.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+            valido = false;
+        }
+        if (txtSenha.getPassword().length == 0) {
+            txtSenha.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+            valido = false;
+        }
+
+        if (!valido) {
+            lblMensagem.setText("Preencha todos os campos corretamente!");
+            lblMensagem.setForeground(UITheme.ACCENT_COLOR);
+            return;
+        }
+
         String usuarioId = txtUsuarioId.getText().trim();
         String senha = new String(txtSenha.getPassword());
-
-        if (usuarioId.isEmpty()) {
-            lblMensagem.setText("Por favor, digite o ID do utilizador.");
-            return;
-        }
-        if (senha.isEmpty()) {
-            lblMensagem.setText("Por favor, digite a senha.");
-            return;
-        }
 
         String tipoUsuario = controller.autenticarUsuario(usuarioId, senha);
 
@@ -208,9 +260,20 @@ public class LoginView extends JFrame {
         } else {
             lblMensagem.setText("Credenciais inválidas. Tente novamente.");
             lblMensagem.setForeground(UITheme.ACCENT_COLOR);
+            txtUsuarioId.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+            txtSenha.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
         }
     }
 
+    private void limparCampos() {
+        txtUsuarioId.setText("");
+        txtSenha.setText("");
+        txtUsuarioId.setBorder(UITheme.BORDER_INPUT);
+        txtSenha.setBorder(UITheme.BORDER_INPUT);
+
+        lblMensagem.setText(" ");
+        txtUsuarioId.requestFocus();
+    }
 
 
     private void abrirTelaPrincipal(String tipoUsuario) {

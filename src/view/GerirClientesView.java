@@ -163,7 +163,7 @@ public class GerirClientesView extends JPanel {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 criarPainelFormularioE_Acoes(),
                 criarPainelTabela());
-        splitPane.setResizeWeight(0.4); // Aumentar um pouco o espaço para o formulário
+        splitPane.setResizeWeight(0.4);
         splitPane.setOpaque(false);
         splitPane.setBorder(null);
         add(splitPane, BorderLayout.CENTER);

@@ -183,9 +183,22 @@ public class RegistrarVendaView extends JPanel {
     }
 
     private void setupLayout() {
+
         setLayout(new BorderLayout());
-        JPanel topPanel = UITheme.createTopbar("🛒 Registrar Nova Venda", btnVoltar);
-        add(topPanel, BorderLayout.NORTH);
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        JLabel lblTitulo = UITheme.createHeadingLabel("🛒 Registrar Nova Venda");
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
+        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        voltarPanel.setOpaque(false);
+        voltarPanel.add(btnVoltar);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
 
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         mainSplit.setResizeWeight(0.6);
@@ -309,7 +322,7 @@ public class RegistrarVendaView extends JPanel {
                             eq.getMarca(),
                             eq instanceof Computador ? "Computador" : "Periférico",
                             String.format("%.2f MT", eq.getPreco()),
-                            disponivelReal  // Mostrar disponibilidade real
+                            disponivelReal
                     });
                 }
             }
@@ -408,7 +421,7 @@ public class RegistrarVendaView extends JPanel {
                         JOptionPane.showMessageDialog(this, "Quantidade total excede o estoque.", "Estoque", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    item.setQuantidade(novaQtd); // subtotal será recalculado ao atualizar a tabela
+                    item.setQuantidade(novaQtd);
                     atualizarCarrinhoETotal();
                     return;
                 }
@@ -459,22 +472,47 @@ public class RegistrarVendaView extends JPanel {
             JOptionPane.showMessageDialog(this, "Apenas Vendedor, Gestor ou Administrador podem finalizar vendas.", "Permissão Negada", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
         if (itensVenda.isEmpty()) {
             JOptionPane.showMessageDialog(this, "O carrinho está vazio.", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
         Cliente cliente = getClienteDaVenda();
         if (cliente == null) return;
+
+        for (ItemVenda item : itensVenda) {
+            Equipamento eq = item.getEquipamento();
+            int disponivelReal = eq.getQuantidadeEstoque() - eq.getReservado();
+
+            System.out.println("Verificando: " + eq.getMarca() +
+                    " - Estoque: " + eq.getQuantidadeEstoque() +
+                    " - Reservado: " + eq.getReservado() +
+                    " - Disponível: " + disponivelReal +
+                    " - Necessário: " + item.getQuantidade());
+
+            if (item.getQuantidade() > disponivelReal) {
+                JOptionPane.showMessageDialog(this,
+                        "Estoque insuficiente para " + eq.getMarca() +
+                                "\nDisponível: " + disponivelReal +
+                                "\nSolicitado: " + item.getQuantidade(),
+                        "Estoque Insuficiente", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
 
         Venda venda = new Venda(new Date(), vendedorLogado, cliente, new ArrayList<>(), BigDecimal.ZERO);
 
         for (ItemVenda item : itensVenda) {
             boolean ok = venda.adicionarItem(item.getEquipamento(), item.getQuantidade());
             if (!ok) {
-                JOptionPane.showMessageDialog(this, "Falha ao adicionar item: estoque insuficiente para " + item.getEquipamento().getMarca(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Falha ao adicionar item: estoque insuficiente para " + item.getEquipamento().getMarca(),
+                        "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
+
         try {
             if (txtDesconto != null && !txtDesconto.getText().isBlank()) {
                 BigDecimal desc = new BigDecimal(txtDesconto.getText().trim().replace(',', '.'));
@@ -491,7 +529,9 @@ public class RegistrarVendaView extends JPanel {
 
         BigDecimal totalFinal = venda.getTotalComDescontosImpostos();
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Finalizar venda para " + cliente.getNome() + "?\nTotal: " + String.format("%.2f MT", totalFinal),
+                "Finalizar venda para " + cliente.getNome() + "?\n" +
+                        "Total: " + String.format("%.2f MT", totalFinal) + "\n" +
+                        "Itens: " + itensVenda.size(),
                 "Confirmar Venda", JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
@@ -564,52 +604,39 @@ public class RegistrarVendaView extends JPanel {
     }
 
     private void finalizarReserva() {
-        System.out.println("=== FINALIZAR RESERVA INICIADO ===");
 
         if (itensVenda.isEmpty()) {
-            System.out.println("❌ Carrinho vazio");
             JOptionPane.showMessageDialog(this, "O carrinho está vazio.", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        System.out.println("Itens no carrinho: " + itensVenda.size());
-
         Cliente cliente = getClienteDaVenda();
         if (cliente == null) {
-            System.out.println("❌ Cliente não selecionado");
             return;
         }
-
-        System.out.println("Cliente selecionado: " + cliente.getNome());
 
         try {
             // Criar objeto Reserva
             Reserva reserva = new Reserva();
-            System.out.println("Nova reserva criada (ID inicial: " + reserva.getIdReserva() + ")");
 
             reserva.setCliente(cliente);
             reserva.setVendedor(vendedorLogado);
             reserva.setDataReserva(new Date());
-            System.out.println("Dados básicos definidos");
 
             // Calcular data de expiração (7 dias)
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DAY_OF_MONTH, 7);
             reserva.setExpiraEm(cal.getTime());
-            System.out.println("Data de expiração definida: " + reserva.getExpiraEm());
 
             // Converter itens
             List<ItemReserva> itensReserva = new ArrayList<>();
-            System.out.println("Convertendo " + itensVenda.size() + " itens...");
 
             for (ItemVenda itemVenda : itensVenda) {
                 String equipamentoId = itemVenda.getEquipamento().getId();
-                System.out.println("Processando equipamento: " + equipamentoId + ", Qtd: " + itemVenda.getQuantidade());
 
                 Optional<Equipamento> equipamentoOpt = controller.findEquipamentoById(equipamentoId);
 
                 if (equipamentoOpt.isEmpty()) {
-                    System.err.println("❌ Equipamento não encontrado: " + equipamentoId);
                     JOptionPane.showMessageDialog(this,
                             "Equipamento não encontrado: " + equipamentoId,
                             "Erro", JOptionPane.ERROR_MESSAGE);
@@ -617,32 +644,31 @@ public class RegistrarVendaView extends JPanel {
                 }
 
                 Equipamento equipamentoAtual = equipamentoOpt.get();
-                System.out.println("Equipamento encontrado: " + equipamentoAtual.getMarca() +
-                        " (Estoque: " + equipamentoAtual.getQuantidadeEstoque() +
-                        ", Reservado: " + equipamentoAtual.getReservado() + ")");
 
                 ItemReserva itemReserva = new ItemReserva(equipamentoAtual, itemVenda.getQuantidade());
                 itensReserva.add(itemReserva);
-                System.out.println("✅ Item convertido: " + equipamentoAtual.getMarca());
             }
 
             reserva.setItens(itensReserva);
             reserva.setStatus(Reserva.StatusReserva.ATIVA);
-            System.out.println("Itens definidos: " + itensReserva.size() + ", Status: ATIVA");
 
             BigDecimal totalFinal = getTotalVenda();
-            System.out.println("Total calculado: " + totalFinal);
+            BigDecimal taxa = totalFinal.multiply(BigDecimal.valueOf(0.3));  // 30%
+            reserva.setTaxaPaga(taxa);
 
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Salvar reserva para " + cliente.getNome() + "?\n" +
-                            "Total: " + String.format("%.2f MT", totalFinal) +
-                            "\nExpira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
+                            "Total: " + String.format("%.2f MT", totalFinal) + "\n" +
+                            "Taxa Obrigatória (30%): " + String.format("%.2f MT", taxa) + "\n" +  // Novo
+                            "Expira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
                             "\nItens: " + itensReserva.size(),
                     "Confirmar Reserva", JOptionPane.YES_NO_OPTION);
+
 
             if (confirm == JOptionPane.YES_OPTION) {
 
                 boolean sucesso = controller.registrarReserva(reserva);
+
 
                 if (sucesso) {
                     JOptionPane.showMessageDialog(this,
@@ -662,44 +688,33 @@ public class RegistrarVendaView extends JPanel {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ ERRO CRÍTICO ao finalizar reserva: " + e.getMessage());
             JOptionPane.showMessageDialog(this,
                     "Erro ao registrar reserva: " + e.getMessage(),
                     "Erro", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-
-        System.out.println("=== FINALIZAR RESERVA CONCLUÍDO ===");
     }
 
     private void voltarParaGerirReservasEAtualizar() {
-        System.out.println("=== VOLTANDO PARA GERIR RESERVAS ===");
 
         try {
             CardLayoutManager clm = controller.getCardLayoutManager();
 
-            // Buscar a instância atual de GerirReservasView
-            GerirReservasView viewReservas = null;
-            for (java.awt.Component comp : clm.getMainPanel().getComponents()) {
-                if (comp instanceof GerirReservasView) {
-                    viewReservas = (GerirReservasView) comp;
-                    break;
-                }
-            }
+            GerirReservasView viewReservas = GerirReservasView.getInstance();
 
             if (viewReservas != null) {
                 viewReservas.carregarReservas();
-
-                // Mostrar o painel
                 clm.showPanel("GerirReservas");
             } else {
-                voltarMenuPrincipal();
+                GerirReservasView novaView = new GerirReservasView(controller);
+                clm.addPanel(novaView, "GerirReservas");
+                clm.showPanel("GerirReservas");
             }
 
         } catch (Exception e) {
+            e.printStackTrace();
             voltarMenuPrincipal();
         }
-        GerirReservasView.atualizarTabelaReservas();
     }
     public void carregarReserva(Reserva reserva) {
         if (reserva == null) return;

@@ -23,6 +23,8 @@ public class MenuVendedorView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        setupKeyBindings(this);
+
     }
 
     private void initComponents() {
@@ -112,9 +114,11 @@ public class MenuVendedorView extends JPanel {
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
-                        "Como Vendedor, você pode 👤 registrar clientes, 🛒 registrar vendas, 📋 consultar suas vendas e 📦 gerir reservas.</center></html>"
+                "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral ou os atalhos de teclado:<br>" +
+                        "👤 Registrar Cliente <b>(Ctrl+C)</b> | 🛒 Registrar Venda <b>(Ctrl+N)</b><br>" +
+                        "📋 Minhas Vendas <b>(Ctrl+L)</b> | 📦 Gerir Reservas <b>(Ctrl+R)</b> | 🚪 Logout <b>(Ctrl+Q)</b></center></html>"
         );
+
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
         welcomePanel.add(lblDescription, BorderLayout.CENTER);
@@ -218,6 +222,29 @@ public class MenuVendedorView extends JPanel {
                                 new LoginView(controller).setVisible(true);
                             }
                         }
+                    }
+                });
+            }
+        }
+    }
+    private void setupKeyBindings(JComponent root) {
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        // Atalhos
+        im.put(KeyStroke.getKeyStroke("control C"), "RegistrarCliente");
+        im.put(KeyStroke.getKeyStroke("control N"), "RegistrarVenda");
+        im.put(KeyStroke.getKeyStroke("control L"), "MinhasVendas");
+        im.put(KeyStroke.getKeyStroke("control R"), "GerirReservas");
+        im.put(KeyStroke.getKeyStroke("control Q"), "Logout");
+
+
+        for (Component comp : sidebarPanel.getComponents()) {
+            if (comp instanceof JButton btn) {
+                am.put(btn.getActionCommand(), new AbstractAction() {
+                    @Override
+                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                        btn.doClick();
                     }
                 });
             }

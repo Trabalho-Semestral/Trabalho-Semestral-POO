@@ -105,10 +105,10 @@ public class GerirEquipamentosView extends JPanel {
 
         // Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");  // antes era secondary
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");        // antes era success
+        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
+        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
         btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");            // antes era danger
+        btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
         btnVoltar.setFont(emojiFont);
@@ -145,8 +145,9 @@ public class GerirEquipamentosView extends JPanel {
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Gestão de Equipamentos");
-        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         voltarPanel.setOpaque(false);

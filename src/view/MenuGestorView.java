@@ -23,6 +23,8 @@ public class MenuGestorView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        setupKeyBindings(this);
+
     }
 
     private void initComponents() {
@@ -118,9 +120,12 @@ public class MenuGestorView extends JPanel {
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>Olá, " + gestorLogado.getNome() + "! Utilize o menu lateral para navegar pelas funcionalidades.<br>" +
-                        "Como Gestor, você pode gerir 👥 vendedores, 👤 clientes, 💻 equipamentos, 📦 reservas, 👨‍👩‍👧‍👦 funcionários e visualizar 📊 relatórios.</center></html>"
+                "<html><center>Olá, " + gestorLogado.getNome() + "! Utilize o menu lateral ou os atalhos de teclado:<br>" +
+                        "👥 Vendedores <b>(Ctrl+V)</b> | 👤 Clientes <b>(Ctrl+C)</b> | 💻 Equipamentos <b>(Ctrl+E)</b><br>" +
+                        "📦 Reservas <b>(Ctrl+R)</b> | 🛒 Registrar Venda <b>(Ctrl+N)</b> | 📊 Relatórios <b>(Ctrl+L)</b><br>" +
+                        "👨‍👩‍👧‍👦 Funcionários <b>(Ctrl+F)</b> | 🚪 Logout <b>(Ctrl+Q)</b></center></html>"
         );
+
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
         lblDescription.setForeground(UITheme.TEXT_SECONDARY);
         welcomePanel.add(lblDescription, BorderLayout.CENTER);
@@ -212,7 +217,7 @@ public class MenuGestorView extends JPanel {
                         case "GerirReservas" -> abrirGerirReservas();
                         case "RegistrarVenda" -> abrirRegistrarVenda();
                         case "RelatoriosVendas" -> abrirRelatoriosVendas();
-                        case "GestaoFuncionarios" -> abrirGestaoFuncionarios(); // NOVO CASE
+                        case "GestaoFuncionarios" -> abrirGestaoFuncionarios();
                         case "Logout" -> {
                             int confirm = JOptionPane.showConfirmDialog(MenuGestorView.this,
                                     "Deseja realmente sair do sistema?",
@@ -228,6 +233,32 @@ public class MenuGestorView extends JPanel {
                                 new LoginView(controller).setVisible(true);
                             }
                         }
+                    }
+                });
+            }
+        }
+
+    }
+    private void setupKeyBindings(JComponent root) {
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        im.put(KeyStroke.getKeyStroke("control V"), "GerirVendedores");
+        im.put(KeyStroke.getKeyStroke("control C"), "GerirClientes");
+        im.put(KeyStroke.getKeyStroke("control E"), "GerirEquipamentos");
+        im.put(KeyStroke.getKeyStroke("control R"), "GerirReservas");
+        im.put(KeyStroke.getKeyStroke("control N"), "RegistrarVenda");
+        im.put(KeyStroke.getKeyStroke("control L"), "RelatoriosVendas");
+        im.put(KeyStroke.getKeyStroke("control F"), "GestaoFuncionarios");
+        im.put(KeyStroke.getKeyStroke("control Q"), "Logout");
+
+        // Liga cada atalho ao botão correspondente
+        for (Component comp : sidebarPanel.getComponents()) {
+            if (comp instanceof JButton btn) {
+                am.put(btn.getActionCommand(), new AbstractAction() {
+                    @Override
+                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                        btn.doClick(); // dispara a ação do botão
                     }
                 });
             }

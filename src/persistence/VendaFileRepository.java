@@ -1,6 +1,8 @@
 package persistence;
 
+import model.concretas.ItemVenda;
 import model.concretas.Venda;
+import persistence.dto.ItemVendaDTO;
 import persistence.dto.VendaDTO;
 import persistence.mapper.VendaMapper;
 import java.io.BufferedWriter;
@@ -11,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -90,6 +93,32 @@ public class VendaFileRepository {
             }
         }
         return arq;
+    }Reservas
+    private VendaDTO toDTO(Venda venda) {
+        VendaDTO dto = new VendaDTO();
+        dto.idVenda = venda.getIdVenda();
+        dto.clienteId = venda.getCliente() != null ? venda.getCliente().getId() : null;
+        dto.clienteNome = venda.getCliente() != null ? venda.getCliente().getNome() : null;
+        dto.vendedorId = venda.getVendedor() != null ? venda.getVendedor().getId() : null;
+        dto.vendedorNome = venda.getVendedor() != null ? venda.getVendedor().getNome() : null;
+        dto.dataMillis = venda.getData() != null ? venda.getData().getTime() : System.currentTimeMillis();
+        dto.total = venda.getTotalComDescontosImpostos();
+        dto.desconto = venda.getDesconto();
+        dto.imposto = venda.getImposto();
+
+        // Converter itens
+        if (venda.getItens() != null) {
+            dto.itens = new ArrayList<>();
+            for (ItemVenda item : venda.getItens()) {
+                ItemVendaDTO itemDTO = new ItemVendaDTO();
+                itemDTO.equipamentoId = item.getEquipamento().getId();
+                itemDTO.quantidade = item.getQuantidade();
+                itemDTO.precoUnitario = item.getPrecoUnitario();
+                dto.itens.add(itemDTO);
+            }
+        }
+
+        return dto;
     }
 
 

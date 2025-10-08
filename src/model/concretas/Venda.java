@@ -89,12 +89,56 @@ public class Venda {
      * Valida os dados da venda.
      * @return true se todos os dados forem válidos, false caso contrário
      */
+    // Na classe Venda, adicione debug ao método validarDados()
     public boolean validarDados() {
-        return vendedor != null &&
-                cliente != null &&
-                itens != null && !itens.isEmpty() &&
-                valorTotal != null && valorTotal.compareTo(BigDecimal.ZERO) > 0;
+        System.out.println("=== VALIDANDO VENDA ===");
+        System.out.println("ID Venda: " + idVenda);
+        System.out.println("Cliente: " + (cliente != null ? cliente.getNome() : "NULO"));
+        System.out.println("Vendedor: " + (vendedor != null ? vendedor.getNome() : "NULO"));
+        System.out.println("Data: " + data);
+        System.out.println("Itens: " + (itens != null ? itens.size() : 0));
+
+        if (idVenda == null || idVenda.trim().isEmpty()) {
+            System.out.println("❌ ID Venda inválido");
+            return false;
+        }
+        if (cliente == null) {
+            System.out.println("❌ Cliente nulo");
+            return false;
+        }
+        if (vendedor == null) {
+            System.out.println("❌ Vendedor nulo");
+            return false;
+        }
+        if (data == null) {
+            System.out.println("❌ Data nula");
+            return false;
+        }
+        if (itens == null || itens.isEmpty()) {
+            System.out.println("❌ Lista de itens vazia");
+            return false;
+        }
+
+        // Validar cada item
+        for (ItemVenda item : itens) {
+            if (item == null) {
+                System.out.println("❌ Item nulo na lista");
+                return false;
+            }
+            if (item.getEquipamento() == null) {
+                System.out.println("❌ Equipamento nulo no item");
+                return false;
+            }
+            if (item.getQuantidade() <= 0) {
+                System.out.println("❌ Quantidade inválida: " + item.getQuantidade());
+                return false;
+            }
+        }
+
+        System.out.println("✅ Venda válida!");
+        return true;
     }
+
     public void setDescontoPercent(BigDecimal p) { this.descontoPercent = p != null ? p : BigDecimal.ZERO; }
 
     // Getters e Setters

@@ -1,1 +1,10 @@
 {"idVenda":"VNDPEXH","dataMillis":1759327795323,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":25000.0}
+{"idVenda":"VND12R0","dataMillis":1759502994701,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":25000.0}
+{"idVenda":"VNDYE18","dataMillis":1759766342175,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":25000.0}
+{"idVenda":"VNDCCZU","dataMillis":1759939453416,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":0}
+{"idVenda":"VNDXNUY","dataMillis":1759939989593,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":0}
+{"idVenda":"VNDPWSU","dataMillis":1759940787553,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":0}
+{"idVenda":"VNDG5J4","dataMillis":1759940820512,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":25000.0}
+{"idVenda":"VNDUQ0R","dataMillis":1759941714792,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":0,"clienteNome":null,"vendedorNome":null}
+{"idVenda":"VNDQSO0","dataMillis":1759941742605,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":25000.0,"clienteNome":null,"vendedorNome":null}
+{"idVenda":"VNDOD8D","dataMillis":1759941815928,"vendedorId":"BCID","clienteId":"O3D1","itens":[{"equipamentoId":"TU60","quantidade":1,"precoUnitario":25000.0}],"desconto":0,"imposto":0,"total":0,"clienteNome":null,"vendedorNome":null}

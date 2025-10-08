@@ -2,6 +2,7 @@ package persistence;
 
 import model.concretas.Reserva;
 import persistence.dto.ReservaDTO;
+import persistence.dto.ItemReservaDTO;
 import persistence.mapper.ReservaMapper;
 
 import java.io.BufferedWriter;
@@ -29,7 +30,7 @@ public class ReservaFileRepository implements ReservaRepository {
         try {
             List<ReservaDTO> todas = listarTodasDTO();
             boolean found = false;
-            ReservaDTO novo = persistence.mapper.ReservaMapper.toDTO(reserva);
+            ReservaDTO novo = ReservaMapper.toDTO(reserva); // CORRIGIDO: removido "persistence.mapper."
             for (int i = 0; i < todas.size(); i++) {
                 if (Objects.equals(todas.get(i).idReserva, reserva.getIdReserva())) {
                     todas.set(i, novo);
@@ -38,10 +39,8 @@ public class ReservaFileRepository implements ReservaRepository {
                 }
             }
             if (!found) {
-                // se não existe, adiciona (comportamento similar ao salvar)
                 todas.add(novo);
             }
-            // regrava ficheiro
             Files.writeString(arquivoNdjson, "", StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
             com.google.gson.Gson gsonCompact = new com.google.gson.GsonBuilder().serializeNulls().create();
             for (ReservaDTO dto : todas) {
@@ -106,7 +105,7 @@ public class ReservaFileRepository implements ReservaRepository {
                 if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) continue;
                 try {
                     var dto = JsonUtil.GSON.fromJson(trimmed, ReservaDTO.class);
-                    if (dto != null && dto.idReserva != null) out.add(dto); // Validar DTO
+                    if (dto != null && dto.idReserva != null) out.add(dto);
                 } catch (Exception e) {
                     System.err.println("Linha inválida no arquivo de reservas: " + trimmed);
                 }
@@ -115,7 +114,6 @@ public class ReservaFileRepository implements ReservaRepository {
         return out;
     }
 
-    // remover por id (reescreve arquivo)
     public synchronized void remover(String idReserva) {
         try {
             List<ReservaDTO> todas = listarTodasDTO();
@@ -130,7 +128,6 @@ public class ReservaFileRepository implements ReservaRepository {
         }
     }
 
-    // export CSV opcional
     public Path exportarCSV(List<ReservaDTO> reservas, String nomeArquivo) throws IOException {
         Path exportDir = pastaDados.resolve("exports");
         Files.createDirectories(exportDir);
@@ -150,57 +147,34 @@ public class ReservaFileRepository implements ReservaRepository {
         }
         return arq;
     }
+
     @Override
     public List<Reserva> listarTodas() {
         List<Reserva> out = new ArrayList<>();
         try {
             List<ReservaDTO> dtos = listarTodasDTO();
-            System.out.println("=== DEBUG ReservaRepository: " + dtos.size() + " DTOs encontrados ===");
 
             for (var dto : dtos) {
-                System.out.println("DTO: idReserva=" + dto.idReserva +
-                        ", cliente=" + dto.clienteNome +
-                        ", itens=" + (dto.itens != null ? dto.itens.size() : 0));
 
-                Reserva reserva = persistence.mapper.ReservaMapper.fromDTO(dto);
+
+                Reserva reserva = ReservaMapper.fromDTO(dto);
                 if (reserva != null && reserva.getIdReserva() != null) {
                     out.add(reserva);
-                    System.out.println("Reserva mapeada: " + reserva.getIdReserva());
-                } else {
-                    System.out.println("Falha ao mapear reserva do DTO");
                 }
             }
         } catch (Exception e) {
-            System.err.println("Erro ao listar reservas: " + e.getMessage());
-            e.printStackTrace();
+          e.printStackTrace();
         }
         return out;
     }
-    public void debugArquivoReservas() {
-        try {
-            System.out.println("=== DEBUG ARQUIVO RESERVAS ===");
-            System.out.println("Caminho: " + arquivoNdjson);
-            System.out.println("Existe: " + Files.exists(arquivoNdjson));
 
-            if (Files.exists(arquivoNdjson)) {
-                String conteudo = Files.readString(arquivoNdjson, StandardCharsets.UTF_8);
-                System.out.println("Tamanho: " + conteudo.length() + " caracteres");
-                System.out.println("Conteúdo: " + conteudo);
-            } else {
-                System.out.println("Arquivo não existe!");
-            }
-            System.out.println("=== FIM DEBUG ===");
-        } catch (Exception e) {
-            System.err.println("Erro no debug: " + e.getMessage());
-        }
-    }
+
+
     @Override
     public synchronized void salvar(Reserva reserva) {
         try {
-            System.out.println("=== SALVANDO NO ARQUIVO ===");
-            System.out.println("Reserva ID: " + reserva.getIdReserva());
 
-            ReservaDTO dto = persistence.mapper.ReservaMapper.toDTO(reserva);
+            ReservaDTO dto = ReservaMapper.toDTO(reserva);
             com.google.gson.Gson gsonCompact = new com.google.gson.GsonBuilder().serializeNulls().create();
             String linha = gsonCompact.toJson(dto) + System.lineSeparator();
 
@@ -208,10 +182,8 @@ public class ReservaFileRepository implements ReservaRepository {
 
             Files.writeString(arquivoNdjson, linha, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
 
-            System.out.println("Reserva salva no arquivo!");
 
         } catch (IOException e) {
-            System.err.println("ERRO ao salvar reserva: " + e.getMessage());
             throw new RuntimeException("Erro ao salvar reserva", e);
         }
     }
