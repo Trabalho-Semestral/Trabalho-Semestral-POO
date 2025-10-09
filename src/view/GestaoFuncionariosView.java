@@ -100,6 +100,14 @@ public class GestaoFuncionariosView extends JPanel {
         btnSuspender = UITheme.createSecondaryButton("⏸ Sus/Reat");
         btnDetalhes = UITheme.createSecondaryButton("👤 Detalhes");
 
+     /// visibilidade das imagens
+        btnVoltar.setFont(new java.awt.Font("Sengoe UI Emoji", com.itextpdf.text.Font.BOLD, 18));
+        btnExportarPDF.setFont(new java.awt.Font("Sengoe UI Emoji", com.itextpdf.text.Font.BOLD, 18));
+        btnSuspender.setFont(new java.awt.Font("Sengoe UI Emoji", com.itextpdf.text.Font.BOLD, 18));
+        btnAtualizar.setFont(new java.awt.Font("Sengoe UI Emoji", com.itextpdf.text.Font.BOLD, 18));
+        btnDetalhes.setFont(new java.awt.Font("Sengoe UI Emoji", com.itextpdf.text.Font.BOLD, 18));
+
+     
         // Inicializar abas
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(UITheme.FONT_BODY);
