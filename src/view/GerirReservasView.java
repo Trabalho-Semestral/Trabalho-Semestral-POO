@@ -147,8 +147,6 @@ public class GerirReservasView extends JPanel {
         btnConverterVenda.addActionListener(e -> converterReservaEmVenda());
     }
     public void carregarReservas() {
-        controller.debugEquipamentos();
-
         modeloTabela.setRowCount(0);
         try {
             List<Reserva> reservas = controller.getReservas();
@@ -157,18 +155,8 @@ public class GerirReservasView extends JPanel {
             double total = 0;
             int count = 0;
 
-            System.out.println("=== DEBUG GERIR RESERVAS ===");
-            System.out.println("Total de reservas encontradas: " + reservas.size());
-
             for (Reserva r : reservas) {
                 if (r != null && r.getCliente() != null) {
-                    // DEBUG DETALHADO
-                    System.out.println("--- Reserva ID: " + r.getIdReserva() + " ---");
-                    System.out.println("Cliente: " + r.getCliente().getNome());
-                    System.out.println("Status: " + r.getStatus());
-                    System.out.println("Número de itens: " + (r.getItens() != null ? r.getItens().size() : 0));
-
-                    // Calcular valor manualmente para debug
                     double valorCalculado = 0.0;
                     if (r.getItens() != null) {
                         for (ItemReserva item : r.getItens()) {
@@ -177,20 +165,10 @@ public class GerirReservasView extends JPanel {
                                 int quantidade = item.getQuantidade();
                                 double subtotal = precoItem * quantidade;
                                 valorCalculado += subtotal;
-                                System.out.println("  Item: " + item.getEquipamento().getMarca() +
-                                        " - Preço: " + precoItem +
-                                        " - Qtd: " + quantidade +
-                                        " - Subtotal: " + subtotal);
-                            } else {
-                                System.out.println("  ⚠️ Item ou equipamento nulo!");
                             }
                         }
                     }
 
-                    System.out.println("Valor calculado: " + valorCalculado);
-                    System.out.println("Valor getValorTotal(): " + r.getValorTotal());
-
-                    // Usar o maior valor entre calculado e getValorTotal()
                     double valorFinal = Math.max(valorCalculado, r.getValorTotal());
 
                     modeloTabela.addRow(new Object[]{
@@ -204,13 +182,10 @@ public class GerirReservasView extends JPanel {
                     });
                     total += valorFinal;
                     count++;
-                    System.out.println("Valor final usado: " + valorFinal);
-                } else {
-                    System.out.println("⚠️ Reserva ou cliente nulo: " + r);
+
                 }
             }
 
-            System.out.println("=== TOTAL GERAL: " + total + " ===");
             lblTotalReservas.setText("Total de Reservas: " + count);
             lblValorTotal.setText("Valor Total: " + String.format("%.2f MT", total));
 
@@ -225,18 +200,6 @@ public class GerirReservasView extends JPanel {
         }
     }
 
-    // Método auxiliar para calcular valor da reserva
-    private double calcularValorReserva(Reserva reserva) {
-        if (reserva.getItens() == null) return 0.0;
-
-        double total = 0.0;
-        for (ItemReserva item : reserva.getItens()) {
-            if (item.getEquipamento() != null) {
-                total += item.getEquipamento().getPreco() * item.getQuantidade();
-            }
-        }
-        return total;
-    }
     private void abrirRegistrarReserva() {
         try {
             RegistrarVendaView registrar = RegistrarVendaView.criarParaReserva(controller);

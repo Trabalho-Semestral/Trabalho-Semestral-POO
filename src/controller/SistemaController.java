@@ -588,9 +588,8 @@ public class SistemaController {
         return vendedorId;
     }
 
-
     public boolean converterReservaParaVenda(String idReserva) {
-        System.out.println("=== CONVERSÃO RESERVA->VENDA (SOLUÇÃO DEFINITIVA) ===");
+        System.out.println("=== CONVERSÃO RESERVA->VENDA (COM ATUALIZAÇÃO DE ESTOQUE) ===");
 
         try {
             Reserva reserva = buscarReservaPorId(idReserva);
@@ -599,11 +598,47 @@ public class SistemaController {
                 return false;
             }
 
-            // 1. Cancelar reserva
+            System.out.println("📋 Reserva encontrada: " + reserva.getIdReserva());
+            System.out.println("📦 Itens da reserva: " + reserva.getItens().size());
+
+            // 1. VALIDAR ESTOQUE ANTES DE QUALQUER OPERAÇÃO
+            System.out.println("=== VALIDANDO ESTOQUE ===");
+            for (ItemReserva itemReserva : reserva.getItens()) {
+                String equipamentoId = itemReserva.getEquipamento().getId();
+                Optional<Equipamento> equipamentoOpt = findEquipamentoById(equipamentoId);
+
+                if (equipamentoOpt.isEmpty()) {
+                    throw new IllegalStateException("Equipamento não encontrado: " + equipamentoId);
+                }
+
+                Equipamento e = equipamentoOpt.get();
+                int estoqueDisponivel = e.getQuantidadeEstoque() - e.getReservado();
+
+                System.out.println("Equipamento: " + e.getMarca() +
+                        " - Estoque: " + e.getQuantidadeEstoque() +
+                        " - Reservado: " + e.getReservado() +
+                        " - Disponível: " + estoqueDisponivel +
+                        " - Necessário: " + itemReserva.getQuantidade());
+
+                if (estoqueDisponivel < itemReserva.getQuantidade()) {
+                    JOptionPane.showMessageDialog(null,
+                            "Estoque insuficiente para " + e.getMarca() +
+                                    "\nDisponível: " + estoqueDisponivel +
+                                    "\nNecessário: " + itemReserva.getQuantidade(),
+                            "Estoque Insuficiente", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+
+            // 2. CANCELAR RESERVA (libera estoque reservado)
+            System.out.println("=== CANCELANDO RESERVA ===");
             reservaService.cancelar(idReserva);
+
+            // 3. RECARREGAR EQUIPAMENTOS PARA DADOS ATUALIZADOS
             equipamentoRepo.init();
 
-            // 2. Criar venda
+            // 4. CRIAR VENDA
+            System.out.println("=== CRIANDO VENDA ===");
             Venda venda = new Venda();
             venda.setIdVenda("VND" + GeradorID.gerarID());
             venda.setData(new Date());
@@ -611,50 +646,85 @@ public class SistemaController {
             venda.setCliente(reserva.getCliente());
             venda.setItens(new ArrayList<>());
 
-            // 3. Converter itens
             BigDecimal totalVenda = BigDecimal.ZERO;
+
+            // 5. CONVERTER ITENS E ATUALIZAR ESTOQUE
+            System.out.println("=== CONVERTENDO ITENS E ATUALIZANDO ESTOQUE ===");
             for (ItemReserva itemReserva : reserva.getItens()) {
                 String equipamentoId = itemReserva.getEquipamento().getId();
                 Optional<Equipamento> equipamentoOpt = findEquipamentoById(equipamentoId);
+
                 if (equipamentoOpt.isPresent()) {
                     Equipamento equipamentoAtual = equipamentoOpt.get();
+
+                    // DEBUG: Mostrar estoque antes da atualização
+                    System.out.println("Antes da venda - " + equipamentoAtual.getMarca() +
+                            ": Estoque=" + equipamentoAtual.getQuantidadeEstoque() +
+                            ", Reservado=" + equipamentoAtual.getReservado());
+
+                    // ATUALIZAR ESTOQUE (diminuir quantidade em estoque)
+                    int novaQuantidade = equipamentoAtual.getQuantidadeEstoque() - itemReserva.getQuantidade();
+                    equipamentoAtual.setQuantidadeEstoque(novaQuantidade);
+
+                    // SALVAR EQUIPAMENTO ATUALIZADO
+                    equipamentoRepo.salvar(equipamentoAtual);
+
+                    System.out.println("Depois da venda - " + equipamentoAtual.getMarca() +
+                            ": Estoque=" + equipamentoAtual.getQuantidadeEstoque());
+
+                    // Criar item da venda
                     ItemVenda itemVenda = new ItemVenda(equipamentoAtual, itemReserva.getQuantidade());
                     venda.getItens().add(itemVenda);
                     totalVenda = totalVenda.add(itemVenda.getSubtotal());
 
-                    System.out.println("  ✅ Item convertido: " + equipamentoAtual.getMarca() +
-                            " - Preço: " + itemVenda.getPrecoUnitario() +
-                            " - Subtotal: " + itemVenda.getSubtotal());
+                    System.out.println("✅ Estoque atualizado: " + equipamentoAtual.getMarca() +
+                            " - Nova quantidade: " + equipamentoAtual.getQuantidadeEstoque());
                 }
             }
 
-            System.out.println("💰 Total da venda convertida: " + totalVenda);
+            System.out.println("💰 Total da venda: " + totalVenda);
 
-            // 4. Registrar venda (agora com total calculado)
+            // 6. REGISTRAR VENDA
+            System.out.println("=== REGISTRANDO VENDA ===");
             boolean sucesso = registrarVenda(venda);
 
             if (sucesso) {
+                // 7. ATUALIZAR STATUS DA RESERVA
                 reserva.setStatus(Reserva.StatusReserva.CONVERTIDA);
                 reservaRepo.atualizar(reserva);
 
-                System.out.println("🎉 Conversão concluída - Venda: " + venda.getIdVenda() + " - Total: " + totalVenda);
+                System.out.println("🎉 CONVERSÃO CONCLUÍDA COM SUCESSO!");
+                System.out.println("Venda: " + venda.getIdVenda());
+                System.out.println("Total: " + totalVenda);
+
                 JOptionPane.showMessageDialog(null,
-                        "Reserva convertida em venda com sucesso!\nID: " + venda.getIdVenda() + "\nTotal: " + totalVenda + " MT",
+                        "Reserva convertida em venda com sucesso!\n" +
+                                "ID Venda: " + venda.getIdVenda() + "\n" +
+                                "Total: " + String.format("%.2f MT", totalVenda) + "\n" +
+                                "Estoque atualizado automaticamente.",
                         "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 return true;
             } else {
+                // REVERTER SE FALHAR
+                System.out.println("❌ Falha ao registrar venda - Revertendo operação...");
                 restaurarReservaCancelada(reserva);
+                JOptionPane.showMessageDialog(null,
+                        "Erro ao registrar a venda. Operação revertida.",
+                        "Erro", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Erro na conversão: " + e.getMessage());
+            System.out.println("❌ ERRO NA CONVERSÃO: " + e.getMessage());
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Erro: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null,
+                    "Erro durante a conversão: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
-    // Método auxiliar novo: Restaura o 'reservado' e status da reserva se conversão falhar
+
+
     private void restaurarReservaCancelada(Reserva reserva) {
         for (ItemReserva item : reserva.getItens()) {
             Optional<Equipamento> opt = findEquipamentoById(item.getEquipamento().getId());
@@ -668,15 +738,4 @@ public class SistemaController {
         reservaRepo.atualizar(reserva);
     }
 
-    // No SistemaController.java, adicione este método temporário
-    public void debugEquipamentos() {
-        System.out.println("=== DEBUG EQUIPAMENTOS ===");
-        List<Equipamento> equipamentos = getEquipamentos();
-        for (Equipamento eq : equipamentos) {
-            System.out.println("Equipamento: " + eq.getMarca() +
-                    " - ID: " + eq.getId() +
-                    " - Preço: " + eq.getPreco() +
-                    " - Estoque: " + eq.getQuantidadeEstoque());
-        }
-    }
 }

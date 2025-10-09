@@ -166,24 +166,6 @@ public class RelatoriosVendasView extends JPanel {
         topBar.add(voltarPanel, BorderLayout.WEST);
         add(topBar, BorderLayout.NORTH);
 
-        /*JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-
-        JLabel lblTitulo = UITheme.createHeadingLabel("📊 Relatórios de Vendas");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.BOLD, 18));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-        topPanel.add(lblTitulo, BorderLayout.CENTER);
-
-        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        voltarPanel.add(btnVoltar);
-        topPanel.add(voltarPanel, BorderLayout.WEST);
-
-        add(topPanel, BorderLayout.NORTH);
-*/
         // Painel principal com abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(UITheme.FONT_SUBHEADING);
@@ -936,30 +918,6 @@ public class RelatoriosVendasView extends JPanel {
         }
     }
 
-    /**
-     * Cria um placeholder para gráfico.
-     */
-    private JPanel criarGraficoPlaceholder(String titulo) {
-        JPanel panel = UITheme.createCardPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setPreferredSize(new Dimension(300, 200));
-
-        JLabel lblTitulo = UITheme.createSubtitleLabel(titulo);
-        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(lblTitulo, BorderLayout.NORTH);
-
-        JLabel lblGrafico = new JLabel("📊");
-        lblGrafico.setHorizontalAlignment(SwingConstants.CENTER);
-        lblGrafico.setForeground(UITheme.SECONDARY_LIGHT);
-        panel.add(lblGrafico, BorderLayout.CENTER);
-
-        JLabel lblInfo = UITheme.createBodyLabel("Gráfico será implementado em versão futura");
-        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblInfo.setForeground(UITheme.TEXT_SECONDARY);
-        panel.add(lblInfo, BorderLayout.SOUTH);
-
-        return panel;
-    }
 
 
 }

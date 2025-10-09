@@ -50,12 +50,38 @@ public class Venda {
      * @return true se o equipamento foi adicionado com sucesso, false caso contrário
      */
     public boolean adicionarItem(Equipamento equipamento, int quantidade) {
-        if (equipamento == null || quantidade <= 0) return false;
-        if (equipamento.getQuantidadeEstoque() < quantidade) return false;
-        ItemVenda item = new ItemVenda(equipamento, quantidade);
-        itens.add(item);
-        equipamento.reduzirEstoque(quantidade);
-        calcularValorTotal();
+        System.out.println("=== ADICIONANDO ITEM À VENDA ===");
+        System.out.println("Equipamento: " + equipamento.getMarca());
+        System.out.println("Quantidade: " + quantidade);
+        System.out.println("Estoque disponível: " + (equipamento.getQuantidadeEstoque() - equipamento.getReservado()));
+
+        // Verificar estoque
+        if (quantidade > (equipamento.getQuantidadeEstoque() - equipamento.getReservado())) {
+            System.out.println("❌ Estoque insuficiente");
+            return false;
+        }
+
+        // Diminuir estoque
+        equipamento.setQuantidadeEstoque(equipamento.getQuantidadeEstoque() - quantidade);
+        System.out.println("✅ Estoque atualizado: " + equipamento.getQuantidadeEstoque());
+
+        // Adicionar item
+        if (itens == null) {
+            itens = new ArrayList<>();
+        }
+
+        // Verificar se item já existe
+        for (ItemVenda item : itens) {
+            if (item.getEquipamento().getId().equals(equipamento.getId())) {
+                item.setQuantidade(item.getQuantidade() + quantidade);
+                System.out.println("✅ Quantidade atualizada no item existente");
+                return true;
+            }
+        }
+
+        // Criar novo item
+        itens.add(new ItemVenda(equipamento, quantidade));
+        System.out.println("✅ Novo item adicionado à venda");
         return true;
     }
     
@@ -89,7 +115,6 @@ public class Venda {
      * Valida os dados da venda.
      * @return true se todos os dados forem válidos, false caso contrário
      */
-    // Na classe Venda, adicione debug ao método validarDados()
     public boolean validarDados() {
         System.out.println("=== VALIDANDO VENDA ===");
         System.out.println("ID Venda: " + idVenda);
@@ -138,6 +163,7 @@ public class Venda {
         System.out.println("✅ Venda válida!");
         return true;
     }
+
 
     public void setDescontoPercent(BigDecimal p) { this.descontoPercent = p != null ? p : BigDecimal.ZERO; }
 
