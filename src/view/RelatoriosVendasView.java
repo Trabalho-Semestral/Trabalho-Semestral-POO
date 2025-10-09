@@ -108,6 +108,7 @@ public class RelatoriosVendasView extends JPanel {
         btnExportarPDF = UITheme.createSecondaryButton("Exportar PDF");
         btnLimparFiltros = UITheme.createSecondaryButton(" Limpar");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar.setFont(new java.awt.Font("Sengoe UI Emoji", Font.BOLD, 18));
 
 
         // Labels de estatísticas
