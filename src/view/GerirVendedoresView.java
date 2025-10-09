@@ -71,11 +71,17 @@ public class GerirVendedoresView extends JPanel {
         txtSenha = new JPasswordField();
 
         styleTextField(txtNome, "Nome");
-        styleTextField(txtNrBI, "Nr. BI");
+        styleTextField(txtNrBI, "Nº BI");
         styleTextField(txtNuit, "NUIT");
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
         styleTextField(txtSenha, "Senha");
+
+         /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo houver
+        }
 
         // Componentes da foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
@@ -435,5 +441,42 @@ public class GerirVendedoresView extends JPanel {
                 controller.getCardLayoutManager().showPanel("MenuAdministrador");
                 break;
         }
+    }
+
+    private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
     }
 }
