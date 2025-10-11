@@ -72,6 +72,11 @@ public class GerirClientesView extends JPanel {
         txtPesquisar = UITheme.createStyledTextField();
         txtPesquisar.setBorder(criarTitulo("Pesquisar"));
 
+        JTextField[] campos = {txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail, /*txtPesquisar*/}
+         for(JTextField tf : campos){
+            adicionarEfeitosHover(tf);
+         }   
+
         // --- Botões ---
 
 
@@ -83,9 +88,9 @@ public class GerirClientesView extends JPanel {
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
 
 
-        JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover, btnLimpar};
-        for (JButton btn : actionButtons) {
-            styleActionButton(btn);
+        JTextField[] campos = {txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail/*, txtPesquisar*/};
+        for (JTextField tf : campos) {
+            adicionarEfeitoHover(tf); 
         }
 
         // --- Tabela com visibilidade do header corrigida ---
@@ -409,5 +414,42 @@ public class GerirClientesView extends JPanel {
     private void atualizarEstadoBotoes(boolean habilitar) {
         btnEditar.setEnabled(habilitar);
         btnRemover.setEnabled(habilitar);
+    }
+
+    private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
     }
 }
