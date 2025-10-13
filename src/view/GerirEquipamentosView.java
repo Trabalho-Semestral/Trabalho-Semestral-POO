@@ -120,9 +120,9 @@ public class GerirEquipamentosView extends JPanel {
         // Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
         btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");
+        btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
+        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
+        btnRemover = UITheme.createDangerButton("🗑️ Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
         btnVoltar.setFont(emojiFont);
