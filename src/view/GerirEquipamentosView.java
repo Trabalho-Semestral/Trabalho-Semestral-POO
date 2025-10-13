@@ -9,9 +9,16 @@ import util.Validador;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -91,15 +98,16 @@ public class GerirEquipamentosView extends JPanel {
         styleTextField(txtArmazenamento, "Armazenamento");
         styleTextField(txtPlacaGrafica, "Placa Gráfica");
 
-        /// Campos que serao afectados pelo evento
-        JTextField[] campos = { txtProcessador, txtMemoriaRAM, txtArmazenamento, txtPlacaGrafica, txtMarca, txtQuantidade, txtPreco};
-        for (JTextField tf :campos){
-            adicionarEfeitoHover(tf); 
-        }
-
         // Campos específicos de Periférico
         txtTipoPeriferico = new JTextField();
         styleTextField(txtTipoPeriferico, "Tipo de Periférico");
+
+         /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtMarca, txtPreco, txtQuantidade, txtProcessador, txtMemoriaRAM, txtArmazenamento, txtPlacaGrafica};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo houver
+        }
+
 
         // Foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
@@ -111,10 +119,10 @@ public class GerirEquipamentosView extends JPanel {
 
         // Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");  // antes era secondary
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");        // antes era success
+        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
+        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
         btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");            // antes era danger
+        btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
         btnVoltar.setFont(emojiFont);
@@ -151,8 +159,9 @@ public class GerirEquipamentosView extends JPanel {
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Gestão de Equipamentos");
-        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         voltarPanel.setOpaque(false);
@@ -461,7 +470,8 @@ public class GerirEquipamentosView extends JPanel {
         controller.getCardLayoutManager().showPanel(painel);
     }
 
-     private void adicionarEfeitoHover(JTextField campo){
+
+    private void adicionarEfeitoHover(JTextField campo){
         final Border bordaOriginal =  campo.getBorder();
 
         Border bordaHover = new CompoundBorder(
