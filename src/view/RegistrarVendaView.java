@@ -11,6 +11,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -58,6 +60,7 @@ public class RegistrarVendaView extends JPanel {
         this.modoReserva = false;
         initComponents();
         setupLayout();
+        installAltForVoltar();
         setupEvents();
         carregarDadosIniciais();
     }
@@ -156,6 +159,7 @@ public class RegistrarVendaView extends JPanel {
         txtQuantidade.setText("1");
         txtQuantidade.setPreferredSize(new Dimension(60, UITheme.INPUT_SIZE.height));
         btnAdicionarItem = UITheme.createPrimaryButton("➕ Adicionar");
+        btnAdicionarItem.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
 
         // --- INICIALIZAÇÃO DO CARRINHO E AÇÕES ---
         modeloTabelaItens = new DefaultTableModel(new String[]{"Qtd", "Produto", "Preço Unit.", "Subtotal"}, 0) {
@@ -299,6 +303,7 @@ public class RegistrarVendaView extends JPanel {
         btnAdicionarItem.addActionListener(e -> adicionarItemAoCarrinho());
         btnRemoverItem.addActionListener(e -> removerItemDoCarrinho());
         btnLimparVenda.addActionListener(e -> limparVenda());
+        installAltForVoltar();
         btnFinalizarVenda.addActionListener(e -> {
             if (modoReserva) {
                 finalizarReserva();
@@ -653,17 +658,22 @@ public class RegistrarVendaView extends JPanel {
             reserva.setStatus(Reserva.StatusReserva.ATIVA);
 
             BigDecimal totalFinal = getTotalVenda();
+            BigDecimal taxa = totalFinal.multiply(BigDecimal.valueOf(0.3));  // 30%
+            reserva.setTaxaPaga(taxa);
 
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Salvar reserva para " + cliente.getNome() + "?\n" +
-                            "Total: " + String.format("%.2f MT", totalFinal) +
-                            "\nExpira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
+                            "Total: " + String.format("%.2f MT", totalFinal) + "\n" +
+                            "Taxa Obrigatória (30%): " + String.format("%.2f MT", taxa) + "\n" +  // Novo
+                            "Expira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
                             "\nItens: " + itensReserva.size(),
                     "Confirmar Reserva", JOptionPane.YES_NO_OPTION);
+
 
             if (confirm == JOptionPane.YES_OPTION) {
 
                 boolean sucesso = controller.registrarReserva(reserva);
+
 
                 if (sucesso) {
                     JOptionPane.showMessageDialog(this,
@@ -758,5 +768,53 @@ public class RegistrarVendaView extends JPanel {
                 controller.getCardLayoutManager().showPanel("MenuAdministrador");
                 break;
         }
+    }
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
     }
 }
