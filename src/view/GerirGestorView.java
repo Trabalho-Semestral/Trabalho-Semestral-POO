@@ -8,9 +8,16 @@ import util.Validador;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -76,6 +83,12 @@ public class GerirGestorView extends JPanel {
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
         styleTextField(txtSenha, "Senha");
+
+        /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo houver
+        }
 
         // Componentes da foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
@@ -380,6 +393,44 @@ public class GerirGestorView extends JPanel {
         tabelaGestores.clearSelection();
         removerFoto();
     }
+
+     private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
+    }
+
 
     private void voltarMenuPrincipal() {
         controller.getCardLayoutManager().showPanel("MenuAdministrador");
