@@ -1,12 +1,15 @@
 package view;
 
 import controller.SistemaController;
+import model.concretas.ItemReserva;
 import model.concretas.Reserva;
 import util.UITheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -27,6 +30,7 @@ public class GerirReservasView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        installAltForVoltar();
         carregarReservas();
     }
 
@@ -144,9 +148,11 @@ public class GerirReservasView extends JPanel {
         btnEditarReserva.addActionListener(e -> editarReservaSelecionada());
         btnCancelarReserva.addActionListener(e -> cancelarReservaSelecionada());
         btnConverterVenda.addActionListener(e -> converterReservaEmVenda());
+        installAltForVoltar();
     }
-
     public void carregarReservas() {
+        controller.debugEquipamentos();
+
         modeloTabela.setRowCount(0);
         try {
             List<Reserva> reservas = controller.getReservas();
@@ -155,8 +161,42 @@ public class GerirReservasView extends JPanel {
             double total = 0;
             int count = 0;
 
+            System.out.println("=== DEBUG GERIR RESERVAS ===");
+            System.out.println("Total de reservas encontradas: " + reservas.size());
+
             for (Reserva r : reservas) {
                 if (r != null && r.getCliente() != null) {
+                    // DEBUG DETALHADO
+                    System.out.println("--- Reserva ID: " + r.getIdReserva() + " ---");
+                    System.out.println("Cliente: " + r.getCliente().getNome());
+                    System.out.println("Status: " + r.getStatus());
+                    System.out.println("Número de itens: " + (r.getItens() != null ? r.getItens().size() : 0));
+
+                    // Calcular valor manualmente para debug
+                    double valorCalculado = 0.0;
+                    if (r.getItens() != null) {
+                        for (ItemReserva item : r.getItens()) {
+                            if (item != null && item.getEquipamento() != null) {
+                                double precoItem = item.getEquipamento().getPreco();
+                                int quantidade = item.getQuantidade();
+                                double subtotal = precoItem * quantidade;
+                                valorCalculado += subtotal;
+                                System.out.println("  Item: " + item.getEquipamento().getMarca() +
+                                        " - Preço: " + precoItem +
+                                        " - Qtd: " + quantidade +
+                                        " - Subtotal: " + subtotal);
+                            } else {
+                                System.out.println("  ⚠️ Item ou equipamento nulo!");
+                            }
+                        }
+                    }
+
+                    System.out.println("Valor calculado: " + valorCalculado);
+                    System.out.println("Valor getValorTotal(): " + r.getValorTotal());
+
+                    // Usar o maior valor entre calculado e getValorTotal()
+                    double valorFinal = Math.max(valorCalculado, r.getValorTotal());
+
                     modeloTabela.addRow(new Object[]{
                             r.getIdReserva(),
                             r.getCliente().getNome(),
@@ -164,13 +204,17 @@ public class GerirReservasView extends JPanel {
                             r.getExpiraEm() != null ? sdf.format(r.getExpiraEm()) : "N/A",
                             r.getStatus(),
                             r.getItens() != null ? r.getItens().size() : 0,
-                            String.format("%.2f MT", r.getValorTotal())
+                            String.format("%.2f MT", valorFinal)
                     });
-                    total += r.getValorTotal();
+                    total += valorFinal;
                     count++;
+                    System.out.println("Valor final usado: " + valorFinal);
+                } else {
+                    System.out.println("⚠️ Reserva ou cliente nulo: " + r);
                 }
             }
 
+            System.out.println("=== TOTAL GERAL: " + total + " ===");
             lblTotalReservas.setText("Total de Reservas: " + count);
             lblValorTotal.setText("Valor Total: " + String.format("%.2f MT", total));
 
@@ -185,6 +229,18 @@ public class GerirReservasView extends JPanel {
         }
     }
 
+    // Método auxiliar para calcular valor da reserva
+    private double calcularValorReserva(Reserva reserva) {
+        if (reserva.getItens() == null) return 0.0;
+
+        double total = 0.0;
+        for (ItemReserva item : reserva.getItens()) {
+            if (item.getEquipamento() != null) {
+                total += item.getEquipamento().getPreco() * item.getQuantidade();
+            }
+        }
+        return total;
+    }
     private void abrirRegistrarReserva() {
         try {
             RegistrarVendaView registrar = RegistrarVendaView.criarParaReserva(controller);
@@ -290,5 +346,53 @@ public class GerirReservasView extends JPanel {
             case "Vendedor" -> controller.getCardLayoutManager().showPanel("MenuVendedor");
             case "Administrador" -> controller.getCardLayoutManager().showPanel("MenuAdministrador");
         }
+    }
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
     }
 }
