@@ -101,11 +101,16 @@ public class GerirGestorView extends JPanel {
         // Botões de Ação
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
         btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");
+        btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
+        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
+        btnRemover = UITheme.createDangerButton("🗑️ Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+
+        ///Visibilidade de imagens
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnCadastrar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnEditar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnRemover.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
 
         // Tabela
         String[] colunas = {"ID", "Nome", "Nº BI", "NUIT", "Telefone", "Salário"};
