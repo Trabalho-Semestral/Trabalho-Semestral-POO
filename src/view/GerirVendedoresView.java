@@ -2,14 +2,21 @@ package view;
 
 import controller.SistemaController;
 import model.concretas.Vendedor;
+import org.jfree.chart.block.LineBorder;
 import util.Validador;
 import util.UITheme;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,16 +78,16 @@ public class GerirVendedoresView extends JPanel {
         txtSenha = new JPasswordField();
 
         styleTextField(txtNome, "Nome");
-        styleTextField(txtNrBI, "Nº BI");
+        styleTextField(txtNrBI, "Nr. BI");
         styleTextField(txtNuit, "NUIT");
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
         styleTextField(txtSenha, "Senha");
 
-         /// Campos que serao afectados pelos efeitos
+        /// Campos que serao afectados pelos efeitos
         JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
         for (JTextField tf :campos){
-            adicionarEfeitoHover(tf); /// Metodo houver
+            adicionarEfeitoHover(tf); /// Metodo hover
         }
 
         // Componentes da foto
@@ -133,23 +140,21 @@ public class GerirVendedoresView extends JPanel {
         setLayout(new BorderLayout());
 
         // --- Top bar ---
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("👥 Gestão de Vendedores");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-        topPanel.add(lblTitulo, BorderLayout.CENTER);
-
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        voltarPanel.setOpaque(false);
         voltarPanel.add(btnVoltar);
-        topPanel.add(voltarPanel, BorderLayout.WEST);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
 
-        add(topPanel, BorderLayout.NORTH);
 
         // --- PAINEL PRINCIPAL ---
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
@@ -443,13 +448,13 @@ public class GerirVendedoresView extends JPanel {
         }
     }
 
-    private void adicionarEfeitoHover(JTextField campo){
+     private void adicionarEfeitoHover(JTextField campo){
         final Border bordaOriginal =  campo.getBorder();
 
-        Border bordaHover = new CompoundBorder(
-                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
-                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
-        );
+         Border bordaHover = new CompoundBorder(
+                 new javax.swing.border.LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                 new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+         );
 
         /// Efeito ao passar o cursor
         campo.addMouseListener(new MouseAdapter() {
