@@ -176,7 +176,7 @@ public class RegistrarVendaView extends JPanel {
 
         btnRemoverItem = UITheme.createDangerButton("Remover Item");
         btnFinalizarVenda = UITheme.createSuccessButton("✅ Finalizar Venda");
-        btnFinalizarVenda.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnFinalizarVenda.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
         btnLimparVenda = UITheme.createSecondaryButton("Limpar Tudo");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
