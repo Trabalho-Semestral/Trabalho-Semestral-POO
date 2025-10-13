@@ -14,10 +14,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -43,6 +40,7 @@ public class GerirClientesView extends JPanel {
         setupLayout();
         setupEvents();
         carregarClientes();
+        installAltForVoltar();
         atualizarEstadoBotoes(false);
     }
 
@@ -93,7 +91,7 @@ public class GerirClientesView extends JPanel {
         btnEditar = UITheme.createSuccessButton("✏️ Editar");
         btnRemover = UITheme.createDangerButton("🗑️ Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
 
         JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover};
         for (JButton btn : actionButtons) {
@@ -241,7 +239,7 @@ public class GerirClientesView extends JPanel {
         btnEditar.addActionListener(e -> editarCliente());
         btnRemover.addActionListener(e -> removerCliente());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
+        installAltForVoltar();
         tabelaClientes.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean clienteSelecionado = tabelaClientes.getSelectedRow() != -1;
@@ -423,6 +421,55 @@ public class GerirClientesView extends JPanel {
             @Override
             public void focusLost(FocusEvent e) {
                 campo.setBorder(bordaOriginal);
+            }
+        });
+    }
+
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
             }
         });
     }
