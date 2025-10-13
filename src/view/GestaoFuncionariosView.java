@@ -94,7 +94,7 @@ public class GestaoFuncionariosView extends JPanel {
         styleTextField(txtPesquisa, "Pesquisar (ID, Nome, BI)");
 
         // Inicializar botões
-        btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
+        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
         btnExportarPDF = UITheme.createPrimaryButton("📄 Exportar");
         btnAtualizar = UITheme.createSuccessButton("🔄 Atualizar");
         btnSuspender = UITheme.createSecondaryButton("⏸ Sus/Reat");
