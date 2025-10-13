@@ -7,6 +7,9 @@ import org.jfree.chart.plot.CategoryPlot;
 import util.UITheme;
 import persistence.dto.VendaDTO;
 import persistence.dto.ItemVendaDTO;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -79,6 +82,8 @@ public class RelatoriosVendasView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        installAltForVoltar();
+        installAltForVoltar();
         carregarDadosIniciais();
         gerarRelatorio(); // Carregar dados iniciais
     }
@@ -108,8 +113,7 @@ public class RelatoriosVendasView extends JPanel {
         btnExportarPDF = UITheme.createSecondaryButton("Exportar PDF");
         btnLimparFiltros = UITheme.createSecondaryButton(" Limpar");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new java.awt.Font("Sengoe UI Emoji", Font.BOLD, 18));
-
+        btnVoltar.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.BOLD, 18));
 
         // Labels de estatísticas
         lblTotalVendas = UITheme.createHeadingLabel("0");
@@ -150,7 +154,24 @@ public class RelatoriosVendasView extends JPanel {
      */
     private void setupLayout() {
         // Painel superior com título
-        JPanel topPanel = new JPanel(new BorderLayout());
+
+        setLayout(new BorderLayout());
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+        JLabel lblTitulo = UITheme.createHeadingLabel("📊 Relatórios de Vendas");
+        lblTitulo.setForeground(Color.WHITE);
+        lblTitulo.setFont(new java.awt.Font("Sengoe UI Emoji", java.awt.Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBar.add(lblTitulo, BorderLayout.CENTER);
+        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        voltarPanel.setOpaque(false);
+        voltarPanel.add(btnVoltar);
+        topBar.add(voltarPanel, BorderLayout.WEST);
+        add(topBar, BorderLayout.NORTH);
+
+        /*JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
@@ -167,7 +188,7 @@ public class RelatoriosVendasView extends JPanel {
         topPanel.add(voltarPanel, BorderLayout.WEST);
 
         add(topPanel, BorderLayout.NORTH);
-
+*/
         // Painel principal com abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(UITheme.FONT_SUBHEADING);
@@ -204,6 +225,7 @@ public class RelatoriosVendasView extends JPanel {
 
         return panel;
     }
+
 
     /**
      * Cria a aba de estatísticas.
@@ -374,6 +396,8 @@ public class RelatoriosVendasView extends JPanel {
 
         // Mudança no tipo de relatório
         cmbTipoRelatorio.addActionListener(e -> atualizarCamposFiltro());
+
+        installAltForVoltar();
     }
 
     /**
@@ -778,7 +802,7 @@ public class RelatoriosVendasView extends JPanel {
         }
     }
     /**
-     * Atualiza a tabela de vendas.
+     * Atualiza a tabela de vendas com cálculo de fallback
      */
     private void atualizarTabelaVendas() {
         modeloTabelaVendas.setRowCount(0);
@@ -788,7 +812,21 @@ public class RelatoriosVendasView extends JPanel {
             String vendedorNome = resolveVendedorNome(dto.vendedorId);
             String clienteNome = resolveClienteNome(dto.clienteId);
             int qtdItens = somaQuantidadeItens(dto.itens);
+
+            // SOLUÇÃO DEFINITIVA: Se total for zero, recalcular baseado nos itens
             BigDecimal total = dto.total != null ? dto.total : BigDecimal.ZERO;
+
+            if (total.compareTo(BigDecimal.ZERO) == 0 && dto.itens != null && !dto.itens.isEmpty()) {
+                // Recalcular total baseado nos itens
+                total = BigDecimal.ZERO;
+                for (ItemVendaDTO item : dto.itens) {
+                    if (item.precoUnitario != null) {
+                        total = total.add(item.precoUnitario.multiply(BigDecimal.valueOf(item.quantidade)));
+                    }
+                }
+                System.out.println("🔄 Total recalculado para venda " + dto.idVenda + ": " + total);
+            }
+
             modeloTabelaVendas.addRow(new Object[]{
                     dto.idVenda,
                     dateFormat.format(data),
@@ -802,7 +840,6 @@ public class RelatoriosVendasView extends JPanel {
         tabelaVendas.revalidate();
         tabelaVendas.repaint();
     }
-
     /**
      * Calcula as estatísticas das vendas.
      */
@@ -932,6 +969,53 @@ public class RelatoriosVendasView extends JPanel {
         return panel;
     }
 
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
+    }
+
 
 }
-
