@@ -78,7 +78,7 @@ public class GerirVendedoresView extends JPanel {
         txtSenha = new JPasswordField();
 
         styleTextField(txtNome, "Nome");
-        styleTextField(txtNrBI, "Nr. BI");
+        styleTextField(txtNrBI, "Nº BI");
         styleTextField(txtNuit, "NUIT");
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
@@ -111,7 +111,7 @@ public class GerirVendedoresView extends JPanel {
         btnEditar = UITheme.createPrimaryButton("Editar");
         btnRemover = UITheme.createDangerButton("Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
 
         // Tabela
         String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Salário"};
