@@ -1,0 +1,15 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RESDOYF
+Data de Criação: 23/10/2025 17:45:16
+Expira em: 30/10/2025 17:45:16
+Vendedor: Junior Dzimba
+Cliente: AutoTech
+Status: ATIVA
+Taxa Paga: 12978.0000 MT
+
+Itens:
+ - ScorpionGamer | Qtd: 1 | Preço Unit: 36000.0 MT | Subtotal: 36000.0 MT
+ - UGREEN | Qtd: 1 | Preço Unit: 6000.0 MT | Subtotal: 6000.0 MT
+
+Total Líquido: 29022.0 MT
+=== FIM DA FATURA ===

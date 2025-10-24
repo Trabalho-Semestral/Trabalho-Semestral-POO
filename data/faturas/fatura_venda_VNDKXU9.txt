@@ -1,0 +1,16 @@
+=== FATURA DE VENDA ===
+ID da Venda: VNDKXU9
+Data: 22/10/2025 23:13:19
+Vendedor: Junior Dzimba
+Cliente: FUNDA INC CORPORETION
+Método de Pagamento: null
+Total Pago: 0 MT
+Troco: 0 MT
+
+Itens:
+ - HP  notbook | Qtd: 1 | Preço Unit: 10000.0 MT | Subtotal: 10000.0 MT
+
+Desconto: 0 MT
+Imposto: 0.00 MT
+Total Final: 0.00 MT
+=== FIM DA FATURA ===

@@ -1,6 +1,5 @@
 package persistence.dto;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class ReservaDTO {
@@ -13,7 +12,6 @@ public class ReservaDTO {
     public long dataMillis;
     public long expiraEmMillis;
     public List<ItemReservaDTO> itens;
-    public BigDecimal taxaPaga;
 
     public ReservaDTO() {}
 }

@@ -97,13 +97,13 @@ public class MenuAdministradorView extends JPanel {
         lblUserInfo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         userInfoPanel.add(lblUserInfo);
         topBarPanel.add(userInfoPanel, BorderLayout.EAST);
+
         add(topBarPanel, BorderLayout.NORTH);
-
-
 
         // SplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setLeftComponent(sidebarPanel);
+
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
@@ -354,6 +354,5 @@ public class MenuAdministradorView extends JPanel {
             }
         }
     }
-
-
+    
 }

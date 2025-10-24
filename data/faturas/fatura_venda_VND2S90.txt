@@ -1,0 +1,16 @@
+=== FATURA DE VENDA ===
+ID da Venda: VND2S90
+Data: 22/10/2025 23:01:32
+Vendedor: Junior Dzimba
+Cliente: Forever
+Método de Pagamento: CARTAO
+Total Pago: 14000.0 MT
+Troco: 0 MT
+
+Itens:
+ - EPSON | Qtd: 1 | Preço Unit: 14000.0 MT | Subtotal: 14000.0 MT
+
+Desconto: 0.0 MT
+Imposto: 420.000 MT
+Total Final: 14840.000 MT
+=== FIM DA FATURA ===

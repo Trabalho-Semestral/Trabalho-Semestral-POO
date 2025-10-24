@@ -14,7 +14,7 @@ public class Cliente extends Pessoa {
     /**
      * Construtor padrão.
      */
-    public Cliente() {
+    public Cliente(String clienteNome, String clienteId, String s, String string) {
         super();
     }
     

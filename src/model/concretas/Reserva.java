@@ -1,6 +1,5 @@
 package model.concretas;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -14,12 +13,6 @@ public class Reserva extends Vendedor {
     private List<ItemReserva> itens;
     private Date dataReserva;
     private Date expiraEm;
-    private BigDecimal taxaPaga = BigDecimal.ZERO;  // Novo campo
-
-    public BigDecimal getTaxaPaga() { return taxaPaga; }
-    public void setTaxaPaga(BigDecimal taxaPaga) { this.taxaPaga = taxaPaga; }
-
-    // Atualize getValorTotal() se necessário para considerar taxa
     private StatusReserva status;
 
     public void adicionarItem(Equipamento eq, int quantidade) {

@@ -114,9 +114,9 @@ public class MenuVendedorView extends JPanel {
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
-                        "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral ou os atalhos de teclado:<br>" +
-                                "👤 Registrar Cliente <b>(Ctrl+C)</b> | 🛒 Registrar Venda <b>(Ctrl+N)</b><br>" +
-                                "📋 Minhas Vendas <b>(Ctrl+L)</b> | 📦 Gerir Reservas <b>(Ctrl+R)</b> | 🚪 Logout <b>(Ctrl+Q)</b></center></html>"
+                "<html><center>Olá, " + vendedorLogado.getNome() + "! Utilize o menu lateral ou os atalhos de teclado:<br>" +
+                        "👤 Registrar Cliente <b>(Ctrl+C)</b> | 🛒 Registrar Venda <b>(Ctrl+N)</b><br>" +
+                        "📋 Minhas Vendas <b>(Ctrl+L)</b> | 📦 Gerir Reservas <b>(Ctrl+R)</b> | 🚪 Logout <b>(Ctrl+Q)</b></center></html>"
         );
 
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
@@ -279,14 +279,15 @@ public class MenuVendedorView extends JPanel {
 
     private void abrirMinhasVendas() {
         try {
-            MinhasVendasView view = new MinhasVendasView(controller, vendedorLogado);
+            // Criar uma view personalizada para mostrar apenas as vendas do vendedor logado
+            RelatoriosVendasView view = new RelatoriosVendasView(controller);
             controller.getCardLayoutManager().addPanel(view, "MinhasVendas");
             controller.getCardLayoutManager().showPanel("MinhasVendas");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
         }
     }
+
     private void abrirGerirReservas() {
         try {
             GerirReservasView view = new GerirReservasView(controller);

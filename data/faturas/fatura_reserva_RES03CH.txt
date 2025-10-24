@@ -1,0 +1,15 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RES03CH
+Data de Criação: 23/10/2025 18:37:00
+Expira em: 30/10/2025 18:37:00
+Vendedor: Junior Dzimba
+Cliente: AutoTech
+Status: ATIVA
+Taxa Paga: 14832.0000 MT
+
+Itens:
+ - ScorpionGamer | Qtd: 1 | Preço Unit: 36000.0 MT | Subtotal: 36000.0 MT
+ - UGREEN | Qtd: 2 | Preço Unit: 6000.0 MT | Subtotal: 12000.0 MT
+
+Total Líquido: 33168.0 MT
+=== FIM DA FATURA ===

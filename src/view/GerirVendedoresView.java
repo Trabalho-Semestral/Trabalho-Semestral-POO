@@ -2,14 +2,18 @@ package view;
 
 import controller.SistemaController;
 import model.concretas.Vendedor;
+import org.jfree.chart.block.LineBorder;
 import util.Validador;
 import util.UITheme;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,6 +61,7 @@ public class GerirVendedoresView extends JPanel {
         setupLayout();
         setupEvents();
         carregarVendedores();
+        installAltForVoltar();          ///
     }
 
     private void initComponents() {
@@ -71,11 +76,17 @@ public class GerirVendedoresView extends JPanel {
         txtSenha = new JPasswordField();
 
         styleTextField(txtNome, "Nome");
-        styleTextField(txtNrBI, "Nr. BI");
+        styleTextField(txtNrBI, "Nº BI");
         styleTextField(txtNuit, "NUIT");
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
         styleTextField(txtSenha, "Senha");
+
+        /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo hover
+        }
 
         // Componentes da foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
@@ -94,11 +105,17 @@ public class GerirVendedoresView extends JPanel {
 // Botões
         btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
         btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");
+        btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
+        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
+        btnRemover = UITheme.createDangerButton("🗑️ Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+
+
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnCadastrar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnEditar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnRemover.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+
 
         // Tabela
         String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Salário"};
@@ -212,6 +229,7 @@ public class GerirVendedoresView extends JPanel {
         btnEditar.addActionListener(e -> editarVendedor());
         btnRemover.addActionListener(e -> removerVendedor());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
+        installAltForVoltar();              ///
 
         tabelaVendedores.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) carregarVendedorSelecionado();
@@ -434,4 +452,92 @@ public class GerirVendedoresView extends JPanel {
                 break;
         }
     }
+
+    private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new javax.swing.border.LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
+    }
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    // Se quiser QUE O BOTÃO DISPARA A AÇÃO ao soltar ALT, mantenha a linha abaixo.
+                    // Se NÃO quiser disparar a ação, comente ou remova a próxima linha.
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
+    }
+
 }

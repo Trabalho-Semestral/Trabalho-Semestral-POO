@@ -229,7 +229,7 @@ public class LoginView extends JFrame {
         }
     }
 
-    // Metodo realizar login atualizado para validação visual
+    // Método realizar login atualizado para validação visual
     private void realizarLogin() {
         boolean valido = true;
 
@@ -265,6 +265,7 @@ public class LoginView extends JFrame {
         }
     }
 
+    // Limpar campos e resetar cores
     private void limparCampos() {
         txtUsuarioId.setText("");
         txtSenha.setText("");

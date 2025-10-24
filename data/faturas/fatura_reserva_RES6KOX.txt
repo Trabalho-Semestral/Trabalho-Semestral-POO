@@ -1,0 +1,14 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RES6KOX
+Data de Criação: 23/10/2025 18:37:45
+Expira em: 30/10/2025 18:37:45
+Vendedor: Junior Dzimba
+Cliente: AutoTech
+Status: ATIVA
+Taxa Paga: 4944.0000 MT
+
+Itens:
+ - Lenovo THINKPAD | Qtd: 1 | Preço Unit: 16000.0 MT | Subtotal: 16000.0 MT
+
+Total Líquido: 11056.0 MT
+=== FIM DA FATURA ===

@@ -50,38 +50,12 @@ public class Venda {
      * @return true se o equipamento foi adicionado com sucesso, false caso contrário
      */
     public boolean adicionarItem(Equipamento equipamento, int quantidade) {
-        System.out.println("=== ADICIONANDO ITEM À VENDA ===");
-        System.out.println("Equipamento: " + equipamento.getMarca());
-        System.out.println("Quantidade: " + quantidade);
-        System.out.println("Estoque disponível: " + (equipamento.getQuantidadeEstoque() - equipamento.getReservado()));
-
-        // Verificar estoque
-        if (quantidade > (equipamento.getQuantidadeEstoque() - equipamento.getReservado())) {
-            System.out.println("❌ Estoque insuficiente");
-            return false;
-        }
-
-        // Diminuir estoque
-        equipamento.setQuantidadeEstoque(equipamento.getQuantidadeEstoque() - quantidade);
-        System.out.println("✅ Estoque atualizado: " + equipamento.getQuantidadeEstoque());
-
-        // Adicionar item
-        if (itens == null) {
-            itens = new ArrayList<>();
-        }
-
-        // Verificar se item já existe
-        for (ItemVenda item : itens) {
-            if (item.getEquipamento().getId().equals(equipamento.getId())) {
-                item.setQuantidade(item.getQuantidade() + quantidade);
-                System.out.println("✅ Quantidade atualizada no item existente");
-                return true;
-            }
-        }
-
-        // Criar novo item
-        itens.add(new ItemVenda(equipamento, quantidade));
-        System.out.println("✅ Novo item adicionado à venda");
+        if (equipamento == null || quantidade <= 0) return false;
+        if (equipamento.getQuantidadeEstoque() < quantidade) return false;
+        ItemVenda item = new ItemVenda(equipamento, quantidade);
+        itens.add(item);
+        equipamento.reduzirEstoque(quantidade);
+        calcularValorTotal();
         return true;
     }
     
@@ -116,55 +90,11 @@ public class Venda {
      * @return true se todos os dados forem válidos, false caso contrário
      */
     public boolean validarDados() {
-        System.out.println("=== VALIDANDO VENDA ===");
-        System.out.println("ID Venda: " + idVenda);
-        System.out.println("Cliente: " + (cliente != null ? cliente.getNome() : "NULO"));
-        System.out.println("Vendedor: " + (vendedor != null ? vendedor.getNome() : "NULO"));
-        System.out.println("Data: " + data);
-        System.out.println("Itens: " + (itens != null ? itens.size() : 0));
-
-        if (idVenda == null || idVenda.trim().isEmpty()) {
-            System.out.println("❌ ID Venda inválido");
-            return false;
-        }
-        if (cliente == null) {
-            System.out.println("❌ Cliente nulo");
-            return false;
-        }
-        if (vendedor == null) {
-            System.out.println("❌ Vendedor nulo");
-            return false;
-        }
-        if (data == null) {
-            System.out.println("❌ Data nula");
-            return false;
-        }
-        if (itens == null || itens.isEmpty()) {
-            System.out.println("❌ Lista de itens vazia");
-            return false;
-        }
-
-        // Validar cada item
-        for (ItemVenda item : itens) {
-            if (item == null) {
-                System.out.println("❌ Item nulo na lista");
-                return false;
-            }
-            if (item.getEquipamento() == null) {
-                System.out.println("❌ Equipamento nulo no item");
-                return false;
-            }
-            if (item.getQuantidade() <= 0) {
-                System.out.println("❌ Quantidade inválida: " + item.getQuantidade());
-                return false;
-            }
-        }
-
-        System.out.println("✅ Venda válida!");
-        return true;
+        return vendedor != null &&
+                cliente != null &&
+                itens != null && !itens.isEmpty() &&
+                valorTotal != null && valorTotal.compareTo(BigDecimal.ZERO) > 0;
     }
-
-
     public void setDescontoPercent(BigDecimal p) { this.descontoPercent = p != null ? p : BigDecimal.ZERO; }
 
     // Getters e Setters

@@ -11,6 +11,11 @@ public class EquipamentoFileRepository extends BaseListRepository<Equipamento> i
     @Override protected Type getListType() { return new TypeToken<java.util.List<Equipamento>>(){}.getType(); }
 
 
+
+    @Override
+    public void salvar(Equipamento equipamento) {
+
+    }
     @Override
     public Optional<Equipamento> buscarPorId(String id) {
         try {
@@ -19,38 +24,9 @@ public class EquipamentoFileRepository extends BaseListRepository<Equipamento> i
                     .filter(e -> e.getId() != null && e.getId().equals(id))
                     .findFirst();
         } catch (Exception e) {
+            System.err.println("Erro ao buscar equipamento por ID: " + id);
             e.printStackTrace();
             return Optional.empty();
         }
     }
-    @Override
-    public void salvar(Equipamento equipamento) {
-        try {
-            // Buscar todos os equipamentos
-            List<Equipamento> equipamentos = findAll();
-
-            // Encontrar e atualizar o equipamento
-            boolean encontrado = false;
-            for (int i = 0; i < equipamentos.size(); i++) {
-                if (equipamentos.get(i).getId().equals(equipamento.getId())) {
-                    equipamentos.set(i, equipamento);
-                    encontrado = true;
-                    break;
-                }
-            }
-
-            // Se não encontrou, adicionar novo
-            if (!encontrado) {
-                equipamentos.add(equipamento);
-            }
-
-            // Salvar a lista atualizada
-            replaceAll(equipamentos);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Erro ao salvar equipamento: " + e.getMessage(), e);
-        }
-    }
-
 }

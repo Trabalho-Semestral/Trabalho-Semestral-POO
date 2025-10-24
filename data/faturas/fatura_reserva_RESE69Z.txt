@@ -1,0 +1,14 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RESE69Z
+Data de Criação: 23/10/2025 17:41:43
+Expira em: 30/10/2025 17:41:43
+Vendedor: Junior Dzimba
+Cliente: DEV'MANDS
+Status: ATIVA
+Taxa Paga: 7725.0000 MT
+
+Itens:
+ - DELL | Qtd: 1 | Preço Unit: 25000.0 MT | Subtotal: 25000.0 MT
+
+Total Líquido: 17275.0 MT
+=== FIM DA FATURA ===

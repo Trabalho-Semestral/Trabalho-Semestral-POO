@@ -7,6 +7,9 @@ import org.jfree.chart.plot.CategoryPlot;
 import util.UITheme;
 import persistence.dto.VendaDTO;
 import persistence.dto.ItemVendaDTO;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -79,6 +82,8 @@ public class RelatoriosVendasView extends JPanel {
         initComponents();
         setupLayout();
         setupEvents();
+        installAltForVoltar();
+        installAltForVoltar();
         carregarDadosIniciais();
         gerarRelatorio(); // Carregar dados iniciais
     }
@@ -108,7 +113,7 @@ public class RelatoriosVendasView extends JPanel {
         btnExportarPDF = UITheme.createSecondaryButton("Exportar PDF");
         btnLimparFiltros = UITheme.createSecondaryButton(" Limpar");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-
+        btnVoltar.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.BOLD, 18));
 
         // Labels de estatísticas
         lblTotalVendas = UITheme.createHeadingLabel("0");
@@ -166,6 +171,24 @@ public class RelatoriosVendasView extends JPanel {
         topBar.add(voltarPanel, BorderLayout.WEST);
         add(topBar, BorderLayout.NORTH);
 
+        /*JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
+
+        JLabel lblTitulo = UITheme.createHeadingLabel("📊 Relatórios de Vendas");
+        lblTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblTitulo.setFont(new java.awt.Font("Segoe UI Emoji", java.awt.Font.BOLD, 18));
+        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+        topPanel.add(lblTitulo, BorderLayout.CENTER);
+
+        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        voltarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        voltarPanel.add(btnVoltar);
+        topPanel.add(voltarPanel, BorderLayout.WEST);
+
+        add(topPanel, BorderLayout.NORTH);
+*/
         // Painel principal com abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(UITheme.FONT_SUBHEADING);
@@ -202,6 +225,7 @@ public class RelatoriosVendasView extends JPanel {
 
         return panel;
     }
+
 
     /**
      * Cria a aba de estatísticas.
@@ -372,6 +396,8 @@ public class RelatoriosVendasView extends JPanel {
 
         // Mudança no tipo de relatório
         cmbTipoRelatorio.addActionListener(e -> atualizarCamposFiltro());
+
+        installAltForVoltar();
     }
 
     /**
@@ -918,7 +944,78 @@ public class RelatoriosVendasView extends JPanel {
         }
     }
 
+    /**
+     * Cria um placeholder para gráfico.
+     */
+    private JPanel criarGraficoPlaceholder(String titulo) {
+        JPanel panel = UITheme.createCardPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setPreferredSize(new Dimension(300, 200));
+
+        JLabel lblTitulo = UITheme.createSubtitleLabel(titulo);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lblTitulo, BorderLayout.NORTH);
+
+        JLabel lblGrafico = new JLabel("📊");
+        lblGrafico.setHorizontalAlignment(SwingConstants.CENTER);
+        lblGrafico.setForeground(UITheme.SECONDARY_LIGHT);
+        panel.add(lblGrafico, BorderLayout.CENTER);
+
+        JLabel lblInfo = UITheme.createBodyLabel("Gráfico será implementado em versão futura");
+        lblInfo.setHorizontalAlignment(SwingConstants.CENTER);
+        lblInfo.setForeground(UITheme.TEXT_SECONDARY);
+        panel.add(lblInfo, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
+    }
 
 
 }
-

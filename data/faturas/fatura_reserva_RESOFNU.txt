@@ -1,0 +1,14 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RESOFNU
+Data de Criação: 23/10/2025 17:42:58
+Expira em: 30/10/2025 17:42:58
+Vendedor: Junior Dzimba
+Cliente: Jorge Magalhaes
+Status: ATIVA
+Taxa Paga: 7725.0000 MT
+
+Itens:
+ - DELL | Qtd: 1 | Preço Unit: 25000.0 MT | Subtotal: 25000.0 MT
+
+Total Líquido: 17275.0 MT
+=== FIM DA FATURA ===

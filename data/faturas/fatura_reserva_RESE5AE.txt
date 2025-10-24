@@ -1,0 +1,14 @@
+=== FATURA DE RESERVA ===
+ID da Reserva: RESE5AE
+Data de Criação: 22/10/2025 23:11:12
+Expira em: 29/10/2025 23:11:12
+Vendedor: Junior Dzimba
+Cliente: FUNDA INC CORPORETION
+Status: ATIVA
+Taxa Paga: 3180.0000 MT
+
+Itens:
+ - HP  notbook | Qtd: 1 | Preço Unit: 10000.0 MT | Subtotal: 10000.0 MT
+
+Total Líquido: 6820.0 MT
+=== FIM DA FATURA ===

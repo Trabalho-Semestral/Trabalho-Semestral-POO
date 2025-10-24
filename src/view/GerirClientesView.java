@@ -6,8 +6,7 @@ import util.UITheme;
 import util.Validador;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -15,6 +14,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -32,7 +32,7 @@ public class GerirClientesView extends JPanel {
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
 
-    private JButton btnCadastrar, btnEditar, btnRemover, btnLimpar, btnVoltar;
+    private JButton btnCadastrar, btnEditar, btnRemover, btnVoltar;
 
     public GerirClientesView(SistemaController controller) {
         this.controller = controller;
@@ -40,50 +40,60 @@ public class GerirClientesView extends JPanel {
         setupLayout();
         setupEvents();
         carregarClientes();
+        installAltForVoltar();
         atualizarEstadoBotoes(false);
     }
 
     private TitledBorder criarTitulo(String titulo) {
         TitledBorder border = BorderFactory.createTitledBorder(titulo);
-        border.setTitleColor(new Color(19, 56, 94)); // Azul escuro da topbar
-        border.setTitleFont(new Font("Segoe UI", Font.BOLD, 13));
+        border.setTitleColor(new Color(19, 56, 94));
+        border.setTitleFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
         return border;
     }
 
     private void initComponents() {
         txtNome = UITheme.createStyledTextField();
-        txtNome.setBorder(criarTitulo("Nome Completo"));
+        txtNome.setBorder(criarTitulo("🏢 Nome da Empresa"));
+        txtNome.setPreferredSize(new Dimension(180, 45));
 
         txtNrBI = UITheme.createStyledTextField();
-        txtNrBI.setBorder(criarTitulo("Nº do BI"));
+        txtNrBI.setBorder(criarTitulo("🆔 Nº do BI"));
+        txtNrBI.setPreferredSize(new Dimension(180, 45));
 
         txtNuit = UITheme.createStyledTextField();
-        txtNuit.setBorder(criarTitulo("NUIT"));
+        txtNuit.setBorder(criarTitulo("💼 NUIT"));
+        txtNuit.setPreferredSize(new Dimension(180, 45));
 
         txtTelefone = UITheme.createStyledTextField();
-        txtTelefone.setBorder(criarTitulo("Telefone"));
+        txtTelefone.setBorder(criarTitulo("📞 Telefone"));
+        txtTelefone.setPreferredSize(new Dimension(180, 45));
 
         txtEndereco = UITheme.createStyledTextField();
-        txtEndereco.setBorder(criarTitulo("Endereço"));
+        txtEndereco.setBorder(criarTitulo("📍 Endereço"));
+        txtEndereco.setPreferredSize(new Dimension(180, 45));
 
         txtEmail = UITheme.createStyledTextField();
-        txtEmail.setBorder(criarTitulo("Email"));
+        txtEmail.setBorder(criarTitulo("📧 Email"));
+        txtEmail.setPreferredSize(new Dimension(180, 45));
 
         txtPesquisar = UITheme.createStyledTextField();
-        txtPesquisar.setBorder(criarTitulo("Pesquisar"));
+        txtPesquisar.setBorder(criarTitulo("🔍 Pesquisar"));
+        txtPesquisar.setPreferredSize(new Dimension(180, 45));
+
+        /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtEndereco, txtEmail/*, txtPesquisar*/};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo houver
+        }
 
         // --- Botões ---
-
-
         btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
         btnEditar = UITheme.createSuccessButton("✏️ Editar");
         btnRemover = UITheme.createDangerButton("🗑️ Remover");
-        btnLimpar = UITheme.createPrimaryButton("🧹 Limpar");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
 
-
-        JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover, btnLimpar};
+        JButton[] actionButtons = {btnCadastrar, btnEditar, btnRemover};
         for (JButton btn : actionButtons) {
             styleActionButton(btn);
         }
@@ -106,12 +116,13 @@ public class GerirClientesView extends JPanel {
         tabelaClientes.setCellSelectionEnabled(false);
         tabelaClientes.setFocusable(false);
         tabelaClientes.setRowHeight(25);
+        tabelaClientes.setFont(new Font("Segoe UI", Font.PLAIN, 12)); // Standard font for table cells
 
         // Estilo explícito para o Header da tabela para garantir visibilidade
         JTableHeader header = tabelaClientes.getTableHeader();
         header.setBackground(new Color(19, 56, 94));
-        header.setForeground(Color.BLACK);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("Segoe UI Emoji", Font.BOLD, 13)); // Emoji font for header if needed
         header.setReorderingAllowed(false);
         header.setResizingAllowed(true);
 
@@ -123,7 +134,7 @@ public class GerirClientesView extends JPanel {
      * Estilo de botão estático, sem efeito hover, para máxima clareza.
      */
     private void styleActionButton(JButton button) {
-        Font emojiFont = new Font("Segoe UI Emoji", Font.BOLD, 15);
+        Font emojiFont = new Font("Segoe UI Emoji", Font.BOLD, 14);
         Color baseColor = new Color(19, 56, 94); // Azul escuro e sóbrio
 
         button.setFont(emojiFont);
@@ -133,8 +144,8 @@ public class GerirClientesView extends JPanel {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setOpaque(true);
 
-        button.setPreferredSize(new Dimension(160, 45));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setPreferredSize(new Dimension(140, 40));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
     }
 
 
@@ -148,9 +159,9 @@ public class GerirClientesView extends JPanel {
         topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        JLabel lblTitulo = UITheme.createHeadingLabel("👤 Gestão de Clientes");
+        JLabel lblTitulo = UITheme.createHeadingLabel("👥 Gestão de Clientes");
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -159,97 +170,76 @@ public class GerirClientesView extends JPanel {
         topBar.add(voltarPanel, BorderLayout.WEST);
         add(topBar, BorderLayout.NORTH);
 
-        // --- Painel principal com JSplitPane ---
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                criarPainelFormularioE_Acoes(),
-                criarPainelTabela());
-        splitPane.setResizeWeight(0.4);
-        splitPane.setOpaque(false);
-        splitPane.setBorder(null);
-        add(splitPane, BorderLayout.CENTER);
+        // --- Painel principal ---
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // --- Rodapé ---
-        add(createFooterPanel(), BorderLayout.SOUTH);
+        // --- PAINEL SUPERIOR (formulário, botões) ---
+        JPanel topContentPanel = new JPanel(new BorderLayout(15, 15));
+        topContentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Ocultar coluna de ID
-        TableColumn idColumn = tabelaClientes.getColumnModel().getColumn(0);
-        idColumn.setMinWidth(0);
-        idColumn.setMaxWidth(0);
-        idColumn.setWidth(0);
-    }
-
-    private JPanel criarPainelFormularioE_Acoes() {
-        JPanel mainPanel = new JPanel(new BorderLayout(20, 0));
-        mainPanel.setOpaque(false);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
-        JPanel formPanel = new JPanel(new GridLayout(2, 3, 15, 15));
-        formPanel.setOpaque(false);
+        // Formulário no centro (como foto estava no oeste, form no centro)
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        formPanel.setBackground(UITheme.CARD_BACKGROUND);
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
         formPanel.add(txtNome);
         formPanel.add(txtNrBI);
         formPanel.add(txtNuit);
         formPanel.add(txtTelefone);
         formPanel.add(txtEmail);
         formPanel.add(txtEndereco);
+        topContentPanel.add(formPanel, BorderLayout.CENTER);
 
-        JPanel buttonGridPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        buttonGridPanel.setOpaque(false);
-        buttonGridPanel.add(btnCadastrar);
-        buttonGridPanel.add(btnEditar);
-        buttonGridPanel.add(btnRemover);
-        buttonGridPanel.add(btnLimpar);
+        // Botões à direita
+        JPanel acoesPanel = new JPanel(new GridLayout(3, 1, 10, 10));
+        acoesPanel.setBackground(UITheme.BACKGROUND_COLOR);
+        acoesPanel.add(btnCadastrar);
+        acoesPanel.add(btnEditar);
+        acoesPanel.add(btnRemover);
+        topContentPanel.add(acoesPanel, BorderLayout.EAST);
 
-        JPanel buttonWrapper = new JPanel(new GridBagLayout());
-        buttonWrapper.setOpaque(false);
-        buttonWrapper.add(buttonGridPanel);
+        // --- PAINEL INFERIOR (tabela) ---
+        JPanel tabelaPanel = new JPanel(new BorderLayout());
+        tabelaPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
+                "👥 Clientes Cadastrados",
+                0, 0,
+                new Font("Segoe UI Emoji", Font.BOLD, 14),
+                UITheme.TEXT_SECONDARY
+        ));
+        tabelaPanel.setBackground(UITheme.CARD_BACKGROUND);
+        JScrollPane scroll = new JScrollPane(tabelaClientes);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        tabelaPanel.add(scroll, BorderLayout.CENTER);
 
-        mainPanel.add(formPanel, BorderLayout.CENTER);
-        mainPanel.add(buttonWrapper, BorderLayout.EAST);
+        mainPanel.add(topContentPanel, BorderLayout.NORTH);
+        mainPanel.add(tabelaPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
 
-        return mainPanel;
-    }
-
-    private JPanel criarPainelTabela() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setOpaque(false);
-
-        TitledBorder border = BorderFactory.createTitledBorder("Clientes Cadastrados");
-        border.setTitleColor(new Color(19, 56, 94));
-        border.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
-        panel.setBorder(border);
-
-        JPanel pesquisaPanel = new JPanel(new BorderLayout(5, 5));
-        pesquisaPanel.setOpaque(false);
-        pesquisaPanel.add(txtPesquisar, BorderLayout.CENTER);
-        panel.add(pesquisaPanel, BorderLayout.NORTH);
-
-        JScrollPane scrollPane = new JScrollPane(tabelaClientes);
-        scrollPane.getViewport().setBackground(UITheme.BACKGROUND_COLOR);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        return panel;
-    }
-
-    /**
-     * Cria o painel de rodapé com a nota de copyright.
-     */
-    private JPanel createFooterPanel() {
+        // --- RODAPÉ ---
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.setBackground(new Color(19, 56, 94));
-        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
-        lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        lblCopyright.setForeground(Color.GRAY);
-        bottomPanel.add(lblCopyright);
+        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
-        return bottomPanel;
+        bottomPanel.setPreferredSize(new Dimension(0, 40));
+
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
+        lblCopyright.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
+        lblCopyright.setForeground(UITheme.TEXT_WHITE);
+        bottomPanel.add(lblCopyright);
+
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private void setupEvents() {
         btnCadastrar.addActionListener(e -> cadastrarCliente());
         btnEditar.addActionListener(e -> editarCliente());
         btnRemover.addActionListener(e -> removerCliente());
-        btnLimpar.addActionListener(e -> limparFormulario());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
+        installAltForVoltar();
         tabelaClientes.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 boolean clienteSelecionado = tabelaClientes.getSelectedRow() != -1;
@@ -395,6 +385,93 @@ public class GerirClientesView extends JPanel {
             txtEndereco.setText((String) modeloTabela.getValueAt(modelRow, 5));
             txtEmail.setText((String) modeloTabela.getValueAt(modelRow, 6));
         }
+    }
+
+    /// Metodo responsavel pelo foco das bordas
+    private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
+    }
+
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
     }
 
     private void filtrarClientes() {

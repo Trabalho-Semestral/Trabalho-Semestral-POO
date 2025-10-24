@@ -9,9 +9,13 @@ import util.Validador;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,10 +63,11 @@ public class GerirEquipamentosView extends JPanel {
 
     public GerirEquipamentosView(SistemaController controller) {
         this.controller = controller;
-        new File(FOTOS_EQUIPAMENTOS_PATH).mkdirs(); // Cria o diretório de fotos se não existir
+        new File(FOTOS_EQUIPAMENTOS_PATH).mkdirs();
         initComponents();
         setupLayout();
         setupEvents();
+        installAltForVoltar();
         carregarEquipamentos();
     }
 
@@ -77,41 +82,54 @@ public class GerirEquipamentosView extends JPanel {
         cmbEstado = new JComboBox<>(Equipamento.EstadoEquipamento.values());
 
         // Estilo dos campos comuns
-        styleTextField(txtMarca, "Marca");
-        styleTextField(txtPreco, "Preço (MT)");
-        styleTextField(txtQuantidade, "Quantidade");
+        styleTextField(txtMarca, "💻 Marca");
+        styleTextField(txtPreco, "💰 Preço (MT)");
+        styleTextField(txtQuantidade, "📦 Quantidade");
 
         // Campos específicos de Computador
         txtProcessador = new JTextField();
         txtMemoriaRAM = new JTextField();
         txtArmazenamento = new JTextField();
         txtPlacaGrafica = new JTextField();
-        styleTextField(txtProcessador, "Processador");
-        styleTextField(txtMemoriaRAM, "Memória RAM");
-        styleTextField(txtArmazenamento, "Armazenamento");
-        styleTextField(txtPlacaGrafica, "Placa Gráfica");
+        styleTextField(txtProcessador, "🧠 Processador");
+        styleTextField(txtMemoriaRAM, "💾 Memória RAM");
+        styleTextField(txtArmazenamento, "🗜️ Armazenamento");
+        styleTextField(txtPlacaGrafica, "🎮 Placa Gráfica");
+
+        /// Campos que serao afectados pelos efeitos
+        JTextField[] campos = { txtMarca, txtPreco, txtQuantidade, txtProcessador, txtMemoriaRAM, txtArmazenamento, txtPlacaGrafica};
+        for (JTextField tf :campos){
+            adicionarEfeitoHover(tf); /// Metodo houver
+        }
 
         // Campos específicos de Periférico
         txtTipoPeriferico = new JTextField();
-        styleTextField(txtTipoPeriferico, "Tipo de Periférico");
+        styleTextField(txtTipoPeriferico, "🔌 Tipo de Periférico");
 
         // Foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
+        lblFoto.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        lblFoto.setForeground(UITheme.TEXT_SECONDARY);
         lblFoto.setOpaque(true);
         lblFoto.setBackground(UITheme.CARD_BACKGROUND);
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
-        lblFoto.setFont(UITheme.FONT_SUBHEADING);
 
 
         // Botões
-        btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
-        btnCadastrar = UITheme.createSuccessButton("Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("Editar");
-        btnRemover = UITheme.createDangerButton("Remover");
+        btnAdicionarFoto = UITheme.createPrimaryButton("📸 Adicionar Foto");
+        btnRemoverFoto = UITheme.createSecondaryButton("🗑️ Remover Foto");
+        btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
+        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
+        btnRemover = UITheme.createDangerButton("🗑️ Remover");
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        Font emojiFont = new Font("Segoe UI Emoji", Font.PLAIN, 14);
-        btnVoltar.setFont(emojiFont);
+
+        /// Visibilidade de imagens
+        btnAdicionarFoto.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 14));
+        btnEditar.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        btnRemover.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        btnCadastrar.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 18));
+        btnVoltar.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 18));
+        btnRemoverFoto.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 14));
 
 
         // Tabela
@@ -120,20 +138,26 @@ public class GerirEquipamentosView extends JPanel {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaEquipamentos = new JTable(modeloTabela);
-       // UITheme.applyTableStyle(tabelaEquipamentos);
+        tabelaEquipamentos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabelaEquipamentos.setFont(new Font("Segoe UI", Font.PLAIN, 12)); // Standard font
+        tabelaEquipamentos.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
     }
 
     private void styleTextField(JComponent component, String title) {
-        component.setFont(UITheme.FONT_BODY);
+        component.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         Border lineBorder = BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT);
         component.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(lineBorder, title,
                         javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
                         javax.swing.border.TitledBorder.DEFAULT_POSITION,
-                        UITheme.FONT_SUBHEADING, UITheme.TEXT_SECONDARY),
-                BorderFactory.createEmptyBorder(2, 5, 2, 5)
+                        new Font("Segoe UI Emoji", Font.BOLD, 12), UITheme.TEXT_SECONDARY),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
         component.setBackground(UITheme.CARD_BACKGROUND);
+        component.setForeground(UITheme.TEXT_PRIMARY);
+        if (component instanceof JTextField) {
+            ((JTextField) component).setCaretColor(UITheme.PRIMARY_COLOR);
+        }
     }
 
     private void setupLayout() {
@@ -146,7 +170,7 @@ public class GerirEquipamentosView extends JPanel {
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Gestão de Equipamentos");
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -206,7 +230,13 @@ public class GerirEquipamentosView extends JPanel {
 
         especificacoesPanel = new JPanel(new CardLayout(10, 10));
         especificacoesPanel.setOpaque(false);
-        especificacoesPanel.setBorder(BorderFactory.createTitledBorder("Especificações"));
+        especificacoesPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
+                "🔧 Especificações",
+                0, 0,
+                new Font("Segoe UI Emoji", Font.BOLD, 12),
+                UITheme.TEXT_SECONDARY
+        ));
         especificacoesPanel.add(panelComputador, "Computador");
         especificacoesPanel.add(panelPeriferico, "Periférico");
         formWrapper.add(especificacoesPanel, BorderLayout.CENTER);
@@ -223,13 +253,32 @@ public class GerirEquipamentosView extends JPanel {
 
         // --- Painel Inferior (Tabela) ---
         JPanel tabelaPanel = new JPanel(new BorderLayout());
-        tabelaPanel.setBorder(BorderFactory.createTitledBorder("Equipamentos Cadastrados"));
+        tabelaPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
+                "💻 Equipamentos Cadastrados",
+                0, 0,
+                new Font("Segoe UI Emoji", Font.BOLD, 14),
+                UITheme.TEXT_SECONDARY
+        ));
         tabelaPanel.setBackground(UITheme.CARD_BACKGROUND);
         tabelaPanel.add(new JScrollPane(tabelaEquipamentos), BorderLayout.CENTER);
 
         mainPanel.add(topContentPanel, BorderLayout.NORTH);
         mainPanel.add(tabelaPanel, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
+
+        // --- RODAPÉ ---
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
+        bottomPanel.setPreferredSize(new Dimension(0, 40));
+
+        JLabel lblCopyright = new JLabel("©️ 2025 Sistema de Venda de Equipamentos Informáticos");
+        lblCopyright.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
+        lblCopyright.setForeground(UITheme.TEXT_WHITE);
+        bottomPanel.add(lblCopyright);
+
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private void setupEvents() {
@@ -239,7 +288,7 @@ public class GerirEquipamentosView extends JPanel {
         btnEditar.addActionListener(e -> editarEquipamento());
         btnRemover.addActionListener(e -> removerEquipamento());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-
+        installAltForVoltar();
         cmbTipoEquipamento.addActionListener(e -> {
             CardLayout cl = (CardLayout) especificacoesPanel.getLayout();
             cl.show(especificacoesPanel, (String) cmbTipoEquipamento.getSelectedItem());
@@ -393,7 +442,7 @@ public class GerirEquipamentosView extends JPanel {
         for (Equipamento eq : controller.getEquipamentos()) {
             modeloTabela.addRow(new Object[]{
                     eq.getId(),
-                    eq instanceof Computador ? "Computador" : "Periférico",
+                    eq instanceof Computador ? "💻 Computador" : "🔌 Periférico",
                     eq.getMarca(),
                     String.format("%.2f MT", eq.getPreco()),
                     eq.getQuantidadeEstoque(),
@@ -454,5 +503,90 @@ public class GerirEquipamentosView extends JPanel {
             default -> "Login";
         };
         controller.getCardLayoutManager().showPanel(painel);
+    }
+
+    private void adicionarEfeitoHover(JTextField campo){
+        final Border bordaOriginal =  campo.getBorder();
+
+        Border bordaHover = new CompoundBorder(
+                new LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
+                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+        );
+
+        /// Efeito ao passar o cursor
+        campo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                campo.setBorder(bordaHover);
+                campo.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!campo.hasFocus()) {
+                    campo.setBorder(bordaOriginal);
+                }
+            }
+        });
+
+        campo.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                campo.setBorder(bordaHover);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                campo.setBorder(bordaOriginal);
+            }
+        });
+    }
+
+    /**
+     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
+     */
+    private void installAltForVoltar() {
+        JComponent root = getRootPane();
+        if (root == null) {
+            root = this;
+        }
+
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+
+        im.put(altPress, "altPressed_voltar");
+        im.put(altRelease, "altReleased_voltar");
+
+        // ALT pressionado: só altera o estado visual (armed + pressed)
+        am.put("altPressed_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setArmed(true);
+                    m.setPressed(true);
+                    // garante foco visual no botão (opcional)
+                    btnVoltar.requestFocusInWindow();
+                }
+            }
+        });
+
+        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
+        am.put("altReleased_voltar", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnVoltar != null) {
+                    btnVoltar.doClick();
+
+                    // limpa o estado visual
+                    ButtonModel m = btnVoltar.getModel();
+                    m.setPressed(false);
+                    m.setArmed(false);
+                }
+            }
+        });
     }
 }
