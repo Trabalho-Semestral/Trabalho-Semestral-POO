@@ -11,6 +11,9 @@ public class Gestor extends Funcionario {
 
     private String departamento;
     private String fotoPath;
+    private boolean primeiroLogin = true;
+    private boolean suspenso = false; // Novo campo
+    private boolean online = false;   // Novo campo
 
     /**
      * Construtor padrão.
@@ -59,7 +62,49 @@ public class Gestor extends Funcionario {
         return true;
     }
 
-    // Getters e Setters
+    // MÉTODOS NOVOS ADICIONADOS
+
+    /**
+     * Obtém o número do BI do gestor
+     * @return Número do BI
+     */
+    public String getBI() {
+        return this.nrBI; // Usa o campo nrBI da classe pai
+    }
+
+    /**
+     * Verifica se o gestor está suspenso
+     * @return true se está suspenso, false caso contrário
+     */
+    public boolean isSuspenso() {
+        return this.suspenso;
+    }
+
+    /**
+     * Define o status de suspensão do gestor
+     * @param suspenso true para suspender, false para ativar
+     */
+    public void setSuspenso(boolean suspenso) {
+        this.suspenso = suspenso;
+    }
+
+    /**
+     * Verifica se o gestor está online
+     * @return true se está online, false caso contrário
+     */
+    public boolean isOnline() {
+        return this.online;
+    }
+
+    /**
+     * Define o status online do gestor
+     * @param online true para online, false para offline
+     */
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+    // Getters e Setters existentes
     public String getDepartamento() {
         return departamento;
     }
@@ -67,6 +112,7 @@ public class Gestor extends Funcionario {
     public void setDepartamento(String departamento) {
         this.departamento = departamento;
     }
+
     public String getFotoPath() {
         return fotoPath;
     }
@@ -75,6 +121,13 @@ public class Gestor extends Funcionario {
         this.fotoPath = fotoPath;
     }
 
+    public boolean isPrimeiroLogin() {
+        return primeiroLogin;
+    }
+
+    public void setPrimeiroLogin(boolean primeiroLogin) {
+        this.primeiroLogin = primeiroLogin;
+    }
 
     @Override
     public String toString() {
@@ -88,6 +141,9 @@ public class Gestor extends Funcionario {
                 ", tipoUsuario=" + tipoUsuario +
                 ", departamento='" + departamento + '\'' +
                 ", dataContratacao=" + dataContratacao +
+                ", primeiroLogin=" + primeiroLogin +
+                ", suspenso=" + suspenso +
+                ", online=" + online +
                 '}';
     }
 }

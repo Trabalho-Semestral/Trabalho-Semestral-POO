@@ -1,3 +1,4 @@
+// Updated GerirReservasView.java
 package view;
 
 import controller.SistemaController;
@@ -7,9 +8,11 @@ import util.UITheme;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -51,8 +54,8 @@ public class GerirReservasView extends JPanel {
         btnCancelarReserva = UITheme.createDangerButton("❌ Cancelar");
         btnConverterVenda = UITheme.createSuccessButton("💰 Converter em Venda");
         btnNovaReserva = UITheme.createPrimaryButton("➕ Nova Reserva");
-        btnEditarReserva = UITheme.createPrimaryButton("✏️ Editar Reserva");
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnEditarReserva = UITheme.createPrimaryButton("✏ Editar Reserva");
+        btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
 
         /// Visiblidade de imagens
         btnAtualizar.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
@@ -63,13 +66,18 @@ public class GerirReservasView extends JPanel {
         btnVoltar.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
 
         lblTotalReservas = UITheme.createTitleLabel("Total de Reservas: 0");
-        lblValorTotal = UITheme.createTitleLabel("Valor Total: 0,00 MT");
+        lblValorTotal = UITheme.createTitleLabel("Valor Total Líquido: 0,00 MT");
 
-        String[] colunas = {"ID", "Cliente", "Data Criação", "Expira em", "Status", "Itens", "Valor"};
+        String[] colunas = {"ID", "Cliente", "Data Criação", "Expira em", "Status", "Itens", "Valor Líquido"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         tabelaReservas = new JTable(modeloTabela);
+        JTableHeader header =  tabelaReservas.getTableHeader();
+        header.setBackground(Color.WHITE); // fundo branco (ou troca, se quiser)
+        header.setForeground(UITheme.TEXT_SECONDARY); // mesma cor dos títulos dos campos
+        header.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16)); // mesma fonte e tamanho
+        header.setOpaque(true);
         tabelaReservas.setRowHeight(28);
         tabelaReservas.setFont(UITheme.FONT_BODY);
         tabelaReservas.getTableHeader().setFont(UITheme.FONT_SUBHEADING);
@@ -84,7 +92,7 @@ public class GerirReservasView extends JPanel {
         topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        JLabel lblTitulo = UITheme.createHeadingLabel(" Gestão de Reservas");
+        JLabel lblTitulo = UITheme.createHeadingLabel(" GESTÃO DE RESERVAS");
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
@@ -115,7 +123,7 @@ public class GerirReservasView extends JPanel {
         // Painel de ações
         JPanel painelAcoes = UITheme.createCardPanel();
         painelAcoes.setLayout(new GridLayout(0, 1, 10, 10));
-        painelAcoes.setBorder(BorderFactory.createTitledBorder("⚙️ Ações"));
+        painelAcoes.setBorder(BorderFactory.createTitledBorder("⚙ Ações"));
         painelAcoes.add(btnNovaReserva);
         painelAcoes.add(btnEditarReserva);
         painelAcoes.add(btnCancelarReserva);
@@ -151,14 +159,14 @@ public class GerirReservasView extends JPanel {
         installAltForVoltar();
     }
     public void carregarReservas() {
-        controller.debugEquipamentos();
+
 
         modeloTabela.setRowCount(0);
         try {
             List<Reserva> reservas = controller.getReservas();
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-            double total = 0;
+            double totalLiquido = 0;
             int count = 0;
 
             System.out.println("=== DEBUG GERIR RESERVAS ===");
@@ -167,79 +175,70 @@ public class GerirReservasView extends JPanel {
             for (Reserva r : reservas) {
                 if (r != null && r.getCliente() != null) {
                     // DEBUG DETALHADO
-                    System.out.println("--- Reserva ID: " + r.getIdReserva() + " ---");
+                    System.out.println("--- Reserva ID: " + r.getIdReserva());
                     System.out.println("Cliente: " + r.getCliente().getNome());
+                    System.out.println("Vendedor: " + (r.getVendedor() != null ? r.getVendedor().getNome() : "N/A"));
                     System.out.println("Status: " + r.getStatus());
-                    System.out.println("Número de itens: " + (r.getItens() != null ? r.getItens().size() : 0));
+                    System.out.println("Taxa Paga: " + (r.getTaxaPaga() != null ? r.getTaxaPaga().toString() : "0.00"));
+                    System.out.println("Itens: " + (r.getItens() != null ? r.getItens().size() : 0));
 
-                    // Calcular valor manualmente para debug
-                    double valorCalculado = 0.0;
-                    if (r.getItens() != null) {
-                        for (ItemReserva item : r.getItens()) {
-                            if (item != null && item.getEquipamento() != null) {
-                                double precoItem = item.getEquipamento().getPreco();
-                                int quantidade = item.getQuantidade();
-                                double subtotal = precoItem * quantidade;
-                                valorCalculado += subtotal;
-                                System.out.println("  Item: " + item.getEquipamento().getMarca() +
-                                        " - Preço: " + precoItem +
-                                        " - Qtd: " + quantidade +
-                                        " - Subtotal: " + subtotal);
-                            } else {
-                                System.out.println("  ⚠️ Item ou equipamento nulo!");
-                            }
+                    String clienteNome = r.getCliente().getNome();
+                    String dataCriacao = sdf.format(r.getDataReserva());
+                    String dataExpiracao = sdf.format(r.getExpiraEm());
+                    String status = r.getStatus().toString();
+                    int numItens = r.getItens() != null ? r.getItens().size() : 0;
+
+                    // Calcular valor líquido (itens - taxa paga)
+                    double valorItens = 0.0;
+                    for (ItemReserva item : r.getItens()) {
+                        if (item.getEquipamento() != null) {
+                            valorItens += item.getEquipamento().getPreco() * item.getQuantidade();
                         }
                     }
+                    BigDecimal taxaPaga = r.getTaxaPaga() != null ? r.getTaxaPaga() : BigDecimal.ZERO;
+                    double valorLiquido = valorItens - taxaPaga.doubleValue();
 
-                    System.out.println("Valor calculado: " + valorCalculado);
-                    System.out.println("Valor getValorTotal(): " + r.getValorTotal());
-
-                    // Usar o maior valor entre calculado e getValorTotal()
-                    double valorFinal = Math.max(valorCalculado, r.getValorTotal());
+                    totalLiquido += valorLiquido;
+                    count++;
 
                     modeloTabela.addRow(new Object[]{
                             r.getIdReserva(),
-                            r.getCliente().getNome(),
-                            r.getDataReserva() != null ? sdf.format(r.getDataReserva()) : "N/A",
-                            r.getExpiraEm() != null ? sdf.format(r.getExpiraEm()) : "N/A",
-                            r.getStatus(),
-                            r.getItens() != null ? r.getItens().size() : 0,
-                            String.format("%.2f MT", valorFinal)
+                            clienteNome,
+                            dataCriacao,
+                            dataExpiracao,
+                            status,
+                            numItens,
+                            String.format("%.2f MT", valorLiquido)
                     });
-                    total += valorFinal;
-                    count++;
-                    System.out.println("Valor final usado: " + valorFinal);
-                } else {
-                    System.out.println("⚠️ Reserva ou cliente nulo: " + r);
+
+                    System.out.println("Valor Itens: " + valorItens + ", Taxa: " + taxaPaga + ", Líquido: " + valorLiquido);
                 }
             }
 
-            System.out.println("=== TOTAL GERAL: " + total + " ===");
             lblTotalReservas.setText("Total de Reservas: " + count);
-            lblValorTotal.setText("Valor Total: " + String.format("%.2f MT", total));
+            lblValorTotal.setText("Valor Total Líquido: " + String.format("%.2f MT", totalLiquido));
 
-            modeloTabela.fireTableDataChanged();
-            tabelaReservas.revalidate();
-            tabelaReservas.repaint();
+            System.out.println("Total Geral Líquido: " + totalLiquido);
+            System.out.println("=== FIM DEBUG GERIR RESERVAS ===");
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar reservas: " + e.getMessage(),
-                    "Erro", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao carregar reservas: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Método auxiliar para calcular valor da reserva
+    // Método auxiliar atualizado para calcular valor líquido da reserva
     private double calcularValorReserva(Reserva reserva) {
         if (reserva.getItens() == null) return 0.0;
 
-        double total = 0.0;
+        double valorItens = 0.0;
         for (ItemReserva item : reserva.getItens()) {
             if (item.getEquipamento() != null) {
-                total += item.getEquipamento().getPreco() * item.getQuantidade();
+                valorItens += item.getEquipamento().getPreco() * item.getQuantidade();
             }
         }
-        return total;
+        BigDecimal taxaPaga = reserva.getTaxaPaga() != null ? reserva.getTaxaPaga() : BigDecimal.ZERO;
+        return valorItens - taxaPaga.doubleValue();
     }
     private void abrirRegistrarReserva() {
         try {
@@ -278,12 +277,23 @@ public class GerirReservasView extends JPanel {
                 return;
             }
 
+            BigDecimal taxaPaga = reserva.getTaxaPaga() != null ? reserva.getTaxaPaga() : BigDecimal.ZERO;
+            double valorItens = 0.0;
+            for (ItemReserva item : reserva.getItens()) {
+                if (item.getEquipamento() != null) {
+                    valorItens += item.getEquipamento().getPreco() * item.getQuantidade();
+                }
+            }
+            BigDecimal totalLiquido = new BigDecimal(valorItens).subtract(taxaPaga);
+
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Converter reserva " + reserva.getIdReserva() + " em venda?\n" +
                             "Cliente: " + reserva.getCliente().getNome() + "\n" +
                             "Itens: " + reserva.getItens().size() + "\n" +
-                            "Valor: " + String.format("%.2f MT", reserva.getValorTotal()) + "\n\n" +
-                            "Esta ação irá CANCELAR a reserva e criar uma VENDA.",
+                            "Valor Bruto: " + String.format("%.2f MT", valorItens) + "\n" +
+                            "Taxa Paga: " + taxaPaga + " MT\n" +
+                            "Valor Líquido a Pagar: " + totalLiquido + " MT\n\n" +
+                            "Esta ação irá CANCELAR a reserva e criar uma VENDA com valor líquido.",
                     "Converter Reserva em Venda", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
@@ -292,7 +302,7 @@ public class GerirReservasView extends JPanel {
 
                     if (sucesso) {
                         JOptionPane.showMessageDialog(this,
-                                "Reserva convertida em venda com sucesso!",
+                                "Reserva convertida em venda com sucesso!\nValor Líquido: " + totalLiquido + " MT",
                                 "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                         carregarReservas();
                     } else {
@@ -325,7 +335,8 @@ public class GerirReservasView extends JPanel {
         Reserva reserva = getReservaSelecionada();
         if (reserva != null) {
             int opt = JOptionPane.showConfirmDialog(this,
-                    "Tens certeza que deseja cancelar a reserva?",
+                    "Tens certeza que deseja cancelar a reserva?\n" +
+                            "Taxa paga (" + (reserva.getTaxaPaga() != null ? reserva.getTaxaPaga() : BigDecimal.ZERO) + " MT) será considerada perdida.",
                     "Confirmação",
                     JOptionPane.YES_NO_OPTION);
             if (opt == JOptionPane.YES_OPTION) {

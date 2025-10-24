@@ -11,6 +11,10 @@ public class Vendedor extends Funcionario {
 
     private String codigoFuncionario;
     private String fotoPath;
+    private boolean primeiroLogin = true;
+    private boolean suspenso = false;
+    private boolean online = false;
+
 
     /**
      * Construtor padrão.
@@ -48,7 +52,50 @@ public class Vendedor extends Funcionario {
                 Validador.validarCampoObrigatorio(codigoFuncionario);
     }
 
-    // Getters e Setters
+    // MÉTODOS NOVOS ADICIONADOS
+
+    /**
+     * Obtém o número do BI do vendedor
+     * @return Número do BI
+     */
+    public String getBI() {
+        return this.nrBI; // Usa o campo nrBI da classe pai
+    }
+
+    /**
+     * Verifica se o vendedor está suspenso
+     * @return true se está suspenso, false caso contrário
+     */
+    public boolean isSuspenso() {
+        return this.suspenso;
+    }
+
+    /**
+     * Define o status de suspensão do vendedor
+     * @param suspenso true para suspender, false para ativar
+     */
+    public void setSuspenso(boolean suspenso) {
+        this.suspenso = suspenso;
+    }
+
+    /**
+     * Verifica se o vendedor está online
+     * @return true se está online, false caso contrário
+     */
+    public boolean isOnline() {
+        return this.online;
+    }
+
+    /**
+     * Define o status online do vendedor
+     * @param online true para online, false para offline
+     */
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+
+    // Getters e Setters existentes
     public String getCodigoFuncionario() {
         return codigoFuncionario;
     }
@@ -56,6 +103,7 @@ public class Vendedor extends Funcionario {
     public void setCodigoFuncionario(String codigoFuncionario) {
         this.codigoFuncionario = codigoFuncionario;
     }
+
     public String getFotoPath() {
         return fotoPath;
     }
@@ -64,6 +112,13 @@ public class Vendedor extends Funcionario {
         this.fotoPath = fotoPath;
     }
 
+    public boolean isPrimeiroLogin() {
+        return primeiroLogin;
+    }
+
+    public void setPrimeiroLogin(boolean primeiroLogin) {
+        this.primeiroLogin = primeiroLogin;
+    }
 
     @Override
     public String toString() {
@@ -77,6 +132,9 @@ public class Vendedor extends Funcionario {
                 ", tipoUsuario=" + tipoUsuario +
                 ", dataContratacao=" + dataContratacao +
                 ", codigoFuncionario='" + codigoFuncionario + '\'' +
+                ", primeiroLogin=" + primeiroLogin +
+                ", suspenso=" + suspenso +
+                ", online=" + online +
                 '}';
     }
 }

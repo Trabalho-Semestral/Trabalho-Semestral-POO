@@ -29,7 +29,19 @@ public abstract class BaseListRepository<T> {
         this.file = Paths.get(filePath);
         this.idExtractor = idExtractor;
     }
-
+    protected synchronized void save() throws Exception {
+        try {
+            System.out.println("Tentando salvar em: " + file.toAbsolutePath());
+            String json = JsonUtil.GSON.toJson(cache);
+            System.out.println("JSON gerado: " + json); // Log do JSON para verificar
+            JsonUtil.writeAtomic(file, json);
+            System.out.println("Salvo com sucesso em: " + file.toAbsolutePath());
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar " + file.toAbsolutePath() + ": " + e.getMessage());
+            e.printStackTrace(); // Log completo da pilha
+            throw e;
+        }
+    }
     protected abstract Type getListType();
 
     public synchronized void init() throws Exception {
@@ -226,6 +238,29 @@ public abstract class BaseListRepository<T> {
         }
     }
 
+    // NOVO MÉTODO: remove - remove um objeto diretamente
+    /**
+     * Remove um objeto do repositório
+     * @param item O objeto a ser removido
+     * @throws Exception se ocorrer erro ao salvar
+     */
+    public synchronized void remove(T item) throws Exception {
+        if (item == null) return;
+
+        String id = idExtractor.apply(item);
+        removeById(id);
+    }
+
+    // NOVO MÉTODO: atualizar - alias para upsert (para compatibilidade)
+    /**
+     * Atualiza um objeto no repositório (alias para upsert)
+     * @param item O objeto a ser atualizado
+     * @throws Exception se ocorrer erro ao salvar
+     */
+    public synchronized void atualizar(T item) throws Exception {
+        upsert(item);
+    }
+
     public synchronized void replaceAll(Collection<T> items) throws Exception {
         cache.clear();
         indexById.clear();
@@ -241,15 +276,6 @@ public abstract class BaseListRepository<T> {
         save();
     }
 
-    protected synchronized void save() throws Exception {
-        try {
-            String json = JsonUtil.GSON.toJson(cache);
-            JsonUtil.writeAtomic(file, json);
-        } catch (Exception e) {
-            System.err.println("Erro ao salvar " + file + ": " + e.getMessage());
-            throw e;
-        }
-    }
 
     private void addToMemory(T item) {
         if (item != null) {
@@ -260,7 +286,6 @@ public abstract class BaseListRepository<T> {
             }
         }
     }
-
     public synchronized void diagnostic() {
         System.out.println("=== Diagnóstico: " + file + " ===");
         System.out.println("Itens em cache: " + cache.size());

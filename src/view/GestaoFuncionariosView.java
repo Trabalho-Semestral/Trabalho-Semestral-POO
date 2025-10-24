@@ -1,3 +1,4 @@
+
 package view;
 
 import controller.SistemaController;
@@ -104,10 +105,10 @@ public class GestaoFuncionariosView extends JPanel {
         styleTextField(txtPesquisa, "🔍 Pesquisar (ID, Nome, BI)");
 
         // Inicializar botões
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
         btnExportarPDF = UITheme.createPrimaryButton("📄 Exportar");
         btnAtualizar = UITheme.createSuccessButton("🔄 Atualizar");
-        btnSuspender = UITheme.createSecondaryButton("⏸️ Sus/Reat");
+        btnSuspender = UITheme.createSecondaryButton("⏸ Sus/Reat");
         btnDetalhes = UITheme.createSecondaryButton("👤 Detalhes");
 
         /// Visibilidade de imagens
@@ -163,7 +164,7 @@ public class GestaoFuncionariosView extends JPanel {
         leftPanel.add(btnVoltar);
 
         // Painel central com título
-        JLabel lblTitulo = new JLabel("👥 Gestão de Funcionários", SwingConstants.CENTER);
+        JLabel lblTitulo = new JLabel("👥 GESTÃO DE FUNCIONARIOS", SwingConstants.CENTER);
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
         lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 20)); // Emoji font
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
@@ -225,7 +226,7 @@ public class GestaoFuncionariosView extends JPanel {
         bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
         bottomPanel.setPreferredSize(new Dimension(0, 40));
 
-        JLabel lblCopyright = new JLabel("©️ 2025 Sistema de Venda de Equipamentos Informáticos");
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
         lblCopyright.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12)); // Emoji font
         lblCopyright.setForeground(UITheme.TEXT_WHITE);
         bottomPanel.add(lblCopyright);
@@ -292,61 +293,55 @@ public class GestaoFuncionariosView extends JPanel {
     }
 
     private void voltarMenuPrincipal() {
-        controller.getCardLayoutManager().showPanel("MenuAdministrador"); // Or appropriate panel
-    }
-
-    private void aplicarFiltros() {
-        try {
-            String filtroTipo = (String) comboFiltroTipo.getSelectedItem();
-            String pesquisa = txtPesquisa.getText();
-
-            if (filtroTipo == null) {
-                filtroTipo = "Todos";
-            }
-            if (pesquisa == null) {
-                pesquisa = "";
-            }
-
-            pesquisa = pesquisa.toLowerCase();
-
-            List<RowFilter<Object, Object>> filters = new ArrayList<>();
-
-            if (!"Todos".equals(filtroTipo)) {
-                String regexTipo = "";
-                switch (filtroTipo) {
-                    case "Administradores": regexTipo = "Administrador"; break;
-                    case "Gestores": regexTipo = "Gestor"; break;
-                    case "Vendedores": regexTipo = "Vendedor"; break;
-                    default: regexTipo = filtroTipo;
-                }
-                filters.add(RowFilter.regexFilter("(?i)" + regexTipo, 3));
-            }
-
-            if (!pesquisa.isEmpty()) {
-                String finalPesquisa = pesquisa;
-                RowFilter<Object, Object> pesquisaFilter = new RowFilter<Object, Object>() {
-                    public boolean include(Entry<? extends Object, ? extends Object> entry) {
-                        for (int i = 0; i < entry.getValueCount(); i++) {
-                            if (i == 0 || i == 1 || i == 2) {
-                                String value = entry.getStringValue(i);
-                                if (value != null && value.toLowerCase().contains(finalPesquisa)) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    }
-                };
-                filters.add(pesquisaFilter);
-            }
-
-            sorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
-        } catch (Exception e) {
-            System.err.println("Erro em aplicarFiltros: " + e.getMessage());
-            e.printStackTrace();
-            sorter.setRowFilter(null);
+        String tipoUsuario = controller.getTipoUsuarioLogado();
+        if (tipoUsuario == null) {
+            controller.getCardLayoutManager().showPanel("Login");
+            return;
+        }
+        switch (tipoUsuario) {
+            case "Gestor" -> controller.getCardLayoutManager().showPanel("MenuGestor");
+            case "Administrador" -> controller.getCardLayoutManager().showPanel("MenuAdministrador");
         }
     }
+
+
+    private void aplicarFiltros() {
+        RowFilter<DefaultTableModel, Object> filtro = null;
+        try {
+            String textoPesquisa = txtPesquisa.getText().trim().toLowerCase();
+            String tipoSelecionado = (String) comboFiltroTipo.getSelectedItem();
+
+            filtro = new RowFilter<DefaultTableModel, Object>() {
+                @Override
+                public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                    boolean tipoMatch = true;
+                    if (!"Todos".equals(tipoSelecionado)) {
+                        String tipo = (String) entry.getValue(3); // Coluna "Tipo"
+                        tipoMatch = tipo.contains(tipoSelecionado.replace("es", ""));
+                    }
+
+                    boolean textoMatch = true;
+                    if (!textoPesquisa.isEmpty()) {
+                        textoMatch = false;
+                        for (int i = 0; i <= 2; i++) { // Colunas ID, Nome, BI
+                            String valor = entry.getStringValue(i).toLowerCase();
+                            if (valor.contains(textoPesquisa)) {
+                                textoMatch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    return tipoMatch && textoMatch;
+                }
+            };
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        sorter.setRowFilter(filtro);
+    }
+
 
     private void carregarFuncionarios() {
         modeloTabela.setRowCount(0);
@@ -367,7 +362,7 @@ public class GestaoFuncionariosView extends JPanel {
                                 admin.getTelefone() != null ? admin.getTelefone() : "N/A",
                                 String.format("%,.2f MT", admin.getSalario()),
                                 admin.getDataContratacao() != null ? sdf.format(admin.getDataContratacao()) : "N/A",
-                                "✅ Ativo",
+                                admin.isSuspenso() ? "❌ Suspenso" : "✅ Ativo", // Corrigido
                                 isUsuarioOnline(admin.getId()) ? "🟢 Online" : "🔴 Offline",
                                 "N/A",
                                 "N/A"
@@ -387,7 +382,7 @@ public class GestaoFuncionariosView extends JPanel {
                                 gestor.getTelefone() != null ? gestor.getTelefone() : "N/A",
                                 String.format("%,.2f MT", gestor.getSalario()),
                                 gestor.getDataContratacao() != null ? sdf.format(gestor.getDataContratacao()) : "N/A",
-                                "✅ Ativo",
+                                gestor.isSuspenso() ? "❌ Suspenso" : "✅ Ativo", // Corrigido
                                 isUsuarioOnline(gestor.getId()) ? "🟢 Online" : "🔴 Offline",
                                 "N/A",
                                 "N/A"
@@ -410,13 +405,17 @@ public class GestaoFuncionariosView extends JPanel {
                             vendedor.getTelefone() != null ? vendedor.getTelefone() : "N/A",
                             String.format("%,.2f MT", vendedor.getSalario()),
                             vendedor.getDataContratacao() != null ? sdf.format(vendedor.getDataContratacao()) : "N/A",
-                            "✅ Ativo",
+                            vendedor.isSuspenso() ? "❌ Suspenso" : "✅ Ativo", // Corrigido
                             isUsuarioOnline(vendedorId) ? "🟢 Online" : "🔴 Offline",
                             String.valueOf(vendas),
                             String.format("%,.2f MT", faturamento)
                     });
                 }
             }
+
+            modeloTabela.fireTableDataChanged(); // Notifica o modelo de alterações
+            tabelaFuncionarios.revalidate(); // Força atualização visual
+            tabelaFuncionarios.repaint(); // Força repintura
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
@@ -424,8 +423,7 @@ public class GestaoFuncionariosView extends JPanel {
                     "Erro",
                     JOptionPane.ERROR_MESSAGE);
         }
-    }
-    private boolean isUsuarioOnline(String usuarioId) {
+    }    private boolean isUsuarioOnline(String usuarioId) {
         if (usuarioId == null || "N/A".equals(usuarioId)) return false;
 
         Object usuarioLogado = controller.getUsuarioLogado();
@@ -479,6 +477,7 @@ public class GestaoFuncionariosView extends JPanel {
             comboFiltroTipo.addActionListener(e -> aplicarFiltros());
         }
     }
+
 
     private void filtrarApenasUsuarioLogado() {
         Object usuario = controller.getUsuarioLogado();
@@ -590,7 +589,7 @@ public class GestaoFuncionariosView extends JPanel {
                 BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
                 "⏰ Histórico de Login",
                 0, 0,
-                new Font("Segoe UI Emoji", Font.BOLD, 12), // Emoji font
+                new Font("Segoe UI Emoji", Font.BOLD, 12),
                 UITheme.TEXT_SECONDARY
         ));
         historicoWrapper.add(scrollPane, BorderLayout.CENTER);
@@ -828,38 +827,132 @@ public class GestaoFuncionariosView extends JPanel {
         return String.valueOf(idade);
     }
 
+
     private void suspenderFuncionario() {
-        int linha = tabelaFuncionarios.getSelectedRow();
-        if (linha < 0) {
+        int row = tabelaFuncionarios.getSelectedRow();
+        if (row == -1) {
             JOptionPane.showMessageDialog(this,
-                    "Selecione um funcionário para suspender/reativar.",
-                    "Seleção Necessária",
+                    "Selecione um funcionário!",
+                    "Aviso",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int modelRow = tabelaFuncionarios.convertRowIndexToModel(linha);
+        // Converter índice da view para o modelo
+        int modelRow = tabelaFuncionarios.convertRowIndexToModel(row);
         String id = (String) modeloTabela.getValueAt(modelRow, 0);
-        String nome = (String) modeloTabela.getValueAt(modelRow, 1);
-        String tipo = (String) modeloTabela.getValueAt(modelRow, 3);
-        String statusAtual = (String) modeloTabela.getValueAt(modelRow, 7);
+        String tipo = (String) modeloTabela.getValueAt(modelRow, 3); // Ex.: "👨‍💼 Administrador", "👨‍💼 Gestor", "🛒 Vendedor"
 
-        String novaStatus = "❌ Suspenso".equals(statusAtual) ? "✅ Ativo" : "❌ Suspenso";
-        String acao = "❌ Suspenso".equals(statusAtual) ? "reativar" : "suspender";
+        try {
+            boolean sucesso = false;
+            if (tipo.contains("Administrador")) {
+                Optional<Administrador> optAdmin = controller.getAdministradorRepo().findById(id);
+                if (optAdmin.isPresent()) {
+                    Administrador admin = optAdmin.get();
+                    if ("ADMIN".equals(id)) {
+                        JOptionPane.showMessageDialog(this,
+                                "Administrador supremo não pode ser suspenso!",
+                                "Operação Não Permitida",
+                                JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    boolean eraSuspenso = admin.isSuspenso();
+                    admin.setSuspenso(!eraSuspenso);
+                    try {
+                        controller.getAdministradorRepo().atualizar(admin);
+                        sucesso = true;
+                    } catch (Exception ex) {
+                        admin.setSuspenso(eraSuspenso); // Reverte na memória
+                        throw ex;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Administrador não encontrado!",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else if (tipo.contains("Gestor")) {
+                Optional<Gestor> optGestor = controller.getGestorRepo().findById(id);
+                if (optGestor.isPresent()) {
+                    Gestor gestor = optGestor.get();
+                    boolean eraSuspenso = gestor.isSuspenso();
+                    gestor.setSuspenso(!eraSuspenso);
+                    try {
+                        controller.getGestorRepo().atualizar(gestor);
+                        sucesso = true;
+                    } catch (Exception ex) {
+                        gestor.setSuspenso(eraSuspenso); // Reverte na memória
+                        throw ex;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Gestor não encontrado!",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else if (tipo.contains("Vendedor")) {
+                Optional<Vendedor> optVendedor = controller.getVendedorRepo().findById(id);
+                if (optVendedor.isPresent()) {
+                    Vendedor vendedor = optVendedor.get();
+                    boolean eraSuspenso = vendedor.isSuspenso();
+                    vendedor.setSuspenso(!eraSuspenso);
+                    try {
+                        controller.getVendedorRepo().atualizar(vendedor);
+                        sucesso = true;
+                    } catch (Exception ex) {
+                        vendedor.setSuspenso(eraSuspenso); // Reverte na memória
+                        throw ex;
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "Vendedor não encontrado!",
+                            "Erro",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
 
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Tem certeza que deseja " + acao + " o funcionário:\n" +
-                        nome + " (" + id + ")?",
-                "Confirmação de " + acao,
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
+            if (sucesso) {
+                // Recarregar a tabela
+                modeloTabela.setRowCount(0);
+                carregarFuncionarios();
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            modeloTabela.setValueAt(novaStatus, modelRow, 7);
+                // Restaurar a seleção na mesma linha, se possível
+                for (int i = 0; i < modeloTabela.getRowCount(); i++) {
+                    if (id.equals(modeloTabela.getValueAt(i, 0))) {
+                        int viewRow = tabelaFuncionarios.convertRowIndexToView(i);
+                        if (viewRow != -1) { // Verifica se a linha é visível após filtros
+                            tabelaFuncionarios.setRowSelectionInterval(viewRow, viewRow);
+                            tabelaFuncionarios.scrollRectToVisible(tabelaFuncionarios.getCellRect(viewRow, 0, true));
+                        }
+                        break;
+                    }
+                }
+
+                // Garantir atualização visual
+                tabelaFuncionarios.revalidate();
+                tabelaFuncionarios.repaint();
+
+                JOptionPane.showMessageDialog(this,
+                        "Status do funcionário atualizado com sucesso!",
+                        "Sucesso",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (IllegalStateException ex) {
+            // Ex.: tentar alterar "ADMIN"
             JOptionPane.showMessageDialog(this,
-                    "Funcionário " + acao + "do com sucesso!",
-                    "Sucesso",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    ex.getMessage(),
+                    "Operação Não Permitida",
+                    JOptionPane.WARNING_MESSAGE);
+        } catch (Exception ex) {
+            ex.printStackTrace(); // Log detalhado para debug
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao atualizar status: " + ex.getMessage() +
+                            "\nVerifique permissões no diretório 'data' ou o arquivo JSON.",
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -987,7 +1080,7 @@ public class GestaoFuncionariosView extends JPanel {
 
         // Rodapé
         document.add(new Paragraph("\n"));
-        Paragraph rodape = new Paragraph("©️ 2025-Sistema de Gestão de Funcionários",
+        Paragraph rodape = new Paragraph("© 2025-Sistema de Gestão de Funcionários",
                 FontFactory.getFont(FontFactory.HELVETICA, 8, Font.ITALIC, BaseColor.GRAY));
         rodape.setAlignment(Element.ALIGN_CENTER);
         document.add(rodape);

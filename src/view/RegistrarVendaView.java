@@ -1,3 +1,4 @@
+
 package view;
 
 import controller.SistemaController;
@@ -8,8 +9,12 @@ import util.UITheme;
 import util.Validador;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -24,7 +29,6 @@ public class RegistrarVendaView extends JPanel {
     private SistemaController controller;
     private Vendedor vendedorLogado;
 
-
     // --- COMPONENTES DO CLIENTE ---
     private JRadioButton rbClienteCorporativo, rbClienteBalcao;
     private CardLayout cardLayoutCliente;
@@ -32,20 +36,24 @@ public class RegistrarVendaView extends JPanel {
     private JComboBox<Cliente> cmbCliente;
     private JTextArea txtAreaDetalhesCliente;
     private JTextField txtNomeClienteBalcao, txtBiClienteBalcao, txtTelefoneClienteBalcao;
+
+    // --- COMPONENTES DE PRODUTOS ---
+    private JTextField txtBuscarProdutos;
     private JTable tabelaEquipamentosDisponiveis;
     private DefaultTableModel modeloTabelaEquipamentos;
+    private TableRowSorter<DefaultTableModel> sorterEquipamentos;
     private JLabel lblFotoEquipamento;
     private JTextArea txtAreaDetalhesEquipamento;
     private JTextField txtQuantidade;
     private JButton btnAdicionarItem;
-    private JTextField txtDesconto;
-    private JTextField txtImposto;
-    // --- COMPONENTES DA VENDA ATUAL (CARRINHO) ---
+
+    // --- COMPONENTES DO CARRINHO ---
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
+    private TableRowSorter<DefaultTableModel> sorterItensVenda;
     private JLabel lblTotalVenda;
+    private BigDecimal totalFinal = BigDecimal.ZERO;
     private boolean modoReserva;
-
 
     // --- BOTÕES DE AÇÃO ---
     private JButton btnRemoverItem, btnFinalizarVenda, btnLimparVenda, btnVoltar;
@@ -53,6 +61,12 @@ public class RegistrarVendaView extends JPanel {
     // --- DADOS ---
     private List<ItemVenda> itensVenda = new ArrayList<>();
     private BigDecimal totalVenda = BigDecimal.ZERO;
+
+    // --- COMPONENTES PARA PAGAMENTO ---
+    private JRadioButton rbCash, rbCartao;
+    private JTextField txtTotalPago;
+    private JLabel lblTroco;
+    private JLabel lblTrocoValue;
 
     public RegistrarVendaView(SistemaController controller, Vendedor vendedorLogado) {
         this.controller = controller;
@@ -64,6 +78,7 @@ public class RegistrarVendaView extends JPanel {
         setupEvents();
         carregarDadosIniciais();
     }
+
     public static RegistrarVendaView criarParaReserva(SistemaController controller) {
         Object usuarioLogado = controller.getUsuarioLogado();
         if (!(usuarioLogado instanceof Vendedor)) {
@@ -77,12 +92,10 @@ public class RegistrarVendaView extends JPanel {
     }
 
     public static RegistrarVendaView criarParaVenda(SistemaController controller) {
-
         Object usuarioLogado = controller.getUsuarioLogado();
         if (!(usuarioLogado instanceof Vendedor)) {
             throw new IllegalStateException("Apenas vendedores podem registrar vendas");
         }
-
         Vendedor vendedor = (Vendedor) usuarioLogado;
         RegistrarVendaView view = new RegistrarVendaView(controller, vendedor);
         view.modoReserva = false;
@@ -99,7 +112,8 @@ public class RegistrarVendaView extends JPanel {
         UITheme.styleRadioButton(rbClienteCorporativo);
         UITheme.styleRadioButton(rbClienteBalcao);
         ButtonGroup bgTipoCliente = new ButtonGroup();
-        bgTipoCliente.add(rbClienteCorporativo); bgTipoCliente.add(rbClienteBalcao);
+        bgTipoCliente.add(rbClienteCorporativo);
+        bgTipoCliente.add(rbClienteBalcao);
 
         cardLayoutCliente = new CardLayout();
         painelCamposCliente = new JPanel(cardLayoutCliente);
@@ -109,6 +123,17 @@ public class RegistrarVendaView extends JPanel {
         JPanel painelCorp = new JPanel(new BorderLayout(5, 5));
         painelCorp.setOpaque(false);
         cmbCliente = new JComboBox<>();
+        // Custom renderer for JComboBox to show only Nome (ID)
+        cmbCliente.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Cliente cliente) {
+                    setText(cliente.getNome() + " (" + cliente.getId() + ")");
+                }
+                return this;
+            }
+        });
         txtAreaDetalhesCliente = new JTextArea("Selecione um cliente para ver os detalhes.");
         txtAreaDetalhesCliente.setEditable(false);
         txtAreaDetalhesCliente.setFont(UITheme.FONT_BODY);
@@ -124,25 +149,40 @@ public class RegistrarVendaView extends JPanel {
         painelCamposCliente.add(painelCorp, "CORPORATIVO");
 
         // --- Card Cliente de Balcão ---
-        JPanel painelBalcao = new JPanel(new GridLayout(0, 1, 5, 5));
+        JPanel painelBalcao = new JPanel(new GridLayout(0, 2, 5, 5));
         painelBalcao.setOpaque(false);
         txtNomeClienteBalcao = UITheme.createStyledTextField();
         txtBiClienteBalcao = UITheme.createStyledTextField();
         txtTelefoneClienteBalcao = UITheme.createStyledTextField();
-        UITheme.setFieldAsInput(txtNomeClienteBalcao, "Nome do Cliente de Balcão");
+        UITheme.setFieldAsInput(txtNomeClienteBalcao, "Nome");
         UITheme.setFieldAsInput(txtBiClienteBalcao, "Nº BI (Obrigatório)");
         UITheme.setFieldAsInput(txtTelefoneClienteBalcao, "Telefone (Obrigatório)");
+        painelBalcao.add(UITheme.createFormLabel("Nome:"));
         painelBalcao.add(txtNomeClienteBalcao);
+        painelBalcao.add(UITheme.createFormLabel("Nº BI:"));
         painelBalcao.add(txtBiClienteBalcao);
+        painelBalcao.add(UITheme.createFormLabel("Telefone:"));
         painelBalcao.add(txtTelefoneClienteBalcao);
         painelCamposCliente.add(painelBalcao, "BALCAO");
 
         // --- INICIALIZAÇÃO DOS COMPONENTES DE PRODUTO ---
+        txtBuscarProdutos = UITheme.createStyledTextField();
+        txtBuscarProdutos.setToolTipText("Buscar por marca ou tipo");
         modeloTabelaEquipamentos = new DefaultTableModel(new String[]{"Marca", "Tipo", "Preço", "Estoque"}, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         tabelaEquipamentosDisponiveis = new JTable(modeloTabelaEquipamentos);
-
+        tabelaEquipamentosDisponiveis.setRowHeight(35);
+        tabelaEquipamentosDisponiveis.setShowGrid(false);
+        tabelaEquipamentosDisponiveis.setIntercellSpacing(new Dimension(0, 1));
+        tabelaEquipamentosDisponiveis.setBackground(Color.WHITE);
+        // Set column header color to dark gray
+        tabelaEquipamentosDisponiveis.getTableHeader().setForeground(Color.DARK_GRAY);
+        sorterEquipamentos = new TableRowSorter<>(modeloTabelaEquipamentos);
+        tabelaEquipamentosDisponiveis.setRowSorter(sorterEquipamentos);
 
         lblFotoEquipamento = new JLabel("Selecione um produto", SwingConstants.CENTER);
         lblFotoEquipamento.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
@@ -158,73 +198,102 @@ public class RegistrarVendaView extends JPanel {
         txtQuantidade = UITheme.createStyledTextField();
         txtQuantidade.setText("1");
         txtQuantidade.setPreferredSize(new Dimension(60, UITheme.INPUT_SIZE.height));
-        btnAdicionarItem = UITheme.createPrimaryButton("➕ Adicionar");
-        btnAdicionarItem.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnAdicionarItem = UITheme.createSuccessButton("➕ Adicionar");
+        btnAdicionarItem.setPreferredSize(new Dimension(180, 45));
+        btnAdicionarItem.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+        btnAdicionarItem.setToolTipText("Adicionar item ao carrinho");
 
         // --- INICIALIZAÇÃO DO CARRINHO E AÇÕES ---
         modeloTabelaItens = new DefaultTableModel(new String[]{"Qtd", "Produto", "Preço Unit.", "Subtotal"}, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
         };
-        tabelaItensVenda = new JTable(modeloTabelaItens);
-        // UITheme.applyTableStyle(tabelaItensVenda);
+        tabelaItensVenda = new JTable(modeloTabelaItens) {
+            @Override
+            public void setValueAt(Object aValue, int row, int column) {
+                if (column == 0) {
+                    try {
+                        int novaQtd = Integer.parseInt(aValue.toString());
+                        if (novaQtd > 0) {
+                            ItemVenda item = itensVenda.get(row);
+                            int disponivel = item.getEquipamento().getQuantidadeEstoque() - item.getEquipamento().getReservado();
+                            if (novaQtd <= disponivel) {
+                                item.setQuantidade(novaQtd);
+                                atualizarCarrinhoETotal();
+                            } else {
+                                JOptionPane.showMessageDialog(this, "Quantidade excede o estoque disponível.", "Erro", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        JOptionPane.showMessageDialog(this, "Quantidade inválida.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        };
+        tabelaItensVenda.setRowHeight(35);
+        tabelaItensVenda.setShowGrid(false);
+        tabelaItensVenda.setIntercellSpacing(new Dimension(0, 1));
+        tabelaItensVenda.setBackground(Color.WHITE);
+
+        tabelaItensVenda.getTableHeader().setForeground(Color.DARK_GRAY);
+        sorterItensVenda = new TableRowSorter<>(modeloTabelaItens);
+        tabelaItensVenda.setRowSorter(sorterItensVenda);
 
         lblTotalVenda = UITheme.createTitleLabel("TOTAL: 0,00 MT");
         lblTotalVenda.setForeground(UITheme.SUCCESS_COLOR);
-        txtDesconto = UITheme.createStyledTextField();
-        txtDesconto.setPreferredSize(new Dimension(100, UITheme.INPUT_SIZE.height));
-        UITheme.setFieldAsInput(txtDesconto, "Desconto (MT)");
 
-        txtImposto = UITheme.createStyledTextField();
-        txtImposto.setPreferredSize(new Dimension(100, UITheme.INPUT_SIZE.height));
-        UITheme.setFieldAsInput(txtImposto, "Imposto (MT)");
+        // --- NOVOS COMPONENTES PARA PAGAMENTO ---
+        rbCash = new JRadioButton("Cash", true);
+        rbCartao = new JRadioButton("Cartão");
+        UITheme.styleRadioButton(rbCash);
+        UITheme.styleRadioButton(rbCartao);
+        ButtonGroup bgPagamento = new ButtonGroup();
+        bgPagamento.add(rbCash);
+        bgPagamento.add(rbCartao);
 
-        btnRemoverItem = UITheme.createDangerButton("Remover Item");
-        btnFinalizarVenda = UITheme.createSuccessButton("✅ Finalizar Venda");
-        btnFinalizarVenda.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
-        btnLimparVenda = UITheme.createSecondaryButton("Limpar Tudo");
+        txtTotalPago = UITheme.createStyledTextField();
+        txtTotalPago.setPreferredSize(new Dimension(120, UITheme.INPUT_SIZE.height));
+        UITheme.setFieldAsInput(txtTotalPago, "Valor Pago");
+
+        lblTroco = UITheme.createTitleLabel("Troco:");
+        lblTroco.setForeground(UITheme.SUCCESS_COLOR);
+        lblTrocoValue = UITheme.createTitleLabel("0,00 MT");
+        lblTrocoValue.setForeground(UITheme.SUCCESS_COLOR);
+
+        btnRemoverItem = UITheme.createDangerButton("🗑️ Remover");
+        btnRemoverItem.setPreferredSize(new Dimension(180, 45));
+        btnRemoverItem.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+        btnRemoverItem.setToolTipText("Remover item selecionado");
+
+        btnFinalizarVenda = UITheme.createSuccessButton("✅ Finalizar");
+        btnFinalizarVenda.setPreferredSize(new Dimension(180, 45));
+        btnFinalizarVenda.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+        btnFinalizarVenda.setToolTipText("Finalizar venda ou reserva");
+
+        btnLimparVenda = UITheme.createSecondaryButton("🧹 Limpar");
+        btnLimparVenda.setPreferredSize(new Dimension(180, 45));
+        btnLimparVenda.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+        btnLimparVenda.setToolTipText("Limpar carrinho");
+
         btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        btnVoltar.setPreferredSize(new Dimension(180, 45));
+        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+        btnVoltar.setToolTipText("Voltar ao menu");
     }
 
     private void setupLayout() {
-
         setLayout(new BorderLayout());
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        JLabel lblTitulo = UITheme.createHeadingLabel("🛒 Registrar Nova Venda");
-        lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
-        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        topBar.add(lblTitulo, BorderLayout.CENTER);
-        JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        voltarPanel.setOpaque(false);
-        voltarPanel.add(btnVoltar);
-        topBar.add(voltarPanel, BorderLayout.WEST);
+        JPanel topBar = UITheme.createTopbar("REGISTRAR VENDA", btnVoltar);
         add(topBar, BorderLayout.NORTH);
 
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        mainSplit.setResizeWeight(0.6);
+        mainSplit.setResizeWeight(0.5);
         mainSplit.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainSplit.setLeftComponent(createLeftPanel());
         mainSplit.setRightComponent(createRightPanel());
         add(mainSplit, BorderLayout.CENTER);
-
-        if (txtDesconto != null) {
-            txtDesconto.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-                public void insertUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-                public void removeUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-                public void changedUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-            });
-        }
-        if (txtImposto != null) {
-            txtImposto.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-                public void insertUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-                public void removeUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-                public void changedUpdate(javax.swing.event.DocumentEvent e) { atualizarCarrinhoETotal(); }
-            });
-        }
     }
 
     private JPanel createLeftPanel() {
@@ -233,7 +302,14 @@ public class RegistrarVendaView extends JPanel {
 
         JPanel painelCliente = UITheme.createCardPanel();
         painelCliente.setLayout(new BorderLayout(10, 10));
-        painelCliente.setBorder(BorderFactory.createTitledBorder("1. Identificação do Cliente"));
+
+        painelCliente.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY),
+                "🧑‍💼 1. Cliente",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI Emoji", Font.BOLD, 12),
+                Color.DARK_GRAY));
         JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         radioPanel.setOpaque(false);
         radioPanel.add(rbClienteCorporativo);
@@ -243,28 +319,41 @@ public class RegistrarVendaView extends JPanel {
 
         JPanel painelCarrinho = UITheme.createCardPanel();
         painelCarrinho.setLayout(new BorderLayout(10, 10));
-        painelCarrinho.setBorder(BorderFactory.createTitledBorder("3. Itens da Venda (Carrinho)"));
-        painelCarrinho.add(new JScrollPane(tabelaItensVenda), BorderLayout.CENTER);
-        JPanel totaisPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        totaisPanel.setOpaque(false);
-        totaisPanel.add(new JLabel("Desconto:"));
-        totaisPanel.add(txtDesconto);
-        totaisPanel.add(new JLabel("Imposto:"));
-        totaisPanel.add(txtImposto);
+        // Set titled border with emoji and dark gray color
+        painelCarrinho.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY),
+                "🛒 3. Carrinho",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI Emoji", Font.BOLD, 12),
+                Color.DARK_GRAY));
+        JScrollPane scrollPaneCarrinho = new JScrollPane(tabelaItensVenda);
+        scrollPaneCarrinho.setPreferredSize(new Dimension(0, 250));
+        painelCarrinho.add(scrollPaneCarrinho, BorderLayout.CENTER);
 
+        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        pagamentoPanel.setOpaque(false);
+        pagamentoPanel.setBorder(BorderFactory.createTitledBorder("💳 Pagamento"));
+        pagamentoPanel.add(UITheme.createFormLabel("Método:"));
+        pagamentoPanel.add(rbCash);
+        pagamentoPanel.add(rbCartao);
+        pagamentoPanel.add(UITheme.createFormLabel("Valor Pago:"));
+        pagamentoPanel.add(txtTotalPago);
+        pagamentoPanel.add(lblTroco);
+        pagamentoPanel.add(lblTrocoValue);
 
-        JPanel acoesCarrinhoPanel = new JPanel(new BorderLayout(10,10));
+        JPanel acoesCarrinhoPanel = new JPanel(new BorderLayout(10, 10));
         acoesCarrinhoPanel.setOpaque(false);
-        acoesCarrinhoPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        acoesCarrinhoPanel.add(lblTotalVenda, BorderLayout.WEST);
-        acoesCarrinhoPanel.add(totaisPanel, BorderLayout.CENTER);
-        JPanel botoesCarrinho = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        acoesCarrinhoPanel.add(lblTotalVenda, BorderLayout.NORTH);
+        acoesCarrinhoPanel.add(pagamentoPanel, BorderLayout.CENTER);
 
+        JPanel botoesCarrinho = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         botoesCarrinho.setOpaque(false);
         botoesCarrinho.add(btnRemoverItem);
         botoesCarrinho.add(btnLimparVenda);
         botoesCarrinho.add(btnFinalizarVenda);
-        acoesCarrinhoPanel.add(botoesCarrinho, BorderLayout.EAST);
+        acoesCarrinhoPanel.add(botoesCarrinho, BorderLayout.SOUTH);
+
         painelCarrinho.add(acoesCarrinhoPanel, BorderLayout.SOUTH);
 
         leftPanel.add(painelCliente, BorderLayout.NORTH);
@@ -275,17 +364,29 @@ public class RegistrarVendaView extends JPanel {
     private JPanel createRightPanel() {
         JPanel rightPanel = UITheme.createCardPanel();
         rightPanel.setLayout(new BorderLayout(10, 10));
-        rightPanel.setBorder(BorderFactory.createTitledBorder("2. Catálogo de Produtos"));
+        // Set titled border with emoji and dark gray color
+        rightPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.DARK_GRAY),
+                "📦 2. Produtos",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Segoe UI Emoji", Font.BOLD, 12),
+                Color.DARK_GRAY));
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(UITheme.createFormLabel("Buscar:"));
+        searchPanel.add(txtBuscarProdutos);
+        rightPanel.add(searchPanel, BorderLayout.NORTH);
 
         JPanel detalhesPanel = new JPanel(new BorderLayout(10, 10));
         detalhesPanel.setOpaque(false);
-        detalhesPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         detalhesPanel.add(lblFotoEquipamento, BorderLayout.WEST);
         detalhesPanel.add(new JScrollPane(txtAreaDetalhesEquipamento), BorderLayout.CENTER);
 
-        JPanel acoesProdutoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        JPanel acoesProdutoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         acoesProdutoPanel.setOpaque(false);
-        acoesProdutoPanel.add(new JLabel("Qtd:"));
+        acoesProdutoPanel.add(UITheme.createFormLabel("Qtd:"));
         acoesProdutoPanel.add(txtQuantidade);
         acoesProdutoPanel.add(btnAdicionarItem);
         detalhesPanel.add(acoesProdutoPanel, BorderLayout.SOUTH);
@@ -303,7 +404,6 @@ public class RegistrarVendaView extends JPanel {
         btnAdicionarItem.addActionListener(e -> adicionarItemAoCarrinho());
         btnRemoverItem.addActionListener(e -> removerItemDoCarrinho());
         btnLimparVenda.addActionListener(e -> limparVenda());
-        installAltForVoltar();
         btnFinalizarVenda.addActionListener(e -> {
             if (modoReserva) {
                 finalizarReserva();
@@ -313,13 +413,58 @@ public class RegistrarVendaView extends JPanel {
         });
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
 
+        // Busca de produtos
+        txtBuscarProdutos.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filtrarTabelaEquipamentos(); }
+            public void removeUpdate(DocumentEvent e) { filtrarTabelaEquipamentos(); }
+            public void changedUpdate(DocumentEvent e) { filtrarTabelaEquipamentos(); }
+        });
+
+        // Eventos para pagamento
+        rbCash.addActionListener(e -> togglePagamentoFields(true));
+        rbCartao.addActionListener(e -> togglePagamentoFields(false));
+        txtTotalPago.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { atualizarTroco(); }
+            public void removeUpdate(DocumentEvent e) { atualizarTroco(); }
+            public void changedUpdate(DocumentEvent e) { atualizarTroco(); }
+        });
     }
+
+    private void filtrarTabelaEquipamentos() {
+        String texto = txtBuscarProdutos.getText().trim().toLowerCase();
+        if (texto.isEmpty()) {
+            sorterEquipamentos.setRowFilter(null);
+        } else {
+            sorterEquipamentos.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
+        }
+    }
+
+    private void togglePagamentoFields(boolean isCash) {
+        txtTotalPago.setEnabled(isCash);
+        lblTrocoValue.setVisible(isCash);
+        if (!isCash) {
+            txtTotalPago.setText(totalVenda.toPlainString());
+            lblTrocoValue.setText("0,00 MT");
+        }
+        atualizarTroco();
+    }
+
+    private void atualizarTroco() {
+        try {
+            BigDecimal pago = new BigDecimal(txtTotalPago.getText().trim().replace(',', '.'));
+            BigDecimal trocoCalc = pago.subtract(totalFinal).max(BigDecimal.ZERO);
+            lblTrocoValue.setText(String.format("%.2f MT", trocoCalc));
+        } catch (NumberFormatException e) {
+            lblTrocoValue.setText("0,00 MT");
+        }
+    }
+
     private void carregarDadosIniciais() {
         cmbCliente.removeAllItems();
         controller.getClientes().forEach(cmbCliente::addItem);
 
         modeloTabelaEquipamentos.setRowCount(0);
-        for(Equipamento eq : controller.getEquipamentos()) {
+        for (Equipamento eq : controller.getEquipamentos()) {
             if (eq != null && eq.getId() != null) {
                 int disponivelReal = eq.getQuantidadeEstoque() - eq.getReservado();
                 if (disponivelReal > 0) {
@@ -335,6 +480,7 @@ public class RegistrarVendaView extends JPanel {
 
         toggleClienteFields(false);
     }
+
     private void toggleClienteFields(boolean isBalcao) {
         if (isBalcao) {
             cardLayoutCliente.show(painelCamposCliente, "BALCAO");
@@ -352,12 +498,12 @@ public class RegistrarVendaView extends JPanel {
     }
 
     private void exibirDetalhesCliente() {
-        if(rbClienteCorporativo.isSelected()) {
+        if (rbClienteCorporativo.isSelected()) {
             Cliente c = (Cliente) cmbCliente.getSelectedItem();
             if (c != null) {
                 StringBuilder detalhes = new StringBuilder();
                 detalhes.append("Nome:\t").append(c.getNome()).append("\n");
-                detalhes.append("Nº BI/NIF:\t").append(c.getNrBI()).append("\n");
+                detalhes.append("Nº BI:\t").append(c.getNrBI()).append("\n");
                 detalhes.append("Telefone:\t").append(c.getTelefone()).append("\n");
                 if (c.getEmail() != null && !c.getEmail().isEmpty()) {
                     detalhes.append("Email:\t").append(c.getEmail()).append("\n");
@@ -391,7 +537,7 @@ public class RegistrarVendaView extends JPanel {
             detalhes.append("Marca: ").append(eq.getMarca()).append("\n");
             detalhes.append("Estado: ").append(eq.getEstado()).append("\n");
             detalhes.append("Preço: ").append(String.format("%.2f MT", eq.getPreco())).append("\n");
-            if(eq instanceof Computador comp) {
+            if (eq instanceof Computador comp) {
                 detalhes.append("Processador: ").append(comp.getProcessador()).append("\n");
                 detalhes.append("RAM: ").append(comp.getMemoriaRAM()).append("\n");
                 detalhes.append("Armazenamento: ").append(comp.getArmazenamento());
@@ -401,6 +547,7 @@ public class RegistrarVendaView extends JPanel {
             txtAreaDetalhesEquipamento.setText(detalhes.toString());
         }
     }
+
     private void adicionarItemAoCarrinho() {
         int selectedRow = tabelaEquipamentosDisponiveis.getSelectedRow();
         if (selectedRow < 0) {
@@ -414,7 +561,8 @@ public class RegistrarVendaView extends JPanel {
             int quantidade = Integer.parseInt(txtQuantidade.getText().trim());
             if (quantidade <= 0) throw new NumberFormatException();
 
-            if (quantidade > eq.getQuantidadeEstoque()) {
+            int disponivelReal = eq.getQuantidadeEstoque() - eq.getReservado();
+            if (quantidade > disponivelReal) {
                 JOptionPane.showMessageDialog(this, "Quantidade em estoque insuficiente.", "Estoque", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -422,7 +570,7 @@ public class RegistrarVendaView extends JPanel {
             for (ItemVenda item : itensVenda) {
                 if (item.getEquipamento().getId().equals(eq.getId())) {
                     int novaQtd = item.getQuantidade() + quantidade;
-                    if (novaQtd > eq.getQuantidadeEstoque()) {
+                    if (novaQtd > disponivelReal) {
                         JOptionPane.showMessageDialog(this, "Quantidade total excede o estoque.", "Estoque", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
@@ -438,6 +586,7 @@ public class RegistrarVendaView extends JPanel {
             JOptionPane.showMessageDialog(this, "A quantidade deve ser um número inteiro positivo.", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     private void removerItemDoCarrinho() {
         int selectedRow = tabelaItensVenda.getSelectedRow();
         if (selectedRow >= 0) {
@@ -447,9 +596,12 @@ public class RegistrarVendaView extends JPanel {
     }
 
     private Cliente getClienteDaVenda() {
-        if(rbClienteCorporativo.isSelected()) {
+        if (rbClienteCorporativo.isSelected()) {
             Cliente c = (Cliente) cmbCliente.getSelectedItem();
-            if (c == null) JOptionPane.showMessageDialog(this, "Selecione um cliente corporativo.", "Erro", JOptionPane.ERROR_MESSAGE);
+            if (c == null) {
+                JOptionPane.showMessageDialog(this, "Selecione um cliente corporativo.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
             return c;
         } else {
             try {
@@ -489,13 +641,6 @@ public class RegistrarVendaView extends JPanel {
         for (ItemVenda item : itensVenda) {
             Equipamento eq = item.getEquipamento();
             int disponivelReal = eq.getQuantidadeEstoque() - eq.getReservado();
-
-            System.out.println("Verificando: " + eq.getMarca() +
-                    " - Estoque: " + eq.getQuantidadeEstoque() +
-                    " - Reservado: " + eq.getReservado() +
-                    " - Disponível: " + disponivelReal +
-                    " - Necessário: " + item.getQuantidade());
-
             if (item.getQuantidade() > disponivelReal) {
                 JOptionPane.showMessageDialog(this,
                         "Estoque insuficiente para " + eq.getMarca() +
@@ -518,24 +663,32 @@ public class RegistrarVendaView extends JPanel {
             }
         }
 
+        String metodo = rbCash.isSelected() ? "CASH" : "CARTAO";
+        BigDecimal pago;
         try {
-            if (txtDesconto != null && !txtDesconto.getText().isBlank()) {
-                BigDecimal desc = new BigDecimal(txtDesconto.getText().trim().replace(',', '.'));
-                venda.setDesconto(desc);
-            }
-            if (txtImposto != null && !txtImposto.getText().isBlank()) {
-                BigDecimal imp = new BigDecimal(txtImposto.getText().trim().replace(',', '.'));
-                venda.setImposto(imp);
-            }
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Desconto/Imposto inválido.", "Erro", JOptionPane.ERROR_MESSAGE);
+            pago = new BigDecimal(txtTotalPago.getText().trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Valor pago inválido.", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
+        if (rbCash.isSelected() && pago.compareTo(venda.getTotalComDescontosImpostos()) < 0) {
+            JOptionPane.showMessageDialog(this, "Valor pago insuficiente.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        venda.setMetodoPagamento(metodo);
+        venda.setTotalPago(pago);
 
         BigDecimal totalFinal = venda.getTotalComDescontosImpostos();
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Finalizar venda para " + cliente.getNome() + "?\n" +
                         "Total: " + String.format("%.2f MT", totalFinal) + "\n" +
+                        (itensVenda.size() > 5 ? "Desconto (5%): " + String.format("%.2f MT", venda.getDesconto()) + "\n" : "") +
+                        "Imposto (3%): " + String.format("%.2f MT", venda.getImposto()) + "\n" +
+                        "Método de Pagamento: " + metodo + "\n" +
+                        "Valor Pago: " + String.format("%.2f MT", pago) + "\n" +
+                        (rbCash.isSelected() ? "Troco: " + String.format("%.2f MT", venda.getTroco()) + "\n" : "") +
                         "Itens: " + itensVenda.size(),
                 "Confirmar Venda", JOptionPane.YES_NO_OPTION);
 
@@ -555,7 +708,20 @@ public class RegistrarVendaView extends JPanel {
         limparCamposClienteBalcao();
         txtAreaDetalhesCliente.setText("Selecione um cliente para ver os detalhes.");
         if (cmbCliente.getItemCount() > 0) cmbCliente.setSelectedIndex(0);
-        atualizarCarrinhoETotal();
+        totalVenda = BigDecimal.ZERO;
+        totalFinal = BigDecimal.ZERO; // Adiciona reinicialização
+        lblTotalVenda.setText("TOTAL: 0,00 MT");
+        txtTotalPago.setText("");
+        lblTrocoValue.setText("0,00 MT");
+        rbCash.setSelected(true);
+        togglePagamentoFields(true);
+        modeloTabelaItens.setRowCount(0);
+        txtQuantidade.setText("1");
+        tabelaEquipamentosDisponiveis.clearSelection();
+        txtAreaDetalhesEquipamento.setText("Detalhes do produto...");
+        lblFotoEquipamento.setIcon(null);
+        lblFotoEquipamento.setText("Selecione um produto");
+        txtBuscarProdutos.setText("");
     }
     private void atualizarCarrinhoETotal() {
         modeloTabelaItens.setRowCount(0);
@@ -564,7 +730,7 @@ public class RegistrarVendaView extends JPanel {
         for (ItemVenda item : itensVenda) {
             BigDecimal precoUnit = item.getPrecoUnitario();
             BigDecimal subtotal = item.getSubtotal();
-            modeloTabelaItens.addRow(new Object[] {
+            modeloTabelaItens.addRow(new Object[]{
                     item.getQuantidade(),
                     item.getEquipamento().getMarca(),
                     String.format("%.2f", precoUnit),
@@ -573,7 +739,9 @@ public class RegistrarVendaView extends JPanel {
             totalVenda = totalVenda.add(subtotal);
         }
 
-        BigDecimal totalFinal = aplicarDescontoEImpostoSeExistirem(totalVenda);
+        Venda vendaTemp = new Venda();
+        vendaTemp.setItens(new ArrayList<>(itensVenda));
+        totalFinal = vendaTemp.getTotalComDescontosImpostos();
         lblTotalVenda.setText("TOTAL: " + String.format("%.2f MT", totalFinal));
 
         txtQuantidade.setText("1");
@@ -581,35 +749,9 @@ public class RegistrarVendaView extends JPanel {
         txtAreaDetalhesEquipamento.setText("Detalhes do produto...");
         lblFotoEquipamento.setIcon(null);
         lblFotoEquipamento.setText("Selecione um produto");
+        atualizarTroco();
     }
-    private BigDecimal aplicarDescontoEImpostoSeExistirem(BigDecimal base) {
-        BigDecimal total = base != null ? base : BigDecimal.ZERO;
-        try {
-            if (txtDesconto != null && txtDesconto.getText() != null && !txtDesconto.getText().isBlank()) {
-                BigDecimal desc = new BigDecimal(txtDesconto.getText().trim().replace(',', '.'));
-                total = total.subtract(desc);
-            }
-            if (txtImposto != null && txtImposto.getText() != null && !txtImposto.getText().isBlank()) {
-                BigDecimal imp = new BigDecimal(txtImposto.getText().trim().replace(',', '.'));
-                total = total.add(imp);
-            }
-        } catch (NumberFormatException ex) {
-
-
-        }
-        return total.max(BigDecimal.ZERO);
-    }
-
-    private BigDecimal getTotalVenda() {
-        BigDecimal total = BigDecimal.ZERO;
-        for (ItemVenda item : itensVenda) {
-            total = total.add(item.getSubtotal());
-        }
-        return aplicarDescontoEImpostoSeExistirem(total);
-    }
-
     private void finalizarReserva() {
-
         if (itensVenda.isEmpty()) {
             JOptionPane.showMessageDialog(this, "O carrinho está vazio.", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
@@ -621,35 +763,26 @@ public class RegistrarVendaView extends JPanel {
         }
 
         try {
-            // Criar objeto Reserva
             Reserva reserva = new Reserva();
-
             reserva.setCliente(cliente);
             reserva.setVendedor(vendedorLogado);
             reserva.setDataReserva(new Date());
 
-            // Calcular data de expiração (7 dias)
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DAY_OF_MONTH, 7);
             reserva.setExpiraEm(cal.getTime());
 
-            // Converter itens
             List<ItemReserva> itensReserva = new ArrayList<>();
-
             for (ItemVenda itemVenda : itensVenda) {
                 String equipamentoId = itemVenda.getEquipamento().getId();
-
                 Optional<Equipamento> equipamentoOpt = controller.findEquipamentoById(equipamentoId);
-
                 if (equipamentoOpt.isEmpty()) {
                     JOptionPane.showMessageDialog(this,
                             "Equipamento não encontrado: " + equipamentoId,
                             "Erro", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
                 Equipamento equipamentoAtual = equipamentoOpt.get();
-
                 ItemReserva itemReserva = new ItemReserva(equipamentoAtual, itemVenda.getQuantidade());
                 itensReserva.add(itemReserva);
             }
@@ -658,23 +791,19 @@ public class RegistrarVendaView extends JPanel {
             reserva.setStatus(Reserva.StatusReserva.ATIVA);
 
             BigDecimal totalFinal = getTotalVenda();
-            BigDecimal taxa = totalFinal.multiply(BigDecimal.valueOf(0.3));  // 30%
+            BigDecimal taxa = totalFinal.multiply(BigDecimal.valueOf(0.3));
             reserva.setTaxaPaga(taxa);
 
             int confirm = JOptionPane.showConfirmDialog(this,
                     "Salvar reserva para " + cliente.getNome() + "?\n" +
                             "Total: " + String.format("%.2f MT", totalFinal) + "\n" +
-                            "Taxa Obrigatória (30%): " + String.format("%.2f MT", taxa) + "\n" +  // Novo
+                            "Taxa Obrigatória (30%): " + String.format("%.2f MT", taxa) + "\n" +
                             "Expira em: " + new SimpleDateFormat("dd/MM/yyyy").format(reserva.getExpiraEm()) +
                             "\nItens: " + itensReserva.size(),
                     "Confirmar Reserva", JOptionPane.YES_NO_OPTION);
 
-
             if (confirm == JOptionPane.YES_OPTION) {
-
                 boolean sucesso = controller.registrarReserva(reserva);
-
-
                 if (sucesso) {
                     JOptionPane.showMessageDialog(this,
                             "Reserva registrada com sucesso!\nID: " + reserva.getIdReserva(),
@@ -682,16 +811,13 @@ public class RegistrarVendaView extends JPanel {
                     limparVenda();
                     carregarDadosIniciais();
                     voltarParaGerirReservasEAtualizar();
-
                 } else {
                     System.err.println("❌ Falha ao salvar reserva no controller");
                     JOptionPane.showMessageDialog(this,
                             "Falha ao registrar a reserva.",
                             "Erro", JOptionPane.ERROR_MESSAGE);
                 }
-            } else {
             }
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Erro ao registrar reserva: " + e.getMessage(),
@@ -701,12 +827,9 @@ public class RegistrarVendaView extends JPanel {
     }
 
     private void voltarParaGerirReservasEAtualizar() {
-
         try {
             CardLayoutManager clm = controller.getCardLayoutManager();
-
             GerirReservasView viewReservas = GerirReservasView.getInstance();
-
             if (viewReservas != null) {
                 viewReservas.carregarReservas();
                 clm.showPanel("GerirReservas");
@@ -715,12 +838,22 @@ public class RegistrarVendaView extends JPanel {
                 clm.addPanel(novaView, "GerirReservas");
                 clm.showPanel("GerirReservas");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             voltarMenuPrincipal();
         }
     }
+
+    private BigDecimal getTotalVenda() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (ItemVenda item : itensVenda) {
+            total = total.add(item.getSubtotal());
+        }
+        Venda vendaTemp = new Venda();
+        vendaTemp.setItens(new ArrayList<>(itensVenda));
+        return vendaTemp.getTotalComDescontosImpostos();
+    }
+
     public void carregarReserva(Reserva reserva) {
         if (reserva == null) return;
 
@@ -770,9 +903,6 @@ public class RegistrarVendaView extends JPanel {
         }
     }
 
-    /**
-     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
-     */
     private void installAltForVoltar() {
         JComponent root = getRootPane();
         if (root == null) {
@@ -782,13 +912,12 @@ public class RegistrarVendaView extends JPanel {
         InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = root.getActionMap();
 
-        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
-        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true);
 
         im.put(altPress, "altPressed_voltar");
         im.put(altRelease, "altReleased_voltar");
 
-        // ALT pressionado: só altera o estado visual (armed + pressed)
         am.put("altPressed_voltar", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -796,20 +925,16 @@ public class RegistrarVendaView extends JPanel {
                     ButtonModel m = btnVoltar.getModel();
                     m.setArmed(true);
                     m.setPressed(true);
-                    // garante foco visual no botão (opcional)
                     btnVoltar.requestFocusInWindow();
                 }
             }
         });
 
-        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
         am.put("altReleased_voltar", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (btnVoltar != null) {
                     btnVoltar.doClick();
-
-                    // limpa o estado visual
                     ButtonModel m = btnVoltar.getModel();
                     m.setPressed(false);
                     m.setArmed(false);

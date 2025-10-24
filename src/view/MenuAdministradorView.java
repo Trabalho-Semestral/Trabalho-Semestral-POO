@@ -1,6 +1,7 @@
 package view;
 
 import controller.SistemaController;
+import model.concretas.Administrador;
 import util.UITheme;
 
 import javax.swing.*;
@@ -8,6 +9,9 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Window;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 public class MenuAdministradorView extends JPanel {
 
@@ -17,6 +21,10 @@ public class MenuAdministradorView extends JPanel {
 
     public MenuAdministradorView(SistemaController controller) {
         this.controller = controller;
+        System.out.println("Usuário logado: " + controller.getUsuarioLogado());
+        if (controller.getUsuarioLogado() instanceof Administrador admin) {
+            System.out.println("podeCadastrarAdmin: " + admin.podeCadastrarAdmin());
+        }
         initComponents();
         setupLayout();
         setupEvents();
@@ -66,90 +74,16 @@ public class MenuAdministradorView extends JPanel {
         sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(criarBotaoMenu("📊 Relatórios de Vendas", "RelatoriosVendas"));
         sidebarPanel.add(Box.createVerticalStrut(10));
-        sidebarPanel.add(criarBotaoMenu("👨‍👩‍👧‍👦 Gestão de Funcionários", "GestaoFuncionarios")); // NOVO BOTÃO
-
+        sidebarPanel.add(criarBotaoMenu("👨‍👩‍👧‍👦 Gestão de Funcionários", "GestaoFuncionarios"));
+        sidebarPanel.add(Box.createVerticalStrut(10));
         sidebarPanel.add(Box.createVerticalGlue());
+        if (controller.getUsuarioLogado() instanceof Administrador admin && admin.podeCadastrarAdmin()) {
+            sidebarPanel.add(criarBotaoMenu("🧑‍💼 Cadastrar Admin", "CadastrarAdmin"));
+        }
 
         JButton btnLogout = criarBotaoMenu("🚪 Sair", "Logout");
         btnLogout.setBackground(UITheme.ACCENT_COLOR);
         sidebarPanel.add(btnLogout);
-    }
-
-    private void setupLayout() {
-        // TopBar
-        JPanel topBarPanel = new JPanel(new BorderLayout());
-        topBarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        topBarPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
-        topBarPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-
-        topBarPanel.add(btnToggleSidebar, BorderLayout.WEST);
-
-        JLabel lblTitulo = UITheme.createHeadingLabel("💻 SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS");
-        lblTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
-        topBarPanel.add(lblTitulo, BorderLayout.CENTER);
-
-        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        JLabel lblUserInfo = UITheme.createBodyLabel("👤 Administrador");
-        lblUserInfo.setForeground(UITheme.TEXT_WHITE);
-        lblUserInfo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        userInfoPanel.add(lblUserInfo);
-        topBarPanel.add(userInfoPanel, BorderLayout.EAST);
-
-        add(topBarPanel, BorderLayout.NORTH);
-
-        // SplitPane
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(sidebarPanel);
-
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
-
-        // Cards de boas-vindas
-        JPanel welcomePanel = UITheme.createCardPanel();
-        welcomePanel.setLayout(new BorderLayout());
-
-        JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel Administrativo");
-        lblWelcome.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
-        lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
-        welcomePanel.add(lblWelcome, BorderLayout.NORTH);
-
-        JLabel lblDescription = UITheme.createBodyLabel(
-                "<html><center>" +
-                        "Utilize o menu lateral para navegar pelas funcionalidades do sistema.<br>" +
-                        "Atalhos rápidos disponíveis:<br><br>" +
-                        "👥 Vendedores <b>(Ctrl+V)</b> | 👤 Clientes <b>(Ctrl+C)</b> | 👨‍💼 Gestores <b>(Ctrl+G)</b><br>" +
-                        "💻 Equipamentos <b>(Ctrl+E)</b> | 📋 Reservas <b>(Ctrl+R)</b> | 🛒 Vendas <b>(Ctrl+N)</b><br>" +
-                        "📊 Relatórios <b>(Ctrl+L)</b> | 👨‍👩‍👧‍👦 Funcionários <b>(Ctrl+F)</b> | 🚪 Logout <b>(Ctrl+Q)</b>" +
-                        "</center></html>"
-        );
-
-        lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
-        lblDescription.setForeground(UITheme.TEXT_SECONDARY);
-        welcomePanel.add(lblDescription, BorderLayout.CENTER);
-
-        contentPanel.add(welcomePanel, BorderLayout.CENTER);
-        splitPane.setRightComponent(contentPanel);
-
-        splitPane.setDividerSize(0);
-        splitPane.setDividerLocation(UITheme.SIDEBAR_WIDTH);
-
-        add(splitPane, BorderLayout.CENTER);
-
-        // Bottom panel
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
-        JLabel lblCopyright =
-                new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
-        lblCopyright.setFont(UITheme.FONT_SMALL);
-        lblCopyright.setForeground(UITheme.TEXT_MUTED);
-        bottomPanel.add(lblCopyright);
-        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
-
-        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private JButton criarBotaoMenu(String texto, String actionCommand) {
@@ -205,41 +139,169 @@ public class MenuAdministradorView extends JPanel {
         return botao;
     }
 
-    private void setupEvents() {
-            btnToggleSidebar.addActionListener(e -> toggleSidebar());
+    private void setupLayout() {
+        // TopBar
+        JPanel topBarPanel = new JPanel(new BorderLayout());
+        topBarPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        topBarPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
+        topBarPanel.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
 
-            for (Component comp : sidebarPanel.getComponents()) {
-                if (comp instanceof JButton btn) {
-                    btn.addActionListener(e -> {
+        topBarPanel.add(btnToggleSidebar, BorderLayout.WEST);
+
+        JLabel lblTitulo = UITheme.createHeadingLabel("💻 SISTEMA DE VENDAS DE EQUIPAMENTOS INFORMÁTICOS");
+        lblTitulo.setForeground(UITheme.TEXT_WHITE);
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
+        topBarPanel.add(lblTitulo, BorderLayout.CENTER);
+
+        JPanel userInfoPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        JLabel lblUserInfo = UITheme.createBodyLabel("👤 Administrador");
+        lblUserInfo.setForeground(UITheme.TEXT_WHITE);
+        lblUserInfo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        userInfoPanel.add(lblUserInfo);
+        topBarPanel.add(userInfoPanel, BorderLayout.EAST);
+        add(topBarPanel, BorderLayout.NORTH);
+
+        // SplitPane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setLeftComponent(sidebarPanel);
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
+
+        // Cards de boas-vindas com imagem de fundo e texto por cima
+        JPanel welcomePanel = new JPanel(new BorderLayout()) {
+            private BufferedImage backgroundImage;
+
+            {
+                try {
+                    backgroundImage = ImageIO.read(new File("C:\\Users\\administrator\\Desktop\\Nova pasta\\Trabalho\\resources\\007.jpeg"));
+                } catch (Exception e) {
+                    System.err.println("Erro ao carregar imagem de fundo: " + e.getMessage());
+                    backgroundImage = null;
+                }
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                } else {
+                    // Cor de fundo fallback se a imagem não carregar
+                    g.setColor(UITheme.BACKGROUND_COLOR);
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                }
+            }
+        };
+        welcomePanel.setBorder(UITheme.createCardPanel().getBorder());
+        welcomePanel.setBackground(new Color(0, 0, 0, 0));
+
+        JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel Administrativo");
+        lblWelcome.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
+        lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        lblWelcome.setOpaque(false);
+        welcomePanel.add(lblWelcome, BorderLayout.NORTH);
+
+        JLabel lblDescription = UITheme.createBodyLabel(
+                "<html><center>" +
+                        "Utilize o menu lateral para navegar pelas funcionalidades do sistema.<br>" +
+                        "Atalhos rápidos disponíveis:<br><br>" +
+                        "👥 Vendedores <b>(Ctrl+V)</b> | 👤 Clientes <b>(Ctrl+C)</b> | 👨‍💼 Gestores <b>(Ctrl+G)</b><br>" +
+                        "💻 Equipamentos <b>(Ctrl+E)</b> | 📋 Reservas <b>(Ctrl+R)</b> | 🛒 Vendas <b>(Ctrl+N)</b><br>" +
+                        "📊 Relatórios <b>(Ctrl+L)</b> | 👨‍👩‍👧‍👦 Funcionários <b>(Ctrl+F)</b> | 🧑‍💼 Cadastrar Admin <b>(Ctrl+A)</b><br>" +
+                        "🚪 Logout <b>(Ctrl+Q)</b>" +
+                        "</center></html>"
+        );
+
+        lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
+        lblDescription.setForeground(Color.WHITE);
+        lblDescription.setOpaque(false);
+        lblDescription.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        welcomePanel.add(lblDescription, BorderLayout.CENTER);
+
+        contentPanel.add(welcomePanel, BorderLayout.CENTER);
+        splitPane.setRightComponent(contentPanel);
+
+        splitPane.setDividerSize(0);
+        splitPane.setDividerLocation(UITheme.SIDEBAR_WIDTH);
+
+        add(splitPane, BorderLayout.CENTER);
+
+        // Bottom panel
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
+        lblCopyright.setFont(UITheme.FONT_SMALL);
+        lblCopyright.setForeground(UITheme.TEXT_MUTED);
+        bottomPanel.add(lblCopyright);
+        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
+
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void setupEvents() {
+        btnToggleSidebar.addActionListener(e -> toggleSidebar());
+
+        for (Component comp : sidebarPanel.getComponents()) {
+            if (comp instanceof JButton btn) {
+                btn.addActionListener(e -> {
+                    try {
                         switch (btn.getActionCommand()) {
-                            case "GerirVendedores" -> abrirGerirVendedores();
-                            case "GerirGestores" -> abrirGerirGestores();
-                            case "GerirClientes" -> abrirGerirClientes();
-                            case "GerirEquipamentos" -> abrirGerirEquipamentos();
-                            case "GerirReservas" -> abrirGerirReservas();
-                            case "RegistrarVenda" -> abrirRegistrarVenda();
-                            case "RelatoriosVendas" -> abrirRelatoriosVendas();
-                            case "GestaoFuncionarios" -> abrirGestaoFuncionarios();
-                            case "Logout" -> {
+                            case "GerirVendedores":
+                                abrirGerirVendedores();
+                                break;
+                            case "GerirGestores":
+                                abrirGerirGestores();
+                                break;
+                            case "GerirClientes":
+                                abrirGerirClientes();
+                                break;
+                            case "GerirEquipamentos":
+                                abrirGerirEquipamentos();
+                                break;
+                            case "GerirReservas":
+                                abrirGerirReservas();
+                                break;
+                            case "RegistrarVenda":
+                                abrirRegistrarVenda();
+                                break;
+                            case "RelatoriosVendas":
+                                abrirRelatoriosVendas();
+                                break;
+                            case "GestaoFuncionarios":
+                                abrirGestaoFuncionarios();
+                                break;
+                            case "CadastrarAdmin":
+                                abrirCadastrarAdmin();
+                                break;
+                            case "Logout":
                                 int confirm = JOptionPane.showConfirmDialog(MenuAdministradorView.this,
                                         "Deseja realmente sair do sistema?",
                                         "Confirmar Logout",
                                         JOptionPane.YES_NO_OPTION);
                                 if (confirm == JOptionPane.YES_OPTION) {
                                     controller.logout();
-
                                     Window window = SwingUtilities.getWindowAncestor(MenuAdministradorView.this);
                                     if (window instanceof JFrame) {
                                         window.dispose();
                                     }
                                     new LoginView(controller).setVisible(true);
                                 }
-                            }
+                                break;
+                            default:
+                                System.err.println("Ação desconhecida: " + btn.getActionCommand());
                         }
-                    });
-                }
+                    } catch (Exception ex) {
+                        System.err.println("Erro ao processar ação do botão " + btn.getActionCommand() + ": " + ex.getMessage());
+                        JOptionPane.showMessageDialog(MenuAdministradorView.this,
+                                "Erro ao executar a ação: " + ex.getMessage(),
+                                "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
             }
-
+        }
     }
 
     private void toggleSidebar() {
@@ -254,6 +316,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GerirVendedores");
             controller.getCardLayoutManager().showPanel("GerirVendedores");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir GerirVendedores: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de vendedores: " + e.getMessage());
         }
     }
@@ -264,6 +327,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GerirClientes");
             controller.getCardLayoutManager().showPanel("GerirClientes");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir GerirClientes: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de clientes: " + e.getMessage());
         }
     }
@@ -274,6 +338,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GerirEquipamentos");
             controller.getCardLayoutManager().showPanel("GerirEquipamentos");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir GerirEquipamentos: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de equipamentos: " + e.getMessage());
         }
     }
@@ -284,6 +349,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GerirReservas");
             controller.getCardLayoutManager().showPanel("GerirReservas");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir GerirReservas: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de reservas: " + e.getMessage());
         }
     }
@@ -294,6 +360,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "RegistrarVenda");
             controller.getCardLayoutManager().showPanel("RegistrarVenda");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir RegistrarVenda: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de registro de venda: " + e.getMessage());
         }
     }
@@ -304,6 +371,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GerirGestores");
             controller.getCardLayoutManager().showPanel("GerirGestores");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir GerirGestores: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de gestores: " + e.getMessage());
         }
     }
@@ -314,6 +382,7 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "RelatoriosVendas");
             controller.getCardLayoutManager().showPanel("RelatoriosVendas");
         } catch (Exception e) {
+            System.err.println("Erro ao abrir RelatoriosVendas: " + e.getMessage());
             JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de relatórios de vendas: " + e.getMessage());
         }
     }
@@ -324,10 +393,28 @@ public class MenuAdministradorView extends JPanel {
             controller.getCardLayoutManager().addPanel(view, "GestaoFuncionarios");
             controller.getCardLayoutManager().showPanel("GestaoFuncionarios");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Erro ao abrir a tela de gestão de funcionários: " + e.getMessage());
+            System.err.println("Erro ao abrir GestaoFuncionarios: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de gestão de funcionários: " + e.getMessage());
         }
     }
+
+    private void abrirCadastrarAdmin() {
+        try {
+            if (controller.getCardLayoutManager() == null) {
+                System.err.println("CardLayoutManager não inicializado!");
+                JOptionPane.showMessageDialog(this, "Erro interno: Sistema de navegação não inicializado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            CadastrarAdministradorView view = new CadastrarAdministradorView(controller);
+            controller.getCardLayoutManager().addPanel(view, "CadastrarAdmin");
+            controller.getCardLayoutManager().showPanel("CadastrarAdmin");
+            System.out.println("Tela CadastrarAdmin aberta com sucesso.");
+        } catch (Exception e) {
+            System.err.println("Erro ao abrir CadastrarAdmin: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de cadastro de administrador: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void setupKeyBindings(JComponent root) {
         InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = root.getActionMap();
@@ -340,6 +427,7 @@ public class MenuAdministradorView extends JPanel {
         im.put(KeyStroke.getKeyStroke("control N"), "RegistrarVenda");
         im.put(KeyStroke.getKeyStroke("control L"), "RelatoriosVendas");
         im.put(KeyStroke.getKeyStroke("control F"), "GestaoFuncionarios");
+        im.put(KeyStroke.getKeyStroke("control A"), "CadastrarAdmin");
         im.put(KeyStroke.getKeyStroke("control Q"), "Logout");
 
         // Liga cada atalho ao botão correspondente
@@ -348,11 +436,14 @@ public class MenuAdministradorView extends JPanel {
                 am.put(btn.getActionCommand(), new AbstractAction() {
                     @Override
                     public void actionPerformed(java.awt.event.ActionEvent e) {
-                        btn.doClick();
+                        try {
+                            btn.doClick();
+                        } catch (Exception ex) {
+                            System.err.println("Erro ao executar atalho para " + btn.getActionCommand() + ": " + ex.getMessage());
+                        }
                     }
                 });
             }
         }
     }
-    
 }

@@ -12,4 +12,11 @@ public class VendaDTO {
     public BigDecimal desconto;
     public BigDecimal imposto;
     public BigDecimal total;
+    public String clienteNome;
+    public String vendedorNome;
+    public String metodoPagamento;
+    public BigDecimal totalPago;
+    public BigDecimal troco;
+
+    public VendaDTO() {}
 }

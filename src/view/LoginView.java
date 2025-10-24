@@ -2,6 +2,7 @@
 package view;
 
 import controller.SistemaController;
+import model.concretas.Administrador;
 import model.concretas.Vendedor;
 import model.concretas.Gestor;
 import util.UITheme;
@@ -37,7 +38,7 @@ public class LoginView extends JFrame {
     private void initComponents() {
 
         setTitle("💻 Sistema de Venda de Equipamentos Informáticos");
-        setIconImage(new ImageIcon("C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\TECHNAE.jpg").getImage());
+        setIconImage(new ImageIcon("C:\\Users\\administrator\\Desktop\\Nova pasta\\Trabalho\\resources\\007.jpeg").getImage());
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(870, 500);
@@ -70,7 +71,7 @@ public class LoginView extends JFrame {
         JPanel logoPanel = new JPanel(new BorderLayout());
         logoPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        ImageIcon logoIcon = new ImageIcon("C:\\Users\\Nelson Wilson\\IdeaProjects\\Gestao Equipamentos\\Trabalho\\resources\\TECHNAE.jpg");
+        ImageIcon logoIcon = new ImageIcon("C:\\Users\\administrator\\Desktop\\Nova pasta\\Trabalho\\resources\\007.jpeg");
         int logoWidth = getWidth() / 2;
         int logoHeight = getHeight();
         Image logoImage = logoIcon.getImage().getScaledInstance(logoWidth, logoHeight, Image.SCALE_SMOOTH);
@@ -228,8 +229,6 @@ public class LoginView extends JFrame {
             campo.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2));
         }
     }
-
-    // Método realizar login atualizado para validação visual
     private void realizarLogin() {
         boolean valido = true;
 
@@ -256,7 +255,13 @@ public class LoginView extends JFrame {
         if (tipoUsuario != null) {
             lblMensagem.setText("Login realizado com sucesso!");
             lblMensagem.setForeground(UITheme.SUCCESS_COLOR);
-            SwingUtilities.invokeLater(() -> abrirTelaPrincipal(tipoUsuario));
+
+            // Verificar se é primeiro login
+            if (tipoUsuario.startsWith("PRIMEIRO_LOGIN_")) {
+                SwingUtilities.invokeLater(() -> abrirAtualizacaoPerfilObrigatoria());
+            } else {
+                SwingUtilities.invokeLater(() -> abrirTelaPrincipal(tipoUsuario));
+            }
         } else {
             lblMensagem.setText("Credenciais inválidas. Tente novamente.");
             lblMensagem.setForeground(UITheme.ACCENT_COLOR);
@@ -265,7 +270,32 @@ public class LoginView extends JFrame {
         }
     }
 
-    // Limpar campos e resetar cores
+    private void abrirAtualizacaoPerfilObrigatoria() {
+        // Abre a tela de atualização de perfil em modo obrigatório
+        AtualizarPerfilView perfilView = new AtualizarPerfilView(controller, controller.getUsuarioLogado(), true);
+        perfilView.setVisible(true);
+
+        // Após fechar a janela de atualização, verificar se ainda é primeiro login
+        if (!isPrimeiroLogin(controller.getUsuarioLogado())) {
+            // Se não é mais primeiro login, abrir a tela principal
+            abrirTelaPrincipal(controller.getTipoUsuarioLogado());
+        } else {
+            // Se ainda for primeiro login, manter na tela de login
+            lblMensagem.setText("É necessário atualizar o perfil para continuar!");
+            lblMensagem.setForeground(UITheme.ACCENT_COLOR);
+        }
+    }
+
+    private boolean isPrimeiroLogin(Object usuario) {
+        if (usuario instanceof Administrador admin) {
+            return admin.isPrimeiroLogin();
+        } else if (usuario instanceof Gestor gestor) {
+            return gestor.isPrimeiroLogin();
+        } else if (usuario instanceof Vendedor vendedor) {
+            return vendedor.isPrimeiroLogin();
+        }
+        return true;
+    }
     private void limparCampos() {
         txtUsuarioId.setText("");
         txtSenha.setText("");
@@ -275,6 +305,7 @@ public class LoginView extends JFrame {
         lblMensagem.setText(" ");
         txtUsuarioId.requestFocus();
     }
+
 
 
     private void abrirTelaPrincipal(String tipoUsuario) {

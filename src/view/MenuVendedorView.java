@@ -8,7 +8,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.Window;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 public class MenuVendedorView extends JPanel {
 
@@ -32,7 +34,7 @@ public class MenuVendedorView extends JPanel {
         setBackground(UITheme.BACKGROUND_COLOR);
 
         // Botão toggle sidebar
-        btnToggleSidebar = new JButton("'☰'");
+        btnToggleSidebar = new JButton("(☰)");
         btnToggleSidebar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         btnToggleSidebar.setFocusPainted(false);
         btnToggleSidebar.setBorderPainted(false);
@@ -50,7 +52,7 @@ public class MenuVendedorView extends JPanel {
 
         JLabel lblMenuTitulo = UITheme.createSubtitleLabel("👤 PAINEL VENDEDOR");
         lblMenuTitulo.setForeground(UITheme.TEXT_WHITE);
-        lblMenuTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblMenuTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblMenuTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblMenuTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
         sidebarPanel.add(lblMenuTitulo);
@@ -82,7 +84,7 @@ public class MenuVendedorView extends JPanel {
 
         JLabel lblTitulo = UITheme.createHeadingLabel("💻 Sistema de Venda de Equipamentos Informáticos");
         lblTitulo.setForeground(UITheme.TEXT_WHITE);
-         lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBarPanel.add(lblTitulo, BorderLayout.CENTER);
 
@@ -90,7 +92,7 @@ public class MenuVendedorView extends JPanel {
         userInfoPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
         JLabel lblUserInfo = UITheme.createBodyLabel("👤 " + vendedorLogado.getNome() + " (Vendedor)");
         lblUserInfo.setForeground(UITheme.TEXT_WHITE);
-        lblUserInfo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblUserInfo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         userInfoPanel.add(lblUserInfo);
         topBarPanel.add(userInfoPanel, BorderLayout.EAST);
 
@@ -103,14 +105,40 @@ public class MenuVendedorView extends JPanel {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
-        // Cards de boas-vindas com emojis
-        JPanel welcomePanel = UITheme.createCardPanel();
-        welcomePanel.setLayout(new BorderLayout());
+        // Cards de boas-vindas com imagem de fundo e texto por cima - MODIFICADO
+        JPanel welcomePanel = new JPanel(new BorderLayout()) {
+            private BufferedImage backgroundImage;
+
+            {
+                try {
+                    backgroundImage = ImageIO.read(new File("C:\\Users\\administrator\\Desktop\\Nova pasta\\Trabalho\\resources\\007.jpeg"));
+                } catch (Exception e) {
+                    System.err.println("Erro ao carregar imagem de fundo: " + e.getMessage());
+                    backgroundImage = null;
+                }
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                } else {
+                    // Cor de fundo fallback se a imagem não carregar
+                    g.setColor(UITheme.BACKGROUND_COLOR);
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                }
+            }
+        };
+        // Aplicar o estilo do card se disponível (assumindo que UITheme.createCardPanel() adiciona bordas ou sombras)
+        welcomePanel.setBorder(UITheme.createCardPanel().getBorder()); // Copia o border do card original
+        welcomePanel.setBackground(new Color(0, 0, 0, 0)); // Transparente para permitir pintura da imagem
 
         JLabel lblWelcome = UITheme.createTitleLabel("🎉 Bem-vindo ao Painel do Vendedor");
         lblWelcome.setHorizontalAlignment(SwingConstants.CENTER);
         lblWelcome.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblWelcome.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        lblWelcome.setOpaque(false); // Garante que o fundo seja transparente para mostrar a imagem
         welcomePanel.add(lblWelcome, BorderLayout.NORTH);
 
         JLabel lblDescription = UITheme.createBodyLabel(
@@ -120,7 +148,9 @@ public class MenuVendedorView extends JPanel {
         );
 
         lblDescription.setHorizontalAlignment(SwingConstants.CENTER);
-        lblDescription.setForeground(UITheme.TEXT_SECONDARY);
+        lblDescription.setForeground(Color.WHITE);
+        lblDescription.setOpaque(false);
+        lblDescription.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         welcomePanel.add(lblDescription, BorderLayout.CENTER);
 
         contentPanel.add(welcomePanel, BorderLayout.CENTER);
@@ -279,15 +309,14 @@ public class MenuVendedorView extends JPanel {
 
     private void abrirMinhasVendas() {
         try {
-            // Criar uma view personalizada para mostrar apenas as vendas do vendedor logado
-            RelatoriosVendasView view = new RelatoriosVendasView(controller);
+            MinhasVendasView view = new MinhasVendasView(controller, vendedorLogado);
             controller.getCardLayoutManager().addPanel(view, "MinhasVendas");
             controller.getCardLayoutManager().showPanel("MinhasVendas");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao abrir a tela de minhas vendas: " + e.getMessage());
         }
     }
-
     private void abrirGerirReservas() {
         try {
             GerirReservasView view = new GerirReservasView(controller);

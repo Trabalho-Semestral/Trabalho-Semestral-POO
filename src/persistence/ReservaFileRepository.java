@@ -30,7 +30,7 @@ public class ReservaFileRepository implements ReservaRepository {
         try {
             List<ReservaDTO> todas = listarTodasDTO();
             boolean found = false;
-            ReservaDTO novo = ReservaMapper.toDTO(reserva); // CORRIGIDO: removido "persistence.mapper."
+            ReservaDTO novo = ReservaMapper.toDTO(reserva);
             for (int i = 0; i < todas.size(); i++) {
                 if (Objects.equals(todas.get(i).idReserva, reserva.getIdReserva())) {
                     todas.set(i, novo);

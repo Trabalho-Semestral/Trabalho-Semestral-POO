@@ -13,6 +13,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -82,8 +83,16 @@ public class GerirGestorView extends JPanel {
         styleTextField(txtSalario, "💰 Salário");
         styleTextField(txtSenha, "🔒 Senha");
 
+        Dimension dimCampo = new Dimension(200, 50);
+        txtNome.setPreferredSize(dimCampo);
+        txtNrBI.setPreferredSize(dimCampo);
+        txtNuit.setPreferredSize(dimCampo);
+        txtTelefone.setPreferredSize(dimCampo);
+        txtSalario.setPreferredSize(dimCampo);
+        txtSenha.setPreferredSize(dimCampo);
+
         /// Campos que serao afectados pelos efeitos
-        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, (JTextField) txtSenha};
         for (JTextField tf :campos){
             adicionarEfeitoHover(tf); /// Metodo houver
         }
@@ -95,23 +104,31 @@ public class GerirGestorView extends JPanel {
         lblFoto.setOpaque(true);
         lblFoto.setBackground(UITheme.CARD_BACKGROUND);
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
+        lblFoto.setPreferredSize(new Dimension(170, 150));
 
         // Botões de Ação
-        btnAdicionarFoto = UITheme.createPrimaryButton("📸 Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("🗑️ Remover Foto");
+        btnAdicionarFoto = UITheme.createPrimaryButton("📸 Adicionar");
+        btnRemoverFoto = UITheme.createSecondaryButton("🗑 Remover");
         btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
-        btnRemover = UITheme.createDangerButton("🗑️ Remover");
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnEditar = UITheme.createPrimaryButton("✏ Editar");
+        btnRemover = UITheme.createDangerButton("🗑 Remover");
+        btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
 
         /// Visibilidade de imagens
-        btnAdicionarFoto.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 12));
+        btnAdicionarFoto.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
         btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
-        btnCadastrar.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 18));
-        btnEditar.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 18));
-        btnRemover.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 18));
-        btnRemoverFoto.setFont(new Font("Sengoe UE Emoji", Font.BOLD, 12));
+        btnCadastrar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        btnEditar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        btnRemover.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        btnRemoverFoto.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
 
+        // Ajustar altura dos botões (diminuir tamanho)
+        Dimension dimBotao = new Dimension(120, 26);
+        btnAdicionarFoto.setPreferredSize(dimBotao);
+        btnRemoverFoto.setPreferredSize(dimBotao);
+        btnCadastrar.setPreferredSize(dimBotao);
+        btnEditar.setPreferredSize(dimBotao);
+        btnRemover.setPreferredSize(dimBotao);
 
         // Tabela
         String[] colunas = {"ID", "Nome", "Nº BI", "NUIT", "Telefone", "Salário"};
@@ -120,10 +137,18 @@ public class GerirGestorView extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaGestores = new JTable(modeloTabela);
+        JTableHeader header =  tabelaGestores.getTableHeader();
+        header.setBackground(Color.WHITE); // fundo branco (ou troca, se quiser)
+        header.setForeground(UITheme.TEXT_SECONDARY); // mesma cor dos títulos dos campos
+        header.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16)); // mesma fonte e tamanho
+        header.setOpaque(true);
         tabelaGestores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tabelaGestores.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tabelaGestores.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-    }
+
+        // Aumentar tamanho das letras da tabela
+        tabelaGestores.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabelaGestores.setRowHeight(30);
+
+}
 
 
     /**
@@ -152,7 +177,7 @@ public class GerirGestorView extends JPanel {
         topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        JLabel lblTitulo = UITheme.createHeadingLabel("👑 Gestão de Gestores");
+        JLabel lblTitulo = UITheme.createHeadingLabel("👑 GESTÃO DE GESTORES");
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
@@ -167,7 +192,7 @@ public class GerirGestorView extends JPanel {
         // --- PAINEL PRINCIPAL ---
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0)); // Sem margens laterais para cabeçalho e rodapé irem até as bordas
 
         // --- PAINEL SUPERIOR (foto, formulário, botões) ---
         JPanel topContentPanel = new JPanel(new BorderLayout(15, 15));
@@ -175,7 +200,7 @@ public class GerirGestorView extends JPanel {
 
         JPanel fotoPainelWrapper = new JPanel(new BorderLayout(10, 10));
         fotoPainelWrapper.setBackground(UITheme.BACKGROUND_COLOR);
-        lblFoto.setPreferredSize(new Dimension(250, 250));
+        lblFoto.setPreferredSize(new Dimension(150, 150));
         fotoPainelWrapper.add(lblFoto, BorderLayout.CENTER);
 
         JPanel fotoBotoesPanel = new JPanel(new GridLayout(1, 2, 10, 0));
@@ -230,7 +255,7 @@ public class GerirGestorView extends JPanel {
         bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
         bottomPanel.setPreferredSize(new Dimension(0, 40));
 
-        JLabel lblCopyright = new JLabel("©️ 2025 Sistema de Venda de Equipamentos Informáticos");
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
         lblCopyright.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
         lblCopyright.setForeground(UITheme.TEXT_WHITE);
         bottomPanel.add(lblCopyright);

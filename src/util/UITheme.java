@@ -1,6 +1,7 @@
 package util;
 
 import javax.swing.*;
+import com.formdev.flatlaf.FlatLightLaf;
 import javax.swing.border.Border;
 import java.awt.*;
 
@@ -13,7 +14,9 @@ public class UITheme {
     // Paleta de cores principal
     public static final Color PRIMARY_COLOR = new Color(135, 206, 250);       // Azul claro (SkyBlue)
     public static final Color PRIMARY_DARK = new Color(30, 144, 255);         // Azul escuro (DodgerBlue)
-    public static final Color PRIMARY_LIGHT = new Color(173, 216, 230);       // Azul muito claro (LightBlue)
+    public static final Color PRIMARY_LIGHT = new Color(173, 216, 230);
+
+    public static final Color TITLE_COLOR = new Color(19, 56, 94);
 
     public static final Color SECONDARY_COLOR = new Color(52, 73, 94);        // Cinza azulado
     public static final Color SECONDARY_DARK = new Color(44, 62, 80);         // Cinza azulado escuro
@@ -141,7 +144,19 @@ public class UITheme {
             }
         });
     }
-
+    public static void apply() {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+            UIManager.put("Button.arc", 12);
+            UIManager.put("Component.arc", 12);
+            UIManager.put("TextComponent.arc", 10);
+            UIManager.put("Table.showHorizontalLines", true);
+            UIManager.put("Table.showVerticalLines", false);
+            UIManager.put("Table.selectionBackground", new java.awt.Color(0, 120, 215));
+        } catch (Exception e) {
+            System.err.println("Erro ao aplicar tema moderno: " + e.getMessage());
+        }
+    }
     public static JTextField createStyledTextField() {
         JTextField textField = new JTextField();
         textField.setFont(FONT_BODY);

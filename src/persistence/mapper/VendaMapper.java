@@ -1,4 +1,3 @@
-
 package persistence.mapper;
 
 import model.concretas.ItemVenda;
@@ -26,6 +25,9 @@ public class VendaMapper {
         dto.desconto = venda.getDesconto();
         dto.imposto = venda.getImposto();
         dto.total = venda.getTotalComDescontosImpostos();
+        dto.metodoPagamento = venda.getMetodoPagamento();
+        dto.totalPago = venda.getTotalPago();
+        dto.troco = venda.getTroco();
         return dto;
     }
 }

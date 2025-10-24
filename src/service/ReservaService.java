@@ -19,12 +19,6 @@ public class ReservaService {
     }
 
     public Reserva criar(Reserva r) {
-        System.out.println("=== INICIANDO CRIAÇÃO DE RESERVA ===");
-        System.out.println("Reserva recebida - ID: " + r.getIdReserva());
-        System.out.println("Cliente: " + (r.getCliente() != null ? r.getCliente().getNome() : "NULL"));
-        System.out.println("Vendedor: " + (r.getVendedor() != null ? r.getVendedor().getNome() : "NULL"));
-        System.out.println("Itens: " + (r.getItens() != null ? r.getItens().size() : 0));
-        System.out.println("Status: " + r.getStatus());
 
         // Gerar ID se não existir
         if (r.getIdReserva() == null || r.getIdReserva().isBlank()) {
@@ -38,7 +32,7 @@ public class ReservaService {
         // Validar e encontrar equipamentos antes de qualquer operação
         System.out.println("=== VALIDANDO ESTOQUE ===");
         for (var it : r.getItens()) {
-            String equipamentoId = it.getEquipamento().getId();
+            String equipamentoId = it.getEquipamento().getId(); 
             System.out.println("Processando item - Equipamento ID: " + equipamentoId + ", Quantidade: " + it.getQuantidade());
 
             Optional<Equipamento> equipamentoOpt = equipamentos.buscarPorId(equipamentoId);
@@ -93,6 +87,7 @@ public class ReservaService {
                 throw ex;
             }
         }
+
 
         // Definir status e salvar reserva
         System.out.println("=== SALVANDO RESERVA ===");

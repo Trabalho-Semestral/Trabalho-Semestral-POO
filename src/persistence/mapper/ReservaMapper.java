@@ -1,3 +1,4 @@
+// Updated ReservaMapper.java
 package persistence.mapper;
 
 import model.concretas.*;
@@ -5,9 +6,10 @@ import model.abstractas.Equipamento;
 import persistence.dto.ReservaDTO;
 import persistence.dto.ItemReservaDTO;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 public class ReservaMapper {
 
@@ -28,6 +30,9 @@ public class ReservaMapper {
         dto.status = reserva.getStatus().name();
         dto.dataMillis = reserva.getDataReserva() != null ? reserva.getDataReserva().getTime() : new Date().getTime();
         dto.expiraEmMillis = reserva.getExpiraEm() != null ? reserva.getExpiraEm().getTime() : new Date().getTime() + (7L * 24 * 60 * 60 * 1000);
+
+        // Map taxaPaga
+        dto.taxaPaga = reserva.getTaxaPaga() != null ? reserva.getTaxaPaga() : BigDecimal.ZERO;
 
         // Mapear itens
         if (reserva.getItens() != null) {
@@ -75,6 +80,9 @@ public class ReservaMapper {
         reserva.setDataReserva(new Date(dto.dataMillis));
         reserva.setExpiraEm(new Date(dto.expiraEmMillis));
 
+        // Mapear taxaPaga
+        reserva.setTaxaPaga(dto.taxaPaga != null ? dto.taxaPaga : BigDecimal.ZERO);
+
         // Mapear itens
         if (dto.itens != null && !dto.itens.isEmpty()) {
             List<ItemReserva> itens = new ArrayList<>();
@@ -84,7 +92,8 @@ public class ReservaMapper {
                 equipamento.setMarca(itemDTO.equipamentoMarca);
 
                 ItemReserva item = new ItemReserva(equipamento, itemDTO.quantidade);
-                itens.add(item);}
+                itens.add(item);
+            }
             reserva.setItens(itens);
         } else {
             reserva.setItens(new ArrayList<>());

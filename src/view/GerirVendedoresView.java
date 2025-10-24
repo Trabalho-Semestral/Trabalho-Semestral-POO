@@ -2,16 +2,17 @@ package view;
 
 import controller.SistemaController;
 import model.concretas.Vendedor;
-import org.jfree.chart.block.LineBorder;
-import util.Validador;
 import util.UITheme;
+import util.Validador;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -24,7 +25,6 @@ import java.util.UUID;
 
 public class GerirVendedoresView extends JPanel {
 
-    // --- CONSTANTE PARA O DIRETÓRIO DE FOTOS ---
     private static final String FOTOS_VENDEDORES_PATH = "resources/fotos/vendedores/";
 
     private SistemaController controller;
@@ -36,6 +36,7 @@ public class GerirVendedoresView extends JPanel {
     private JTextField txtTelefone;
     private JTextField txtSalario;
     private JPasswordField txtSenha;
+    private JTextField txtPesquisar;
 
     // Componentes da foto
     private JLabel lblFoto;
@@ -44,6 +45,7 @@ public class GerirVendedoresView extends JPanel {
     // Tabela
     private JTable tabelaVendedores;
     private DefaultTableModel modeloTabela;
+    private TableRowSorter<DefaultTableModel> sorter;
 
     // Botões
     private JButton btnAdicionarFoto;
@@ -52,16 +54,21 @@ public class GerirVendedoresView extends JPanel {
     private JButton btnEditar;
     private JButton btnRemover;
     private JButton btnVoltar;
+    private JButton btnLimpar;
 
     public GerirVendedoresView(SistemaController controller) {
         this.controller = controller;
-        // Garante que o diretório de fotos exista
         new File(FOTOS_VENDEDORES_PATH).mkdirs();
-        initComponents();
-        setupLayout();
-        setupEvents();
-        carregarVendedores();
-        installAltForVoltar();          ///
+        try {
+            initComponents();
+            setupLayout();
+            setupEvents();
+            carregarVendedores();
+            installAltForVoltar();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao inicializar a tela: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
     }
 
     private void initComponents() {
@@ -74,6 +81,7 @@ public class GerirVendedoresView extends JPanel {
         txtTelefone = new JTextField();
         txtSalario = new JTextField();
         txtSenha = new JPasswordField();
+        txtPesquisar = new JTextField();
 
         styleTextField(txtNome, "Nome");
         styleTextField(txtNrBI, "Nº BI");
@@ -81,12 +89,24 @@ public class GerirVendedoresView extends JPanel {
         styleTextField(txtTelefone, "Telefone");
         styleTextField(txtSalario, "Salário");
         styleTextField(txtSenha, "Senha");
+        styleTextField(txtPesquisar, "🔍 Pesquisar");
 
-        /// Campos que serao afectados pelos efeitos
-        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtSenha};
-        for (JTextField tf :campos){
-            adicionarEfeitoHover(tf); /// Metodo hover
+        // Ajustar altura dos campos
+        Dimension dimCampo = new Dimension(200, 45);
+        txtNome.setPreferredSize(dimCampo);
+        txtNrBI.setPreferredSize(dimCampo);
+        txtNuit.setPreferredSize(dimCampo);
+        txtTelefone.setPreferredSize(dimCampo);
+        txtSalario.setPreferredSize(dimCampo);
+        txtSenha.setPreferredSize(dimCampo);
+        txtPesquisar.setPreferredSize(new Dimension(180, 35));
+
+        // Aplicar efeito hover aos campos
+        JTextField[] campos = { txtNome, txtNrBI, txtNuit, txtTelefone, txtSalario, txtPesquisar };
+        for (JTextField tf : campos) {
+            adicionarEfeitoHover(tf);
         }
+        adicionarEfeitoHover(txtSenha);
 
         // Componentes da foto
         lblFoto = new JLabel("Sem Foto", SwingConstants.CENTER);
@@ -95,36 +115,46 @@ public class GerirVendedoresView extends JPanel {
         lblFoto.setOpaque(true);
         lblFoto.setBackground(UITheme.CARD_BACKGROUND);
         lblFoto.setBorder(BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT));
+        lblFoto.setPreferredSize(new Dimension(160, 158));
 
-        // Botões de Ação – sempre visíveis e ativos
-        btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-
-        btnRemoverFoto = UITheme.createPrimaryButton("Remover Foto");
-        btnRemoverFoto.setEnabled(true);
-        btnRemoverFoto.setVisible(true);
-// Botões
-        btnAdicionarFoto = UITheme.createPrimaryButton("Adicionar Foto");
-        btnRemoverFoto = UITheme.createSecondaryButton("Remover Foto");
+        // Botões de Ação
+        btnAdicionarFoto = UITheme.createPrimaryButton("📸 Adicionar");
+        btnRemoverFoto = UITheme.createSecondaryButton("🗑 Remover");
         btnCadastrar = UITheme.createSuccessButton("➕ Cadastrar");
-        btnEditar = UITheme.createPrimaryButton("✏️ Editar");
-        btnRemover = UITheme.createDangerButton("🗑️ Remover");
-        btnVoltar = UITheme.createSecondaryButton("⬅️ Voltar");
+        btnEditar = UITheme.createPrimaryButton("✏ Editar");
+        btnRemover = UITheme.createDangerButton("🗑 Remover");
+        btnVoltar = UITheme.createSecondaryButton("⬅ Voltar");
+        btnLimpar = UITheme.createSecondaryButton("🧹 Limpar");
 
-
-        btnVoltar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-        btnCadastrar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-        btnEditar.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-        btnRemover.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-
+        // Estilo reduzido dos botões
+        JButton[] botoes = { btnAdicionarFoto, btnRemoverFoto, btnCadastrar, btnEditar, btnRemover, btnVoltar, btnLimpar };
+        for (JButton btn : botoes) {
+            btn.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
+            btn.setPreferredSize(new Dimension(120, 35));
+        }
 
         // Tabela
         String[] colunas = {"ID", "Nome", "BI", "NUIT", "Telefone", "Salário"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
         tabelaVendedores = new JTable(modeloTabela);
+
         tabelaVendedores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tabelaVendedores.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabelaVendedores.setRowHeight(30);
+        sorter = new TableRowSorter<>(modeloTabela);
+        tabelaVendedores.setRowSorter(sorter);
+
+        // Configurar header da tabela
+        JTableHeader header =  tabelaVendedores.getTableHeader();
+        header.setBackground(Color.WHITE); // fundo branco (ou troca, se quiser)
+        header.setForeground(UITheme.TEXT_SECONDARY); // mesma cor dos títulos dos campos
+        header.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16)); // mesma fonte e tamanho
+        header.setOpaque(true);
     }
 
     private void styleTextField(JComponent component, String title) {
@@ -138,6 +168,9 @@ public class GerirVendedoresView extends JPanel {
                 BorderFactory.createEmptyBorder(2, 5, 2, 5)
         ));
         component.setBackground(UITheme.CARD_BACKGROUND);
+        if (component instanceof JTextField) {
+            ((JTextField) component).setCaretColor(UITheme.PRIMARY_COLOR);
+        }
     }
 
     private void setupLayout() {
@@ -148,9 +181,9 @@ public class GerirVendedoresView extends JPanel {
         topBar.setBackground(UITheme.TOPBAR_BACKGROUND);
         topBar.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.PRIMARY_COLOR));
         topBar.setPreferredSize(new Dimension(0, UITheme.TOPBAR_HEIGHT));
-        JLabel lblTitulo = UITheme.createHeadingLabel("👥 Gestão de Vendedores");
+        JLabel lblTitulo = UITheme.createHeadingLabel("👥 GESTÃO DE VENDEDORES");
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setFont(new Font("Sengoe UI Emoji", Font.BOLD, 18));
+        lblTitulo.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
         lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         topBar.add(lblTitulo, BorderLayout.CENTER);
         JPanel voltarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -159,20 +192,19 @@ public class GerirVendedoresView extends JPanel {
         topBar.add(voltarPanel, BorderLayout.WEST);
         add(topBar, BorderLayout.NORTH);
 
-
         // --- PAINEL PRINCIPAL ---
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBackground(UITheme.BACKGROUND_COLOR);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
 
         // --- PAINEL SUPERIOR (foto, formulário, botões) ---
         JPanel topContentPanel = new JPanel(new BorderLayout(15, 15));
         topContentPanel.setBackground(UITheme.BACKGROUND_COLOR);
 
         // Painel da Foto (com botões)
-        JPanel fotoPainelWrapper = new JPanel(new BorderLayout(10,10));
+        JPanel fotoPainelWrapper = new JPanel(new BorderLayout(10, 10));
         fotoPainelWrapper.setBackground(UITheme.BACKGROUND_COLOR);
-        lblFoto.setPreferredSize(new Dimension(250, 250));
+        lblFoto.setPreferredSize(new Dimension(150, 150));
         fotoPainelWrapper.add(lblFoto, BorderLayout.CENTER);
 
         JPanel fotoBotoesPanel = new JPanel(new GridLayout(1, 2, 10, 0));
@@ -205,13 +237,28 @@ public class GerirVendedoresView extends JPanel {
         acoesPanel.add(btnCadastrar);
         acoesPanel.add(btnEditar);
         acoesPanel.add(btnRemover);
+        acoesPanel.add(btnLimpar);
 
         topContentPanel.add(acoesPanel, BorderLayout.EAST);
 
-        // --- PAINEL INFERIOR (tabela) ---
-        JPanel tabelaPanel = new JPanel(new BorderLayout());
-        tabelaPanel.setBorder(BorderFactory.createTitledBorder("Vendedores Cadastrados"));
+        // --- PAINEL INFERIOR (tabela e pesquisa) ---
+        JPanel tabelaPanel = new JPanel(new BorderLayout(10, 10));
+        tabelaPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(UITheme.SECONDARY_LIGHT),
+                "👥 Vendedores Cadastrados",
+                0, 0,
+                new Font("Segoe UI Emoji", Font.BOLD, 14),
+                UITheme.TEXT_SECONDARY
+        ));
         tabelaPanel.setBackground(UITheme.CARD_BACKGROUND);
+
+        // Painel de pesquisa
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchPanel.setOpaque(false);
+        searchPanel.add(txtPesquisar);
+        tabelaPanel.add(searchPanel, BorderLayout.NORTH);
+
+        // Tabela
         JScrollPane scroll = new JScrollPane(tabelaVendedores);
         tabelaPanel.add(scroll, BorderLayout.CENTER);
 
@@ -219,8 +266,20 @@ public class GerirVendedoresView extends JPanel {
         mainPanel.add(tabelaPanel, BorderLayout.CENTER);
 
         add(mainPanel, BorderLayout.CENTER);
-    }
 
+        // --- RODAPÉ ---
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(UITheme.TOPBAR_BACKGROUND);
+        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, UITheme.PRIMARY_COLOR));
+        bottomPanel.setPreferredSize(new Dimension(0, 40));
+
+        JLabel lblCopyright = new JLabel("© 2025 Sistema de Venda de Equipamentos Informáticos");
+        lblCopyright.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
+        lblCopyright.setForeground(UITheme.TEXT_WHITE);
+        bottomPanel.add(lblCopyright);
+
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
 
     private void setupEvents() {
         btnAdicionarFoto.addActionListener(e -> adicionarFoto());
@@ -229,10 +288,25 @@ public class GerirVendedoresView extends JPanel {
         btnEditar.addActionListener(e -> editarVendedor());
         btnRemover.addActionListener(e -> removerVendedor());
         btnVoltar.addActionListener(e -> voltarMenuPrincipal());
-        installAltForVoltar();              ///
-
+        btnLimpar.addActionListener(e -> limparCampos());
         tabelaVendedores.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) carregarVendedorSelecionado();
+        });
+        txtPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filtrarVendedores();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filtrarVendedores();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filtrarVendedores();
+            }
         });
     }
 
@@ -244,18 +318,13 @@ public class GerirVendedoresView extends JPanel {
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File arquivoSelecionado = fileChooser.getSelectedFile();
             try {
-                // Cria um nome de arquivo único para evitar conflitos
                 String extensao = arquivoSelecionado.getName().substring(arquivoSelecionado.getName().lastIndexOf("."));
                 String novoNome = UUID.randomUUID().toString() + extensao;
                 File destino = new File(FOTOS_VENDEDORES_PATH + novoNome);
 
-                // Copia o arquivo para o diretório de fotos do projeto
                 Files.copy(arquivoSelecionado.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                // Armazena o caminho relativo e exibe a imagem
                 this.caminhoFotoAtual = destino.getPath();
                 exibirImagem(this.caminhoFotoAtual);
-
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "Erro ao salvar a foto: " + e.getMessage(), "Erro de Arquivo", JOptionPane.ERROR_MESSAGE);
             }
@@ -264,14 +333,13 @@ public class GerirVendedoresView extends JPanel {
 
     private void removerFoto() {
         this.caminhoFotoAtual = null;
-        exibirImagem(null); // Limpa a imagem exibida
+        exibirImagem(null);
     }
 
     private void exibirImagem(String caminho) {
         if (caminho != null && !caminho.isEmpty() && new File(caminho).exists()) {
             ImageIcon icon = new ImageIcon(caminho);
             Image img = icon.getImage();
-            // Redimensiona a imagem para caber no JLabel, mantendo a proporção
             Image newImg = img.getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), Image.SCALE_SMOOTH);
             lblFoto.setIcon(new ImageIcon(newImg));
             lblFoto.setText("");
@@ -285,15 +353,18 @@ public class GerirVendedoresView extends JPanel {
         try {
             Vendedor vendedor = criarVendedorFromForm(false);
             if (vendedor != null) {
-                vendedor.setFotoPath(this.caminhoFotoAtual); // Associa a foto ao vendedor
+                vendedor.setFotoPath(this.caminhoFotoAtual);
                 if (controller.adicionarVendedor(vendedor)) {
-                    JOptionPane.showMessageDialog(this, "Vendedor cadastrado com sucesso!");
-                    limparFormulario();
+                    JOptionPane.showMessageDialog(this, "Vendedor cadastrado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparCampos();
                     carregarVendedores();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Não foi possível cadastrar o vendedor.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage(), "Erro de Cadastro", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
@@ -311,7 +382,7 @@ public class GerirVendedoresView extends JPanel {
         Vendedor vendedorNovo = criarVendedorFromForm(true);
         if (vendedorAntigo != null && vendedorNovo != null) {
             vendedorNovo.setId(vendedorAntigo.getId());
-            vendedorNovo.setFotoPath(this.caminhoFotoAtual); // Atualiza o caminho da foto
+            vendedorNovo.setFotoPath(this.caminhoFotoAtual);
 
             if (vendedorNovo.getSenha() == null || vendedorNovo.getSenha().isEmpty()) {
                 vendedorNovo.setSenha(vendedorAntigo.getSenha());
@@ -320,9 +391,9 @@ public class GerirVendedoresView extends JPanel {
             }
 
             if (controller.atualizarVendedor(vendedorAntigo, vendedorNovo)) {
-                JOptionPane.showMessageDialog(this, "Vendedor atualizado com sucesso!");
+                JOptionPane.showMessageDialog(this, "Vendedor atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                limparCampos();
                 carregarVendedores();
-                limparFormulario();
             } else {
                 JOptionPane.showMessageDialog(this, "Não foi possível atualizar o vendedor.", "Erro", JOptionPane.ERROR_MESSAGE);
             }
@@ -344,13 +415,16 @@ public class GerirVendedoresView extends JPanel {
             int confirm = JOptionPane.showConfirmDialog(this, "Deseja realmente remover o vendedor '" + v.getNome() + "'?", "Confirmar Remoção", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 if (controller.removerVendedor(v)) {
-                    // Opcional: remover o arquivo da foto
-                    if(v.getFotoPath() != null) {
-                        try { Files.deleteIfExists(Paths.get(v.getFotoPath())); } catch (IOException e) { /* Ignorar falha na deleção */ }
+                    if (v.getFotoPath() != null) {
+                        try {
+                            Files.deleteIfExists(Paths.get(v.getFotoPath()));
+                        } catch (IOException e) {
+                            /* Ignorar falha na deleção */
+                        }
                     }
-                    JOptionPane.showMessageDialog(this, "Vendedor removido com sucesso!");
+                    JOptionPane.showMessageDialog(this, "Vendedor removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                    limparCampos();
                     carregarVendedores();
-                    limparFormulario();
                 } else {
                     JOptionPane.showMessageDialog(this, "Não foi possível remover o vendedor.", "Erro", JOptionPane.ERROR_MESSAGE);
                 }
@@ -367,14 +441,13 @@ public class GerirVendedoresView extends JPanel {
             double salario = Double.parseDouble(txtSalario.getText().trim());
             String senha = new String(txtSenha.getPassword());
 
-            if (!Validador.validarCampoObrigatorio(nome)) throw new IllegalArgumentException("O campo 'Nome' é obrigatório.");
+            if (!Validador.validarCampoObrigatorio (nome)) throw new IllegalArgumentException("O campo 'Nome' é obrigatório.");
             if (!Validador.validarBI(nrBI)) throw new IllegalArgumentException("O formato do 'Nr. BI' é inválido.");
             if (!Validador.validarTelefone(telefone)) throw new IllegalArgumentException("O formato do 'Telefone' é inválido.");
             if (!Validador.validarValorPositivo(salario)) throw new IllegalArgumentException("O 'Salário' deve ser um valor positivo.");
             if (!isEdit && !Validador.validarCampoObrigatorio(senha)) throw new IllegalArgumentException("A 'Senha' é obrigatória para novos cadastros.");
 
             return new Vendedor(nome, nrBI, nuit, telefone, salario, senha);
-
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Erro: O campo 'Salário' deve ser um valor numérico.", "Erro de Formato", JOptionPane.ERROR_MESSAGE);
             return null;
@@ -385,13 +458,20 @@ public class GerirVendedoresView extends JPanel {
     }
 
     private void carregarVendedores() {
-        modeloTabela.setRowCount(0);
-        List<Vendedor> vendedores = controller.getVendedores();
-        for (Vendedor v : vendedores) {
-            modeloTabela.addRow(new Object[]{
-                    v.getId(), v.getNome(), v.getNrBI(), v.getNuit(),
-                    v.getTelefone(), String.format("%.2f MT", v.getSalario())
-            });
+        try {
+            modeloTabela.setRowCount(0);
+            List<Vendedor> vendedores = controller.getVendedores();
+            if (vendedores != null) {
+                for (Vendedor v : vendedores) {
+                    modeloTabela.addRow(new Object[]{
+                            v.getId(), v.getNome(), v.getNrBI(), v.getNuit(),
+                            v.getTelefone(), String.format("%.2f MT", v.getSalario())
+                    });
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar vendedores: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
@@ -410,58 +490,76 @@ public class GerirVendedoresView extends JPanel {
                 txtSalario.setText(String.valueOf(v.getSalario()));
                 txtSenha.setText("");
                 styleTextField(txtSenha, "Nova Senha (opcional)");
-
-                // Carrega a foto
                 this.caminhoFotoAtual = v.getFotoPath();
                 exibirImagem(this.caminhoFotoAtual);
             }
         }
     }
 
-    private void limparFormulario() {
+    private void limparCampos() {
         txtNome.setText("");
         txtNrBI.setText("");
         txtNuit.setText("");
         txtTelefone.setText("");
         txtSalario.setText("");
         txtSenha.setText("");
+        txtPesquisar.setText("");
         styleTextField(txtSenha, "Senha");
         tabelaVendedores.clearSelection();
-
-        // Limpa a foto
         removerFoto();
+        sorter.setRowFilter(null);
     }
 
     private void voltarMenuPrincipal() {
-        String tipoUsuario = controller.getTipoUsuarioLogado();
-        if (tipoUsuario == null) {
-            controller.getCardLayoutManager().showPanel("Login");
-            return;
-        }
+        try {
+            String tipoUsuario = controller.getTipoUsuarioLogado();
+            if (tipoUsuario == null) {
+                System.err.println("Tipo de usuário é nulo. Redirecionando para Login.");
+                controller.getCardLayoutManager().showPanel("Login");
+                return;
+            }
 
-        switch (tipoUsuario) {
-            case "Gestor":
-                controller.getCardLayoutManager().showPanel("MenuGestor");
-                break;
-            case "Vendedor":
-                controller.getCardLayoutManager().showPanel("MenuVendedor");
-                break;
-            case "Administrador":
-            default:
-                controller.getCardLayoutManager().showPanel("MenuAdministrador");
-                break;
+            String painel = switch (tipoUsuario) {
+                case "Gestor" -> "MenuGestor";
+                case "Vendedor" -> "MenuVendedor";
+                case "Administrador" -> "MenuAdministrador";
+                default -> {
+                    System.err.println("Tipo de usuário desconhecido: " + tipoUsuario);
+                    yield "Login";
+                }
+            };
+
+            if (controller.getCardLayoutManager() == null) {
+                System.err.println("CardLayoutManager é nulo.");
+                JOptionPane.showMessageDialog(this, "Erro interno: Gerenciador de layout não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            controller.getCardLayoutManager().showPanel(painel);
+        } catch (Exception ex) {
+            System.err.println("Erro ao voltar para o menu principal: " + ex.getMessage());
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao voltar para o menu principal: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            controller.getCardLayoutManager().showPanel("Login");
         }
     }
 
-    private void adicionarEfeitoHover(JTextField campo){
-        final Border bordaOriginal =  campo.getBorder();
+    private void filtrarVendedores() {
+        String texto = txtPesquisar.getText().trim();
+        if (texto.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0, 1));
+        }
+    }
 
+    private void adicionarEfeitoHover(JTextField campo) {
+        final Border bordaOriginal = campo.getBorder();
         Border bordaHover = new CompoundBorder(
-                new javax.swing.border.LineBorder(new Color(16, 234, 208), 3, true), // line border com cantos arredondados
-                new EmptyBorder(3, 6, 3, 6)                        // espaçamento interno
+                new javax.swing.border.LineBorder(new Color(16, 234, 208), 3, true),
+                new EmptyBorder(3, 6, 3, 6)
         );
 
-        /// Efeito ao passar o cursor
         campo.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -490,9 +588,6 @@ public class GerirVendedoresView extends JPanel {
         });
     }
 
-    /**
-     * Instala bindings para que a tecla ALT dê o efeito visual no btnVoltar.
-     */
     private void installAltForVoltar() {
         JComponent root = getRootPane();
         if (root == null) {
@@ -502,13 +597,12 @@ public class GerirVendedoresView extends JPanel {
         InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = root.getActionMap();
 
-        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);  // press
-        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true); // release
+        KeyStroke altPress = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, false);
+        KeyStroke altRelease = KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0, true);
 
         im.put(altPress, "altPressed_voltar");
         im.put(altRelease, "altReleased_voltar");
 
-        // ALT pressionado: só altera o estado visual (armed + pressed)
         am.put("altPressed_voltar", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -516,22 +610,16 @@ public class GerirVendedoresView extends JPanel {
                     ButtonModel m = btnVoltar.getModel();
                     m.setArmed(true);
                     m.setPressed(true);
-                    // garante foco visual no botão (opcional)
                     btnVoltar.requestFocusInWindow();
                 }
             }
         });
 
-        /// Alt liberado: remove efeito visual e opcionalmente dispara a ação do botão
         am.put("altReleased_voltar", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (btnVoltar != null) {
-                    // Se quiser QUE O BOTÃO DISPARA A AÇÃO ao soltar ALT, mantenha a linha abaixo.
-                    // Se NÃO quiser disparar a ação, comente ou remova a próxima linha.
                     btnVoltar.doClick();
-
-                    // limpa o estado visual
                     ButtonModel m = btnVoltar.getModel();
                     m.setPressed(false);
                     m.setArmed(false);
@@ -539,5 +627,4 @@ public class GerirVendedoresView extends JPanel {
             }
         });
     }
-
 }

@@ -18,7 +18,9 @@ public class AuditoriaService {
     public void registrarLogout(String usuarioId, String tipoUsuario, String ip) {
         registrarEvento(usuarioId, tipoUsuario, "LOGOUT", ip);
     }
-    
+    public void registrarAdicaoAdmin(String adminId, String adicionadoPor) {
+        registrarEvento(adminId, "Administrador", "ADICIONADO", adicionadoPor); // Adaptar IP ou detalhes
+    }
     private void registrarEvento(String usuarioId, String tipoUsuario, String acao, String ip) {
         try (FileWriter fw = new FileWriter(LOG_FILE, true);
              BufferedWriter bw = new BufferedWriter(fw);
